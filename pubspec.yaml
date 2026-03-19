@@ -1,5 +1,5 @@
 name: tepetl
-description: "A new Flutter project."
+description: "Aplicación multiplataforma para el aprendizaje de lengua Náhuatl."
 publish_to: 'none'
 version: 0.1.0
 
@@ -9,22 +9,39 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_svg: ^2.2.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.7
 
 flutter:
-  assets:
-    - assets/images/
-    - assets/audio/
-  fonts:
-    - family: Space Grotesk
-      fonts:
-        - asset: assets/fonts/SpaceGrotesk-Regular.ttf
-        - asset: assets/fonts/SpaceGrotesk-Medium.ttf
-        - asset: assets/fonts/SpaceGrotesk-SemiBold.ttf
-        - asset: assets/fonts/SpaceGrotesk-Bold.ttf
   uses-material-design: true
+  fonts:
+   - family: SpaceGrotesk
+     fonts:
+      - asset: fonts/SpaceGrotesk-Bold.ttf
+      - asset: fonts/SpaceGrotesk-Light.ttf
+      - asset: fonts/SpaceGrotesk-Medium.ttf
+      - asset: fonts/SpaceGrotesk-Regular.ttf
+      - asset: fonts/SpaceGrotesk-SemiBold.ttf
+  assets:
+   - assets/logo.png
+   - assets/branding.png
+
+flutter_native_splash:
+  android: true
+  ios: true
+  web: false
+
+  color: "#FFFFFF"
+  color_dark: "#111111"
+  image: assets/logo.png
+  branding: assets/branding.png
+
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#111111"
+    image: assets/logo.png
+    branding: assets/branding.png
