@@ -1,3 +1,3 @@
-# tepetl
+# TEPETL
 
-A new Flutter project.
+Plataforma de aprendizaje básico de la lengua nahuatl, con retroalimentación, recomedaciones de ejercicios
