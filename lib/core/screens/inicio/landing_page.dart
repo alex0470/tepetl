@@ -19,7 +19,7 @@ class LandingPage extends StatelessWidget {
           title: Row(
             children: [
               Image.asset(
-                "assets/images/logo_50.png",
+                "assets/logo50.png",
                 width: 28,
                 height: 28,
               ),
@@ -252,8 +252,129 @@ class LandingPage extends StatelessWidget {
                 ],
               ),
             ),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
+              color: AppColors.primario,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    runSpacing: 40,
+                    spacing: 60,
+                    children: [
+                      SizedBox(
+                        width: 250,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Image.asset(
+                                  "assets/logob50.png",
+                                  width: 25,
+                                  height: 25,
+                                ),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  "TEPETL",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              "Preservando la lengua y cultura Náhuatl a través de la tecnología y la innovación educativa.",
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      _footerColumn(
+                        "Plataforma",
+                        ["Metodología", "Cultura", "Planes", "Para Escuelas"],
+                      ),
+
+                      _footerColumn(
+                        "Recursos",
+                        ["Blog", "Diccionario", "Comunidad", "Soporte"],
+                      ),
+
+                      _footerColumn(
+                        "Legal",
+                        ["Privacidad", "Términos", "Cookies"],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+                  const Divider(color: Color(0xFF111111)),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "© 2026 TEPETL.",
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 12,
+                        ),
+                      ),
+                      Row(
+                        children: const [
+                          Icon(Icons.facebook, color: Color(0xFF94A3B8), size: 18),
+                          SizedBox(width: 16),
+                          Icon(Icons.reddit, color: Color(0xFF94A3B8), size: 18),
+                          SizedBox(width: 16),
+                          Icon(Icons.chat_bubble, color: Color(0xFF94A3B8), size: 18),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _footerColumn(String title, List<String> items) {
+    return SizedBox(
+      width: 400,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                item,
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

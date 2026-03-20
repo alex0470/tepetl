@@ -17,12 +17,12 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
 
-      home: kIsWeb
-          ? const LandingPage()
+      home: kIsWeb 
+          ? const LandingPage() 
           : const SplashScreen(),
 
       routes: {
-        "/home": (context) => const Placeholder(),
+        "/home": (context) => const LandingPage(),
       },
     );
   }

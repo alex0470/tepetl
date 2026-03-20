@@ -21,19 +21,22 @@ flutter:
   fonts:
    - family: SpaceGrotesk
      fonts:
-      - asset: fonts/SpaceGrotesk-Bold.ttf
-      - asset: fonts/SpaceGrotesk-Light.ttf
-      - asset: fonts/SpaceGrotesk-Medium.ttf
-      - asset: fonts/SpaceGrotesk-Regular.ttf
-      - asset: fonts/SpaceGrotesk-SemiBold.ttf
+      - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+      - asset: assets/fonts/SpaceGrotesk-Light.ttf
+      - asset: assets/fonts/SpaceGrotesk-Medium.ttf
+      - asset: assets/fonts/SpaceGrotesk-Regular.ttf
+      - asset: assets/fonts/SpaceGrotesk-SemiBold.ttf
   assets:
    - assets/logo.png
    - assets/branding.png
+   - assets/logo50.png
+   - assets/logo_b.png
+   - assets/logob50.png
 
 flutter_native_splash:
   android: true
   ios: true
-  web: false
+  web: true
 
   color: "#FFFFFF"
   color_dark: "#111111"
