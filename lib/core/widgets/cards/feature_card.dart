@@ -20,8 +20,15 @@ class FeatureCardDark extends StatelessWidget {
       height: 210,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.secundario.withValues(alpha: 0.2),
+        color: Color(0xFF145A36),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 2,
+            offset: const Offset(2, 2),
+          )
+        ]
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,7 +43,7 @@ class FeatureCardDark extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     fontSize: 22,
                   ),
                 ),
@@ -47,7 +54,7 @@ class FeatureCardDark extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.secundario.withValues(alpha: 0.2),
+                  color: Color(0xFF0E7146),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: AppColors.secundario),
@@ -60,7 +67,7 @@ class FeatureCardDark extends StatelessWidget {
           Text(
             desc,
             style: const TextStyle(
-              color: Color(0xFF94A3B8),
+              color: AppColors.textoSecundario20,
             ),
           ),
         ],

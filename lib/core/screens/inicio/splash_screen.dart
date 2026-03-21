@@ -1,5 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/screens/inicio/landing_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -8,95 +11,247 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  double progress = 0;
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  static const Color _lightGray = Color(0x99E0E0E0);
+
+  // ── estado ──
+  bool _showLogo = false;
+  double _progress = 0.0;
+
+  late AnimationController _zoomTextCtrl;
+  late Animation<double> _scaleText;
+
+  late AnimationController _fadeLogoCtrl;
+  late AnimationController _zoomLogoCtrl;
+  late Animation<double> _fadeLogo;
+  late Animation<double> _scaleLogo;
+
+  Timer? _progressTimer;
 
   @override
   void initState() {
     super.initState();
-    startLoading();
+
+    _zoomTextCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _scaleText = Tween<double>(begin: 0.75, end: 1.0).animate(
+      CurvedAnimation(parent: _zoomTextCtrl, curve: Curves.easeOutBack),
+    );
+
+    _fadeLogoCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _fadeLogo = CurvedAnimation(parent: _fadeLogoCtrl, curve: Curves.easeIn);
+
+    _zoomLogoCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _scaleLogo = Tween<double>(begin: 0.75, end: 1.0).animate(
+      CurvedAnimation(parent: _zoomLogoCtrl, curve: Curves.easeOutBack),
+    );
+
+    _startSequence();
   }
 
-  void startLoading() {
-    Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      setState(() {
-        progress += 0.01;
-      });
+  Future<void> _startSequence() async {
+    _zoomTextCtrl.forward();
 
-      if (progress >= 1) {
-        timer.cancel();
-        Navigator.pushReplacementNamed(context, "/home");
-      }
-    });
+    await _animateProgress(from: 0.0, to: 0.50, durationMs: 2000);
+
+    setState(() => _showLogo = true);
+    _fadeLogoCtrl.forward();
+    _zoomLogoCtrl.forward();
+
+    await _animateProgress(from: 0.50, to: 1.0, durationMs: 1800);
+
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const LandingPage(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
+    }
+  }
+
+  Future<void> _animateProgress({
+    required double from,
+    required double to,
+    required int durationMs,
+  }) async {
+    const int steps = 60;
+    final double stepValue = (to - from) / steps;
+    final int stepDelay = durationMs ~/ steps;
+
+    for (int i = 0; i < steps; i++) {
+      await Future.delayed(Duration(milliseconds: stepDelay));
+      if (!mounted) return;
+      setState(() {
+        _progress = (from + stepValue * (i + 1)).clamp(0.0, 1.0);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _zoomTextCtrl.dispose();
+    _fadeLogoCtrl.dispose();
+    _zoomLogoCtrl.dispose();
+    _progressTimer?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
+      body: SafeArea(
         child: Column(
           children: [
-
-            const Spacer(),
-
-            Image.asset(
-              "assets/logo.png",
-              width: 120,
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              "TEPETL",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+            Expanded(
+              child: Center(
+                child: _showLogo
+                    ? FadeTransition(
+                        opacity: _fadeLogo,
+                        child: ScaleTransition(
+                          scale: _scaleLogo,
+                          child: _phase2(),
+                        ),
+                      )
+                    : ScaleTransition(
+                        scale: _scaleText,
+                        child: _phase1(),
+                      ),
               ),
             ),
-
-            const SizedBox(height: 5),
-
-            const Text(
-              "APRENDE NÁHUATL",
-              style: TextStyle(
-                fontSize: 14,
-                letterSpacing: 1,
-              ),
-            ),
-
-            const Spacer(),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Cargando TEPETL"),
-                Text("${(progress * 100).toInt()}%"),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              "v0.0.0",
-              style: TextStyle(fontSize: 10, color: Colors.grey),
-            ),
-
-            const SizedBox(height: 40),
+            _buildProgressSection(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _phase1() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'TEPETL',
+          style: TextStyle(
+            color: AppColors.primario,
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'APRENDE NÁHUATL',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _phase2() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 120,
+          height: 120,
+          child: Image.asset("assets/logo800.png"),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'TEPETL',
+          style: TextStyle(
+            color: AppColors.primario,
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 4,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'APRENDE NÁHUATL',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressSection() {
+    final int percent = (_progress * 100).round();
+    final String label = _showLogo ? 'Espera un momento' : 'Cargando TEPETL';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 13,
+                ),
+              ),
+              Text(
+                '$percent%',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: SizedBox(
+              height: 5,
+              child: LinearProgressIndicator(
+                value: _progress,
+                backgroundColor: _lightGray,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.primario,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Center(
+            child: Text(
+              'v0.0.1',
+              style: TextStyle(
+                color: Color(0xFFAAAAAA),
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

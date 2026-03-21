@@ -32,6 +32,9 @@ flutter:
    - assets/logo50.png
    - assets/logo_b.png
    - assets/logob50.png
+   - assets/logo800.png
+   - assets/logoa12.png
+   - assets/logo300.png
 
 flutter_native_splash:
   android: true
@@ -46,5 +49,5 @@ flutter_native_splash:
   android_12:
     color: "#FFFFFF"
     color_dark: "#111111"
-    image: assets/logo.png
-    branding: assets/branding.png
+    image: assets/logoa12.png
+    branding: null

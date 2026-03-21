@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/autenticacion/registro.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/cards/feature_card.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
@@ -16,21 +17,33 @@ class LandingPage extends StatelessWidget {
           centerTitle: false,
           titleSpacing: 16,
 
-          title: Row(
-            children: [
-              Image.asset(
-                "assets/logo50.png",
-                width: 28,
-                height: 28,
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                "TEPETL",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+          title: GestureDetector(
+            onTap: () {
+              Navigator.of(context).pushReplacement(
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const LandingPage(),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
                 ),
-              ),
-            ],
+              );
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  "assets/logo50.png",
+                  width: 28,
+                  height: 28,
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  "TEPETL",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
 
           actions: [
@@ -49,7 +62,16 @@ class LandingPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: BotonesSombra(
                     text: "Registrarse",
-                    onPressed: () {},
+                    onPressed: () {
+                    Navigator.of(context).push(
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => const RegistroScreen(),
+                        transitionsBuilder: (_, anim, __, child) =>
+                            FadeTransition(opacity: anim, child: child),
+                        transitionDuration: const Duration(milliseconds: 500),
+                        ),
+                      );
+                    },
                     width: 150,
                     height: 40,
                   ),
@@ -102,7 +124,16 @@ class LandingPage extends StatelessWidget {
                           children: [
                             BotonesSombra(
                               text: "Comenzar Ahora",
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  PageRouteBuilder(
+                                    pageBuilder: (_, __, ___) => const RegistroScreen(),
+                                    transitionsBuilder: (_, anim, __, child) =>
+                                        FadeTransition(opacity: anim, child: child),
+                                    transitionDuration: const Duration(milliseconds: 500),
+                                    ),
+                                  );
+                              },
                               width: 200,
                               height: 50,
                             ),
@@ -180,7 +211,7 @@ class LandingPage extends StatelessWidget {
                   const Text(
                     "Nuestra plataforma utiliza algoritmos avanzados adaptados específicamente para la fonética y gramática del Náhuatl.",
                     style: TextStyle(
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.textoSecundario20,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -242,11 +273,20 @@ class LandingPage extends StatelessWidget {
 
                   BotonesSombra(
                     text: "Registrate Gratis",
-                    onPressed: () {},
-                    width: 200,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          pageBuilder: (_, __, ___) => const RegistroScreen(),
+                          transitionsBuilder: (_, anim, __, child) =>
+                              FadeTransition(opacity: anim, child: child),
+                          transitionDuration: const Duration(milliseconds: 500),
+                          ),
+                      );
+                    },
+                    width: 250,
                     height: 50,
-                    backgroundColor: AppColors.verde1,
-                    textColor: Colors.black,
+                    backgroundColor: AppColors.primario,
+                    textColor: Colors.white,
                     hasShadow: true,
                     ),
                 ],
@@ -291,7 +331,7 @@ class LandingPage extends StatelessWidget {
                             const Text(
                               "Preservando la lengua y cultura Náhuatl a través de la tecnología y la innovación educativa.",
                               style: TextStyle(
-                                color: Color(0xFF94A3B8),
+                                color: AppColors.textoSecundario40,
                               ),
                             ),
                           ],
@@ -316,7 +356,7 @@ class LandingPage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 40),
-                  const Divider(color: Color(0xFF111111)),
+                  const Divider(color: AppColors.fondoOscuro),
                   const SizedBox(height: 20),
 
                   Row(
@@ -325,17 +365,17 @@ class LandingPage extends StatelessWidget {
                       const Text(
                         "© 2026 TEPETL.",
                         style: TextStyle(
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.textoSecundario20,
                           fontSize: 12,
                         ),
                       ),
                       Row(
                         children: const [
-                          Icon(Icons.facebook, color: Color(0xFF94A3B8), size: 18),
+                          Icon(Icons.facebook, color: AppColors.textoSecundario20, size: 18),
                           SizedBox(width: 16),
-                          Icon(Icons.reddit, color: Color(0xFF94A3B8), size: 18),
+                          Icon(Icons.reddit, color: AppColors.textoSecundario20, size: 18),
                           SizedBox(width: 16),
-                          Icon(Icons.chat_bubble, color: Color(0xFF94A3B8), size: 18),
+                          Icon(Icons.chat_bubble, color: AppColors.textoSecundario20, size: 18),
                         ],
                       ),
                     ],
@@ -369,7 +409,7 @@ class LandingPage extends StatelessWidget {
               child: Text(
                 item,
                 style: const TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textoSecundario20,
                 ),
               ),
             ),

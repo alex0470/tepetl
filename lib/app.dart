@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
 
       home: kIsWeb 
-          ? const LandingPage() 
+          ? const SplashScreen() 
           : const SplashScreen(),
 
       routes: {
