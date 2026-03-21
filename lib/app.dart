@@ -11,14 +11,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: "Lenguas Vivas",
+      title: "Tepetl: Lenguas Vivas",
 
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
 
       home: kIsWeb 
-          ? const SplashScreen() 
+          ? const LandingPage() 
           : const SplashScreen(),
 
       routes: {
