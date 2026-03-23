@@ -424,9 +424,9 @@ class NivelSeleccionScreen extends StatelessWidget {
     required String subtitle,
     required String desc,
   }) {
-    return InkWell(
+    // ── Reemplazado InkWell → _PressableCard ──
+    return _PressableCard(
       onTap: () {},
-      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -504,9 +504,9 @@ class NivelSeleccionScreen extends StatelessWidget {
     required String subtitle,
     required String desc,
   }) {
-    return InkWell(
+    // ── Reemplazado InkWell → _PressableCard ──
+    return _PressableCard(
       onTap: () {},
-      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -561,6 +561,64 @@ class NivelSeleccionScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PressableCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final BorderRadius borderRadius;
+
+  const _PressableCard({
+    required this.child,
+    this.onTap,
+    this.borderRadius = const BorderRadius.all(Radius.circular(16)),
+  });
+
+  @override
+  State<_PressableCard> createState() => _PressableCardState();
+}
+
+class _PressableCardState extends State<_PressableCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 90),
+    reverseDuration: const Duration(milliseconds: 160),
+    lowerBound: 0.0,
+    upperBound: 1.0,
+  );
+
+  late final Animation<double> _scale = Tween<double>(
+    begin: 1.0,
+    end: 0.95,
+  ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) => _ctrl.forward();
+  void _onTapUp(TapUpDetails _)     => _ctrl.reverse();
+  void _onTapCancel()               => _ctrl.reverse();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: ScaleTransition(
+        scale: _scale,
+        child: ClipRRect(
+          borderRadius: widget.borderRadius,
+          child: widget.child,
         ),
       ),
     );

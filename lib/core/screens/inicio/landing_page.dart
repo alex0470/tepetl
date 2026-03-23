@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/autenticacion/inicio_sesion.dart';
 import 'package:tepetl/core/screens/autenticacion/registro.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/cards/feature_card.dart';
@@ -53,7 +54,15 @@ class LandingPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: BotonesSombra(
                     text: "Iniciar sesión",
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          pageBuilder: (_, __, ___) => const LoginScreen(),
+                          transitionDuration: Duration.zero,
+                          reverseTransitionDuration: Duration.zero,
+                        ),
+                      );
+                    },
                     width: 150,
                     height: 40,
                   ),
@@ -65,10 +74,9 @@ class LandingPage extends StatelessWidget {
                     onPressed: () {
                     Navigator.of(context).push(
                       PageRouteBuilder(
-                        pageBuilder: (_, __, ___) => const RegistroScreen(),
-                        transitionsBuilder: (_, anim, __, child) =>
-                            FadeTransition(opacity: anim, child: child),
-                        transitionDuration: const Duration(milliseconds: 500),
+                          pageBuilder: (_, __, ___) => const RegistroScreen(),
+                          transitionDuration: Duration.zero,
+                          reverseTransitionDuration: Duration.zero,
                         ),
                       );
                     },

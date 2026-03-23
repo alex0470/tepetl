@@ -55,14 +55,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }
 
   Widget _wideLayout(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
       children: [
         Expanded(
           flex: 4,
-          child: Container(
-            color: colorScheme.surfaceContainerLow,
+          child: Center(
             child: Stack(
               children: [
                 SafeArea(
