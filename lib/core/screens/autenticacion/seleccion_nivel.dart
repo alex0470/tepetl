@@ -40,9 +40,7 @@ class NivelSeleccionScreen extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────
   //  LAYOUT ESTRECHO
-  // ─────────────────────────────────────────────
   Widget _narrowLayout(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
@@ -126,9 +124,7 @@ class NivelSeleccionScreen extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────
   //  LAYOUT ANCHO
-  // ─────────────────────────────────────────────
   Widget _wideLayout(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
@@ -154,13 +150,11 @@ class NivelSeleccionScreen extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // ── Fila principal: card diagnóstica + sección manual ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 48),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Card diagnóstica
                 SizedBox(
                   width: _cardWideWidth,
                   height: _cardWideHeight,
@@ -169,7 +163,6 @@ class NivelSeleccionScreen extends StatelessWidget {
 
                 const SizedBox(width: 32),
 
-                // Columna "elige manualmente" — centrada
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -184,7 +177,6 @@ class NivelSeleccionScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      // Cards de nivel centradas en el espacio disponible
                       IntrinsicHeight(
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -264,9 +256,7 @@ class NivelSeleccionScreen extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────
   //  WIDGETS COMPARTIDOS
-  // ─────────────────────────────────────────────
   Widget _header(BuildContext context) {
     return Column(
       children: [
@@ -424,7 +414,6 @@ class NivelSeleccionScreen extends StatelessWidget {
     required String subtitle,
     required String desc,
   }) {
-    // ── Reemplazado InkWell → _PressableCard ──
     return _PressableCard(
       onTap: () {},
       child: Container(

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/autenticacion/recuperar_contra.dart';
+import 'package:tepetl/core/screens/lecciones/inicio.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
@@ -14,11 +16,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController();
+  final _passCtrl = TextEditingController();
 
   bool _obscurePass = true;
 
   late final TabController _tabCtrl = TabController(length: 2, vsync: this);
+
+  static const double _kBreakpoint = 700;
 
   @override
   void dispose() {
@@ -28,60 +32,51 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  // ── Mismas constantes que RegistroScreen ──────
-  static const double _kBreakpoint   = 700;
-  static const double _fieldsWide    = 550;
-  static const double _fieldsNarrow  = 350;
-  static const double _buttonWidth   = 250;
-
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final double vw = mq.size.width;
+    final double vh = mq.size.height;
+    final bool isWide = vw >= _kBreakpoint;
+
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final bool isWide = constraints.maxWidth >= _kBreakpoint;
-          return isWide ? _wideLayout(context) : _narrowLayout(context);
-        },
-      ),
+      body: isWide
+          ? _wideLayout(vw: vw, vh: vh)
+          : _narrowLayout(vw: vw, vh: vh),
     );
   }
 
-  // ─────────────────────────────────────────────
-  //  LAYOUT ANCHO  — idéntico al de RegistroScreen
-  // ─────────────────────────────────────────────
-  Widget _wideLayout(BuildContext context) {
+  Widget _wideLayout({required double vw, required double vh}) {
+    final double formWidth = (vw * 0.45).clamp(400, 600);
+
     return Row(
       children: [
-        // Panel izquierdo: BotonAtras + logoPanel
         Expanded(
           flex: 4,
-          child: Center(
-            child: Stack(
-              children: [
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: BotonAtras(),
-                    ),
+          child: Stack(
+            children: [
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                    padding: EdgeInsets.all(vw * 0.01),
+                    child: const BotonAtras(),
                   ),
                 ),
-                Center(child: _logoPanel(large: true)),
-              ],
-            ),
+              ),
+              Center(child: _logoPanel(vw: vw, vh: vh, isWide: true)),
+            ],
           ),
         ),
 
-        // Panel derecho: formulario
         Expanded(
           flex: 5,
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 40),
+              padding: EdgeInsets.symmetric(vertical: vh * 0.05),
               child: SizedBox(
-                width: _fieldsWide,
-                child: _formSection(buttonWidth: _buttonWidth),
+                width: formWidth,
+                child: _formSection(vw: vw, vh: vh),
               ),
             ),
           ),
@@ -90,85 +85,90 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  //  LAYOUT ESTRECHO  — idéntico al de RegistroScreen
-  // ─────────────────────────────────────────────
-  Widget _narrowLayout(BuildContext context) {
+  Widget _narrowLayout({required double vw, required double vh}) {
+    final double formWidth = vw * 0.88;
+
     return SingleChildScrollView(
       child: Column(
         children: [
           SafeArea(
             bottom: false,
-            child: const Padding(
-              padding: EdgeInsets.only(left: 8, top: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: BotonAtras(),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(left: vw * 0.02, top: vh * 0.005),
+                child: const BotonAtras(),
               ),
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: _logoPanel(large: false),
+            padding: EdgeInsets.symmetric(vertical: vh * 0.03),
+            child: _logoPanel(vw: vw, vh: vh, isWide: false),
           ),
 
           Center(
             child: SizedBox(
-              width: _fieldsNarrow,
-              child: _formSection(buttonWidth: _buttonWidth),
+              width: formWidth,
+              child: _formSection(vw: vw, vh: vh),
             ),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: vh * 0.04),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────────
-  //  LOGO PANEL  — copiado 1:1 de RegistroScreen,
-  //  solo cambia el texto descriptivo
-  // ─────────────────────────────────────────────
-  Widget _logoPanel({required bool large}) {
-    final double logoSize     = large ? 200 : 110;
-    final double titleSize    = large ? 48  : 36;
-    final double subtitleSize = large ? 18  : 14;
-    final double descSize     = large ? 16  : 12;
+  Widget _logoPanel({
+    required double vw,
+    required double vh,
+    required bool isWide,
+  }) {
+    final double logoSize = isWide ? vw * 0.13  : vw * 0.28;
+    final double titleSize = isWide ? vw * 0.032 : vw * 0.09;
+    final double subtitleSize = isWide ? vw * 0.012 : vw * 0.035;
+    final double descSize = isWide ? vw * 0.010 : vw * 0.030;
+    final double gapSm = vh * 0.008;
+    final double gapMd = vh * 0.020;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset('assets/logo300.png', width: logoSize, height: logoSize),
-        const SizedBox(height: 14),
+        Image.asset(
+          'assets/logo300.png',
+          width: logoSize.clamp(80, 220),
+          height: logoSize.clamp(80, 220),
+        ),
+        SizedBox(height: gapSm),
         Text(
           'TEPETL',
           style: TextStyle(
             color: AppColors.primario,
-            fontSize: titleSize,
+            fontSize: titleSize.clamp(24, 56),
             fontWeight: FontWeight.w800,
             letterSpacing: 4,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: gapSm * 0.5),
         Text(
           'APRENDE NÁHUATL',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
-            fontSize: subtitleSize,
+            fontSize: subtitleSize.clamp(11, 22),
             fontWeight: FontWeight.w600,
             letterSpacing: 3,
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: gapMd),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: EdgeInsets.symmetric(horizontal: vw * 0.03),
           child: Text(
             'Bienvenido de vuelta. Continúa tu camino hacia el Náhuatl.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
-              fontSize: descSize,
+              fontSize: descSize.clamp(10, 18),
               height: 1.5,
             ),
           ),
@@ -177,34 +177,33 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ─────────────────────────────────────────────
-  //  FORMULARIO
-  // ─────────────────────────────────────────────
-  Widget _formSection({required double buttonWidth}) {
+  Widget _formSection({required double vw, required double vh}) {
     final colorScheme = Theme.of(context).colorScheme;
+    final double fieldGap = vh * 0.018;
+    final double buttonW = (vw * 1).clamp(250, 300);
+    final double buttonH = (vh * 1).clamp(50,  50);
+    final double fontSize = (vw * 0.022).clamp(11, 15);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
 
-        // ── Tabs Usuario / Administrador ──────────
         TabBar(
           controller: _tabCtrl,
           labelColor: AppColors.secundario,
           unselectedLabelColor: colorScheme.onSurfaceVariant,
           indicatorColor: AppColors.secundario,
           indicatorSize: TabBarIndicatorSize.tab,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
+          labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: fontSize),
+          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w400, fontSize: fontSize),
           tabs: const [
             Tab(text: 'Usuario'),
             Tab(text: 'Administrador'),
           ],
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: vh * 0.025),
 
-        // ── Correo electrónico ────────────────────
         _fieldLabel('Correo electrónico'),
         TextfieldPers(
           controller: _emailCtrl,
@@ -213,9 +212,8 @@ class _LoginScreenState extends State<LoginScreen>
           keyboardType: TextInputType.emailAddress,
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: fieldGap),
 
-        // ── Contraseña + link Recuperar ───────────
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -223,11 +221,19 @@ class _LoginScreenState extends State<LoginScreen>
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      pageBuilder: (_, _, _) => const RecuperarContraScreen(),
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                  );
+                },
                 child: Text(
                   'Recuperar',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: (vw * 0.020).clamp(10, 13),
                     fontWeight: FontWeight.w500,
                     color: AppColors.secundario,
                   ),
@@ -246,32 +252,41 @@ class _LoginScreenState extends State<LoginScreen>
               _obscurePass
                   ? Icons.visibility_outlined
                   : Icons.visibility_off_outlined,
-              size: 20,
+              size: (vw * 0.018).clamp(16, 22),
             ),
             onPressed: () => setState(() => _obscurePass = !_obscurePass),
           ),
         ),
 
-        const SizedBox(height: 28),
+        SizedBox(height: vh * 0.035),
 
-        // ── Botón principal ───────────────────────
         Center(
           child: BotonesSombra(
             text: 'Iniciar Sesión',
-            onPressed: () {},
-            width: buttonWidth,
-            height: 50,
+            onPressed: () {
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const InicioScreen(),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            },
+            width: buttonW,
+            height: buttonH,
             backgroundColor: AppColors.primario,
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: vh * 0.018),
 
-        // ── ¿No tienes cuenta? ────────────────────
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+            style: TextStyle(
+              fontSize: (vw * 0.026).clamp(11, 15),
+              color: colorScheme.onSurface,
+            ),
             children: [
               const TextSpan(text: '¿No tienes cuenta? '),
               TextSpan(
@@ -285,65 +300,63 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: vh * 0.025),
 
-        // ── Divider "O inicia sesión con" ─────────
         Row(
           children: [
             Expanded(child: Divider(color: colorScheme.outlineVariant)),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: vw * 0.03),
               child: Text(
                 'O inicia sesión con',
-                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  fontSize: (vw * 0.020).clamp(10, 13),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             Expanded(child: Divider(color: colorScheme.outlineVariant)),
           ],
         ),
 
-        const SizedBox(height: 16),
+        SizedBox(height: vh * 0.020),
 
-        // ── Botones Google + Apple — mismo alto/ancho que el botón principal ──
         Row(
           children: [
             Expanded(
               child: BotonesSombra(
                 text: 'Google',
                 onPressed: () {},
-                width: double.infinity,
-                height: 50,
+                width: buttonW,
+                height: buttonH,
                 backgroundColor: AppColors.primario,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: vw * 0.03),
             Expanded(
               child: BotonesSombra(
                 text: 'Apple',
                 onPressed: () {},
-                width: double.infinity,
-                height: 50,
+                width: buttonW,
+                height: buttonH,
                 backgroundColor: AppColors.primario,
               ),
             ),
           ],
         ),
 
-        const SizedBox(height: 8),
+        SizedBox(height: vh * 0.010),
       ],
     );
   }
 
-  // ─────────────────────────────────────────────
-  //  FIELD LABEL  — copiado 1:1 de RegistroScreen
-  // ─────────────────────────────────────────────
   Widget _fieldLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 12,
+          fontSize:   12,
           fontWeight: FontWeight.w500,
           color: AppColors.primario,
         ),

@@ -26,7 +26,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
   int? _edadSeleccionada = 13;
 
   final List<String> _idiomas = ['Español', 'Náhuatl', 'Otro'];
-  final List<int> _edades = List.generate(83, (i) => i + 13);
+  final List<int> _edades  = List.generate(83, (i) => i + 13);
+
+  static const double _kBreakpoint = 700;
 
   @override
   void dispose() {
@@ -37,55 +39,54 @@ class _RegistroScreenState extends State<RegistroScreen> {
     super.dispose();
   }
 
-  static const double _kBreakpoint = 700;
-  static const double _fieldsWide = 550;
-  static const double _fieldsNarrow = 350;
-  static const double _buttonWidth = 250;
-
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final double vw = mq.size.width;
+    final double vh = mq.size.height;
+    final bool isWide = vw >= _kBreakpoint;
+
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final bool isWide = constraints.maxWidth >= _kBreakpoint;
-          return isWide ? _wideLayout(context) : _narrowLayout(context);
-        },
-      ),
+      body: isWide
+          ? _wideLayout(vw: vw, vh: vh)
+          : _narrowLayout(vw: vw, vh: vh),
     );
   }
 
-  Widget _wideLayout(BuildContext context) {
+  // Layout ancho
+  Widget _wideLayout({required double vw, required double vh}) {
+    final double formWidth = (vw * 0.45).clamp(400, 600);
 
     return Row(
       children: [
+        // Panel izquierdo: logo
         Expanded(
           flex: 4,
-          child: Center(
-            child: Stack(
-              children: [
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: BotonAtras(),
-                    ),
+          child: Stack(
+            children: [
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                    padding: EdgeInsets.all(vw * 0.01),
+                    child: const BotonAtras(),
                   ),
                 ),
-                Center(child: _logoPanel(large: true)),
-              ],
-            ),
+              ),
+              Center(child: _logoPanel(vw: vw, vh: vh, isWide: true)),
+            ],
           ),
         ),
 
+        // Panel derecho: formulario
         Expanded(
           flex: 5,
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 40),
+              padding: EdgeInsets.symmetric(vertical: vh * 0.05),
               child: SizedBox(
-                width: _fieldsWide,
-                child: _formSection(buttonWidth: _buttonWidth),
+                width: formWidth,
+                child: _formSection(vw: vw, vh: vh),
               ),
             ),
           ),
@@ -94,80 +95,93 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
-  // pantallas estrechas
-  Widget _narrowLayout(BuildContext context) {
+  // Estrecho
+  Widget _narrowLayout({required double vw, required double vh}) {
+    final double formWidth = vw * 0.80;
+
     return SingleChildScrollView(
       child: Column(
         children: [
           SafeArea(
             bottom: false,
-            child: const Padding(
-              padding: EdgeInsets.only(left: 8, top: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: BotonAtras(),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(left: vw * 0.02, top: vh * 0.005),
+                child: const BotonAtras(),
               ),
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: _logoPanel(large: false),
+            padding: EdgeInsets.symmetric(vertical: vh * 0.03),
+            child: _logoPanel(vw: vw, vh: vh, isWide: false),
           ),
 
           Center(
             child: SizedBox(
-              width: _fieldsNarrow,
-              child: _formSection(buttonWidth: _buttonWidth),
+              width: formWidth,
+              child: _formSection(vw: vw, vh: vh),
             ),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: vh * 0.04),
         ],
       ),
     );
   }
 
-  // parte logo
-  Widget _logoPanel({required bool large}) {
-    final double logoSize = large ? 200 : 110;
-    final double titleSize = large ? 48 : 36;
-    final double subtitleSize = large ? 18 : 14;
-    final double descSize = large ? 16 : 12;
+  // Panel logo
+  Widget _logoPanel({
+    required double vw,
+    required double vh,
+    required bool isWide,
+  }) {
+
+    final double logoSize = isWide ? vw * 0.13  : vw * 0.28;
+    final double titleSize = isWide ? vw * 0.032 : vw * 0.09;
+    final double subtitleSize = isWide ? vw * 0.012 : vw * 0.035;
+    final double descSize = isWide ? vw * 0.010 : vw * 0.030;
+    final double gapSm = vh * 0.008;
+    final double gapMd = vh * 0.020;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset("assets/logo300.png", width: logoSize, height: logoSize),
-        const SizedBox(height: 14),
+        Image.asset(
+          'assets/logo300.png',
+          width: logoSize.clamp(80,  220),
+          height: logoSize.clamp(80,  220),
+        ),
+        SizedBox(height: gapSm),
         Text(
           'TEPETL',
           style: TextStyle(
             color: AppColors.primario,
-            fontSize: titleSize,
+            fontSize: titleSize.clamp(24, 56),
             fontWeight: FontWeight.w800,
             letterSpacing: 4,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: gapSm * 0.5),
         Text(
           'APRENDE NÁHUATL',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
-            fontSize: subtitleSize,
+            fontSize: subtitleSize.clamp(11, 22),
             fontWeight: FontWeight.w600,
             letterSpacing: 3,
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: gapMd),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: EdgeInsets.symmetric(horizontal: vw * 0.03),
           child: Text(
             'Únete a la comunidad y revitaliza el Náhuatl con el poder de la IA.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
-              fontSize: descSize,
+              fontSize: descSize.clamp(10, 18),
               height: 1.5,
             ),
           ),
@@ -176,8 +190,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
-  // formulario
-  Widget _formSection({required double buttonWidth}) {
+  // Formulario
+  Widget _formSection({required double vw, required double vh}) {
+    final double fieldGap = vh * 0.018;
+    final double buttonW = (vw * 1).clamp(200, 350);
+    final double buttonH = (vh * 1).clamp(50, 50);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -188,16 +206,16 @@ class _RegistroScreenState extends State<RegistroScreen> {
           prefixIcon: Icons.person_outline,
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: fieldGap),
         _fieldLabel('Correo electrónico'),
         TextfieldPers(
           controller: _emailCtrl,
           hint: 'usuario@ejemplo.com',
-          prefixIcon: Icons.mail_outline,
+          prefixIcon:   Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: fieldGap),
         _fieldLabel('Contraseña'),
         TextfieldPers(
           controller: _passCtrl,
@@ -209,13 +227,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
               _obscurePass
                   ? Icons.visibility_outlined
                   : Icons.visibility_off_outlined,
-              size: 20,
+              size: (vw * 0.018).clamp(16, 22),
             ),
             onPressed: () => setState(() => _obscurePass = !_obscurePass),
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: fieldGap),
         _fieldLabel('Confirmar contraseña'),
         TextfieldPers(
           controller: _confirmPassCtrl,
@@ -227,14 +245,14 @@ class _RegistroScreenState extends State<RegistroScreen> {
               _obscureConfirm
                   ? Icons.visibility_outlined
                   : Icons.visibility_off_outlined,
-              size: 20,
+              size: (vw * 0.018).clamp(16, 22),
             ),
             onPressed: () =>
                 setState(() => _obscureConfirm = !_obscureConfirm),
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: fieldGap),
         _fieldLabel('Idioma nativo'),
         DropdownPers<String>(
           value: _idiomaSeleccionado,
@@ -244,7 +262,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
           onChanged: (v) => setState(() => _idiomaSeleccionado = v),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: fieldGap),
         _fieldLabel('Edad'),
         DropdownPers<int>(
           value: _edadSeleccionada,
@@ -254,37 +272,39 @@ class _RegistroScreenState extends State<RegistroScreen> {
           onChanged: (v) => setState(() => _edadSeleccionada = v),
         ),
 
-        const SizedBox(height: 28),
+        SizedBox(height: vh * 0.035),
 
         Center(
           child: BotonesSombra(
-            text: "Crear Cuenta",
+            text:            'Crear Cuenta',
             onPressed: () {
               Navigator.of(context).push(
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const NivelSeleccionScreen(),
+                  pageBuilder: (_, _, _) => const NivelSeleccionScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),
               );
             },
-            width: 250,
-            height: 50,
+            width: buttonW,
+            height: buttonH,
             backgroundColor: AppColors.primario,
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: vh * 0.018),
 
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
             style: TextStyle(
-                fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
+              fontSize: (vw * 0.022).clamp(10, 13),
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             children: [
               const TextSpan(text: 'Al registrarte, aceptas nuestros '),
               TextSpan(
-                text: 'Términos de Servicio',
+                text:  'Términos de Servicio',
                 style: TextStyle(
                   color: AppColors.secundario,
                   decoration: TextDecoration.underline,
@@ -292,7 +312,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
               ),
               const TextSpan(text: ' y '),
               TextSpan(
-                text: 'Política de Privacidad',
+                text:  'Política de Privacidad',
                 style: TextStyle(
                   color: AppColors.secundario,
                   decoration: TextDecoration.underline,
@@ -302,14 +322,16 @@ class _RegistroScreenState extends State<RegistroScreen> {
             ],
           ),
         ),
- 
-        const SizedBox(height: 16),
- 
+
+        SizedBox(height: vh * 0.020),
+
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
             style: TextStyle(
-                fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
+              fontSize: (vw * 0.026).clamp(11, 15),
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             children: [
               const TextSpan(text: '¿Ya tienes cuenta? '),
               TextSpan(
@@ -322,7 +344,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+
+        SizedBox(height: vh * 0.010),
       ],
     );
   }
