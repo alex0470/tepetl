@@ -214,7 +214,7 @@ class _RecuperarContraScreenState extends State<RecuperarContraScreen> {
 
         TextfieldPers(
           controller: _emailCtrl,
-          hint: 'tu@correo.com',
+          hint: 'usuario@ejemplo.com',
           prefixIcon: Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
         ),

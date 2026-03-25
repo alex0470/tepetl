@@ -266,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen>
             onPressed: () {
               Navigator.of(context).push(
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const InicioScreen(),
+                  pageBuilder: (_, _, _) => const InicioScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),
