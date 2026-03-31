@@ -14,6 +14,8 @@ class AppColors {
 
   static const Color extra120 = Color(0xFFE8E9E9);
 
+  static const Color extraOscuro120 = Color(0xFF222222);
+
   static const Color naranja1 = Color(0xFFEA580C);
 
   static const Color azul1 = Color(0xFF2563EB);
