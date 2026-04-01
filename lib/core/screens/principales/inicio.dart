@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/bars/inicio_appbar.dart';
-import 'package:tepetl/core/widgets/bars/bottom_nav.dart';
 import 'package:tepetl/core/widgets/cards/curso_card.dart';
 import 'package:tepetl/core/widgets/cards/recomendacion_card.dart';
 import 'package:tepetl/core/widgets/usuario/progreso_map.dart';
