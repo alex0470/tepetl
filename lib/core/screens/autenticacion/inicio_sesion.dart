@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/autenticacion/recuperar_contra.dart';
 import 'package:tepetl/core/screens/principales/inicio.dart';
+import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
@@ -266,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen>
             onPressed: () {
               Navigator.of(context).push(
                 PageRouteBuilder(
-                  pageBuilder: (_, _, _) => const InicioScreen(),
+                  pageBuilder: (_, _, _) => const MainScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),

@@ -32,13 +32,11 @@ class AppbarEjercicios extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ── Botón cerrar ──────────────────────────────────────────
           GestureDetector(
             onTap: onClose,
             child: const Icon(Icons.close, size: 30),
           ),
 
-          // ── Título centrado ───────────────────────────────────────
           Expanded(
             child: Center(
               child: Text(

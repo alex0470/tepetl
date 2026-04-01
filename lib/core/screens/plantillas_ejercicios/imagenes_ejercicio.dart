@@ -4,6 +4,8 @@ import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
+import 'package:tepetl/core/screens/errores/leccion_resumen.dart';
+import 'package:tepetl/core/models/modelo_revision.dart';
 
 /// Modelo de una opción de imagen.
 class ImageOption {
@@ -90,6 +92,13 @@ class _PlantillaIdentificarImagenState
           _verified = false;
           _selectedIndex = null;
         });
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (_, _, _) => LeccionResumen(result: exampleLessonResult),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
       });
     });
   }

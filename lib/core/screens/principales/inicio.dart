@@ -61,12 +61,6 @@ class _InicioScreenState extends State<InicioScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: InicioAppBar(isDark: isDark),
-      bottomNavigationBar: BottomNav(
-        isDark: isDark,
-        currentIndex: currentIndex,
-        onTap: (i) => setState(() => currentIndex = i),
-      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 1100;

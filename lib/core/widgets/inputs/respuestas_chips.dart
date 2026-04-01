@@ -46,7 +46,9 @@ class OpcionChip extends StatelessWidget {
         );
       case OptionState.idle:
         return _ChipStyle(
-          bg: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
+          bg: isDark
+              ? AppColors.fondoOscuroSecundario
+              : AppColors.fondoSecundario,
           fg: cs.onSurface,
           shadow: Colors.black.withValues(alpha: 0.3),
         );
@@ -88,7 +90,11 @@ class OpcionChip extends StatelessWidget {
             ),
             if (state == OptionState.correct) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.check_circle, size: 16, color: AppColors.amarillo1),
+              const Icon(
+                Icons.check_circle,
+                size: 16,
+                color: AppColors.amarillo1,
+              ),
             ],
             if (state == OptionState.wrong) ...[
               const SizedBox(width: 6),
@@ -140,13 +146,13 @@ class OptionsGrid extends StatelessWidget {
   }
 
   List<OpcionChip> get _chips => List.generate(
-        options.length,
-        (i) => OpcionChip(
-          label: options[i],
-          state: _stateOf(i),
-          onTap: verified ? null : () => onSelect(i),
-        ),
-      );
+    options.length,
+    (i) => OpcionChip(
+      label: options[i],
+      state: _stateOf(i),
+      onTap: verified ? null : () => onSelect(i),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -158,15 +164,17 @@ class OptionsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildWide() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: _chips
-            .map((c) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: c,
-                ))
-            .toList(),
-      );
+  Widget _buildWide() => Column(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: _chips
+        .map(
+          (c) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: c,
+          ),
+        )
+        .toList(),
+  );
 
   Widget _buildMobile() {
     final chips = _chips;
@@ -177,10 +185,7 @@ class OptionsGrid extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             chips[0],
-            if (chips.length > 1) ...[
-              const SizedBox(width: 12),
-              chips[1],
-            ],
+            if (chips.length > 1) ...[const SizedBox(width: 12), chips[1]],
           ],
         ),
         ...List.generate(chips.length - 2, (i) => i + 2).map(

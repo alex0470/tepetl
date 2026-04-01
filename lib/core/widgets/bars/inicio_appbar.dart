@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/screens/principales/inicio.dart';
 
@@ -19,7 +20,7 @@ class InicioAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: GestureDetector(
         onTap: () => Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const InicioScreen()),
+          MaterialPageRoute(builder: (_) => const MainScreen()),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
