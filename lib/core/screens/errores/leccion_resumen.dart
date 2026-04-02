@@ -34,22 +34,25 @@ class LeccionResumen extends StatelessWidget {
             _Header(),
 
             Expanded(
-              child: Center(
-                child: SizedBox(
-                  width: contentWidth,
-                  child: isWide
-                      // ── Desktop: dos columnas ─────────────────────────
-                      ? Padding(
-                          padding: EdgeInsets.all(sw * 0.04),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Columna izquierda
-                              Expanded(
-                                flex: 5,
-                                child: Center( // 👈 AGREGA ESTO
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.all(sw * 0.04),
+                child: Center(
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: isWide
+                        // ── Desktop: dos columnas ─────────────────────────
+                        ? Padding(
+                            padding: EdgeInsets.all(sw * 0.04),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Columna izquierda
+                                Expanded(
+                                  flex: 5,
+                                  child: Center(
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(maxWidth: 600),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.center,
                                         children: [
@@ -58,20 +61,20 @@ class LeccionResumen extends StatelessWidget {
                                           _PrecisionCard(result: result),
                                           const SizedBox(height: 16),
                                           _StatsRow(result: result),
-                                          ],
-                                        ),
+                                        ],
                                       ),
                                     ),
                                   ),
+                                ),
 
-                              const SizedBox(width: 20),
+                                const SizedBox(width: 20),
 
-                              // Columna derecha
-                              Expanded(
-                                flex: 6,
-                                child: Center( // 👈 AGREGA ESTO
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 650),
+                                // Columna derecha
+                                Expanded(
+                                  flex: 6,
+                                  child: Center(
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(maxWidth: 650),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.center,
                                         children: [
@@ -80,8 +83,7 @@ class LeccionResumen extends StatelessWidget {
                                           Row(
                                             children: [
                                               Expanded(
-                                                child: _ReviewErrorsButton(
-                                                    onTap: onReviewErrors),
+                                                child: _ReviewErrorsButton(onTap: onReviewErrors),
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
@@ -92,15 +94,13 @@ class LeccionResumen extends StatelessWidget {
                                         ],
                                       ),
                                     ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        )
-                      // ── Móvil: columna única ──────────────────────────
-                      : SingleChildScrollView(
-                          padding: EdgeInsets.all(sw * 0.04),
-                          child: Column(
+                              ],
+                            ),
+                          )
+                        // ── Móvil: columna única ──────────────────────────
+                        : Column(
                             children: [
                               _HeroBanner(),
                               const SizedBox(height: 16),
@@ -116,7 +116,7 @@ class LeccionResumen extends StatelessWidget {
                               const SizedBox(height: 24),
                             ],
                           ),
-                        ),
+                  ),
                 ),
               ),
             ),

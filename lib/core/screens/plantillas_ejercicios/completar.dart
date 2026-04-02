@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:tepetl/core/screens/principales/inicio.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/inputs/respuestas_chips.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/escribir.dart';
 import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
+import 'package:tepetl/core/screens/principales/main_screen.dart';
 
 class PlantillaCompletar extends StatefulWidget {
   const PlantillaCompletar({super.key});
@@ -105,7 +105,7 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
               hearts: _hearts,
               onClose: () => Navigator.of(context).push(
                 PageRouteBuilder(
-                  pageBuilder: (ctx, a1, a2) => const InicioScreen(),
+                  pageBuilder: (ctx, a1, a2) => const MainScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),
@@ -121,11 +121,13 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
 
             // ── Contenido ────────────────────────────────────────────────
             Expanded(
-              child: Center(
-                child: SizedBox(
-                  width: contentWidth,
-                  child: isWide
-                      ? Row(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Center(
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: isWide
+                        ? Row(
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -275,7 +277,7 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
                             // Pista
                             if (_hintVisible) _buildHint(context),
 
-                            const Spacer(),
+                            const SizedBox(height: 20),
 
                             Text(
                               'SELECCIONA LA PALABRA QUE FALTA',
@@ -349,6 +351,7 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
                 ),
               ),
             ),
+          ),
           ],
         ),
       ),
@@ -366,36 +369,33 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
       text: selectedWord ?? '_______',
       style: const TextStyle(
         color: AppColors.secundario,
-        decoration: TextDecoration.underline,
+        decoration: TextDecoration.underline, decorationColor: AppColors.secundario
       ),
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RichText(
-              text: TextSpan(
-                style: base,
-                children: [
-                  const TextSpan(text: 'Nehuatl '),
-                  blank,
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text('Nahuatlahtolli', style: base),
-          ],
+        Text.rich(
+          TextSpan(
+            style: base,
+            children: [
+              const TextSpan(text: 'Nehuatl '),
+              blank,
+              const TextSpan(text: ' '),
+              TextSpan(text: 'Nahuatlahtolli', style: base),
+            ],
+          ),
+          textAlign: TextAlign.center,
+          softWrap: true,
         ),
         const SizedBox(height: 8),
         Text(
           '(Hablo Náhuatl)',
           style: TextStyle(
             fontSize: isWide ? 18 : 15,
-            color: AppColors.textoSecundario40,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );

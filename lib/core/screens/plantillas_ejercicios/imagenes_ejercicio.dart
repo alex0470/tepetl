@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/principales/inicio.dart';
+import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
@@ -149,7 +150,7 @@ class _PlantillaIdentificarImagenState
               hearts: _hearts,
               onClose: () => Navigator.of(context).push(
                 PageRouteBuilder(
-                  pageBuilder: (_, _, _) => const InicioScreen(),
+                  pageBuilder: (_, _, _) => const MainScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),

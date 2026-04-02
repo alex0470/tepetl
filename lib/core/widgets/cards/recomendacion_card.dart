@@ -30,7 +30,9 @@ class RecomendacionCard extends StatelessWidget {
 
   void _showPopup(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     final isWide = screenWidth > 700;
+    final double dialogMaxHeight = isWide ? 500 : (screenHeight - 56).clamp(0, double.infinity);
 
     showDialog(
       context: context,
@@ -44,10 +46,14 @@ class RecomendacionCard extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: isWide ? 500 : double.infinity,
+              maxHeight: dialogMaxHeight,
             ),
-            child: isWide
-                ? _popupHorizontal(context)
-                : _popupVertical(context),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: isWide
+                  ? _popupHorizontal(context)
+                  : _popupVertical(context),
+            ),
           ),
         );
       },
@@ -60,7 +66,7 @@ class RecomendacionCard extends StatelessWidget {
       children: [
         _popupImage(),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: _popupContent(context),
         ),
       ],
@@ -73,7 +79,7 @@ class RecomendacionCard extends StatelessWidget {
       children: [
         _popupImage(),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: _popupContent(context),
         ),
       ],
@@ -86,7 +92,7 @@ class RecomendacionCard extends StatelessWidget {
         top: Radius.circular(20),
       ),
       child: Container(
-        height: 140,
+        height: 120,
         width: double.infinity,
         color: isDark
             ? AppColors.fondoOscuro
@@ -135,14 +141,16 @@ class RecomendacionCard extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Expanded(
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size.fromHeight(40),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -156,7 +164,8 @@ class RecomendacionCard extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secundario,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size.fromHeight(40),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

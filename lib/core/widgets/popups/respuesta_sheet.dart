@@ -74,7 +74,7 @@ class RespuestaSheet extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 5),
 
           Container(
             width: double.infinity,
@@ -120,11 +120,11 @@ class RespuestaSheet extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
 
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 50,
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
