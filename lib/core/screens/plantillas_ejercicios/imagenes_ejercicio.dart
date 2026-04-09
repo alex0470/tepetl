@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tepetl/core/screens/principales/inicio.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
