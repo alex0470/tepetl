@@ -12,6 +12,7 @@ class InicioAppBar extends StatelessWidget implements PreferredSizeWidget {
     final bgColor = isDark ? AppColors.fondoOscuro : Colors.white;
 
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: bgColor,
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.black.withValues(alpha: 0.2),
