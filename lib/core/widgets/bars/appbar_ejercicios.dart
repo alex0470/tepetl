@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 
-/// AppBar reutilizable para pantallas de lección.
-///
-/// Muestra:
-/// - Botón X (cerrar) a la izquierda → llama a [onClose].
-/// - [title] centrado (p. ej. 'EXPRESIÓN ESCRITA').
-/// - Contador de corazones a la derecha; se actualiza reactivamente
-///   desde el padre vía [hearts].
 class AppbarEjercicios extends StatelessWidget {
   final String title;
   final int hearts;
@@ -71,7 +64,7 @@ class _HeartsChip extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: hearts > 0 ? const Color(0xFFFF4B4B) : Colors.grey,
+        color: hearts > 0 ? AppColors.rojo1 : Colors.grey,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

@@ -360,16 +360,16 @@ class _InicioScreenState extends State<InicioScreen> {
   Widget _sectionTitle(IconData icon, String text, bool isDark) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: isDark ? AppColors.textoClaro : AppColors.textoSecundario),
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85)),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
             style: TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 13,
+              fontSize: 16,
               color:
-                  isDark ? AppColors.textoClaro : AppColors.textoSecundario,
+                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
               letterSpacing: 0.3,
             ),
           ),

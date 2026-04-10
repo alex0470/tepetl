@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/principales/cursos.dart';
+import 'package:tepetl/core/screens/principales/diccionario.dart';
+import 'package:tepetl/core/screens/principales/resumen_ia.dart';
 import 'package:tepetl/core/widgets/bars/bottom_nav.dart';
 import 'package:tepetl/core/widgets/bars/inicio_appbar.dart';
 
@@ -24,10 +27,10 @@ class _MainScreenState extends State<MainScreen> {
 
     screens = [
       const DescubrirScreen(),
-      const _PlaceholderScreen(title: "Cultura"),
+      const ResumenIAScreen(),
       const InicioScreen(),
-      const _PlaceholderScreen(title: "Cursos"),
-      const _PlaceholderScreen(title: "Diccionario"),
+      const CursosScreen(),
+      const DiccionarioScreen(),
     ];
   }
 
@@ -49,29 +52,6 @@ class _MainScreenState extends State<MainScreen> {
         onTap: (i) {
           setState(() => currentIndex = i);
         },
-      ),
-    );
-  }
-}
-
-//
-// ── Placeholder para secciones que aún no tienes ─────────────
-//
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const _PlaceholderScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
       ),
     );
   }

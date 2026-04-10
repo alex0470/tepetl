@@ -340,37 +340,21 @@ class _WideLayout extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                height: 560,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    _HeroCarousel(
-                      articulos: heroArticulos,
-                      controller: pageController,
-                      currentPage: heroPage,
-                      onPageChanged: onPageChanged,
-                      onTap: onTap,
-                      height: 520,
-                    ),
-
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: -80,
-
-                      child: _HeroPreviewCard(
-                        articulo: heroArticulos[heroPage],
-
-                        onTap: () =>
-                            onTap(heroArticulos[heroPage]),
-                      ),
-                    ),
-                  ],
-                ),
+              _HeroCarousel(
+                articulos: heroArticulos,
+                controller: pageController,
+                currentPage: heroPage,
+                onPageChanged: onPageChanged,
+                onTap: onTap,
+                height: 450,
+                isWide: true,
               ),
-
-              const SizedBox(height: 48),
+              _HeroPreviewCard(
+                isDark: isDark,
+                articulo: heroArticulos[heroPage],
+                onTap: () => onTap(heroArticulos[heroPage]),
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -533,32 +517,29 @@ class _QuizCard extends StatelessWidget {
   }
 }
 
-// ── _HeroPreviewCard — onTap inyectado desde _WideLayout ─────────────────────
+// ── _HeroPreviewCard ──────────────────────────────────────────────────────────
 
 class _HeroPreviewCard extends StatelessWidget {
   final _Articulo articulo;
   final VoidCallback onTap;
+  final bool isDark;
 
-  const _HeroPreviewCard({required this.articulo, required this.onTap});
+  const _HeroPreviewCard({required this.articulo, required this.onTap, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 1),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
-        ),
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
+        borderRadius: const BorderRadius.all(Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 2,
+            offset: const Offset(3, 3),
           ),
         ],
       ),
@@ -603,7 +584,6 @@ class _HeroPreviewCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          // "Ver más detalles" dispara el onTap del padre (_abrirArticulo)
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -638,6 +618,7 @@ class _HeroCarousel extends StatelessWidget {
   final ValueChanged<int> onPageChanged;
   final ValueChanged<_Articulo> onTap;
   final double height;
+  final bool isWide;
 
   const _HeroCarousel({
     required this.articulos,
@@ -646,6 +627,7 @@ class _HeroCarousel extends StatelessWidget {
     required this.onPageChanged,
     required this.onTap,
     this.height = 260,
+    this.isWide = false,
   });
 
   @override
@@ -672,6 +654,7 @@ class _HeroCarousel extends StatelessWidget {
               itemBuilder: (_, i) => _HeroSlide(
                 articulo: articulos[i],
                 onTap: () => onTap(articulos[i]),
+                isWide: isWide,
               ),
             ),
           ),
@@ -739,7 +722,7 @@ class _ArrowButton extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: AppColors.secundario.withValues(alpha: 0.15),
+            color: AppColors.secundario.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 18, color: AppColors.secundario),
@@ -752,8 +735,9 @@ class _ArrowButton extends StatelessWidget {
 class _HeroSlide extends StatelessWidget {
   final _Articulo articulo;
   final VoidCallback onTap;
+  final bool isWide;
 
-  const _HeroSlide({required this.articulo, required this.onTap});
+  const _HeroSlide({required this.articulo, required this.onTap, this.isWide = false});
 
   @override
   Widget build(BuildContext context) {
@@ -764,8 +748,8 @@ class _HeroSlide extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 4,
-            offset: const Offset(4, 4),
+            blurRadius: 2,
+            offset: const Offset(3, 3),
           ),
         ],
       ),
@@ -801,7 +785,7 @@ class _HeroSlide extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.secundario.withValues(alpha: 0.88),
+                      color: AppColors.secundario.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -814,48 +798,52 @@ class _HeroSlide extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    articulo.titulo,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
+                  if (!isWide) ...[
+                    Text(
+                      articulo.titulo,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    articulo.subtitulo,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 5),
+                    Text(
+                      articulo.subtitulo,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppColors.textoSecundario20, fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Row(
                     children: [
-                      const Icon(Icons.access_time, color: Colors.white60, size: 14),
+                      const Icon(Icons.access_time, color: AppColors.textoSecundario20, size: 14),
                       const SizedBox(width: 5),
                       Text(
                         articulo.duracion,
-                        style: const TextStyle(color: Colors.white60, fontSize: 13),
+                        style: const TextStyle(color: AppColors.textoSecundario20, fontSize: 13),
                       ),
-                      const Spacer(),
-                      ElevatedButton(
-                        onPressed: onTap,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.secundario,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          minimumSize: const Size(120, 44),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22),
+                      if (!isWide) ...[
+                        const Spacer(),
+                        ElevatedButton(
+                          onPressed: onTap,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.secundario,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            minimumSize: const Size(120, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            elevation: 0,
                           ),
-                          elevation: 0,
+                          child: const Text(
+                            'Leer artículo',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                          ),
                         ),
-                        child: const Text(
-                          'Leer artículo',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                 ],
@@ -893,9 +881,9 @@ class _InfoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 6,
-              offset: const Offset(3, 4),
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 2,
+              offset: const Offset(3, 3),
             ),
           ],
         ),
@@ -1026,7 +1014,7 @@ class _ArticuloWide extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Columna izquierda: imagen + meta (sin botón Volver) ──────
+          // ── Columna izquierda: imagen + meta ────────────────────────
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.35,
             child: Column(
@@ -1049,7 +1037,7 @@ class _ArticuloWide extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.secundario.withValues(alpha: 0.15),
+                        color: AppColors.secundario.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -1062,11 +1050,11 @@ class _ArticuloWide extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(Icons.access_time, size: 15, color: Colors.grey),
+                    Icon(Icons.access_time, size: 15, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85)),
                     const SizedBox(width: 4),
                     Text(
                       articulo.duracion,
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85)),
                     ),
                   ],
                 ),

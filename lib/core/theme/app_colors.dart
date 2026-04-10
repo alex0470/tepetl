@@ -28,6 +28,8 @@ class AppColors {
 
   static const Color amarillo1 = Color(0xFFFBBC05);
 
+  static const Color rojo1 = Color(0xFFFF4B4B);
+
   static const Color fondoOscuro = Color(0xFF111111);
   static const Color fondoOscuroSecundario = Color(0xFF1A1A1A);
 

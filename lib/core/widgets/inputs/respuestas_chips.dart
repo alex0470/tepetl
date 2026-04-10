@@ -40,9 +40,9 @@ class OpcionChip extends StatelessWidget {
         );
       case OptionState.wrong:
         return _ChipStyle(
-          bg: const Color(0xFFFF4B4B).withValues(alpha: 0.2),
-          fg: const Color(0xFFFF4B4B),
-          shadow: const Color(0xFFFF4B4B).withValues(alpha: 0.2),
+          bg: AppColors.rojo1.withValues(alpha: 0.2),
+          fg: AppColors.rojo1,
+          shadow: AppColors.rojo1.withValues(alpha: 0.2),
         );
       case OptionState.idle:
         return _ChipStyle(
@@ -98,7 +98,7 @@ class OpcionChip extends StatelessWidget {
             ],
             if (state == OptionState.wrong) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.cancel, size: 16, color: Color(0xFFFF4B4B)),
+              const Icon(Icons.cancel, size: 16, color: AppColors.rojo1),
             ],
           ],
         ),

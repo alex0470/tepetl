@@ -17,10 +17,10 @@ class BottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final bgColor = isDark ? AppColors.fondoOscuro : Colors.white;
     final activeColor = AppColors.secundario;
-    final inactiveColor = AppColors.textoSecundario40;
+    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85);
 
     final navItems = [
-      {"icon": Icons.terrain_outlined, "label": "Cultura"},
+      {"icon": Icons.nature_people_outlined, "label": "Cultura"},
       {"icon": Icons.auto_awesome_outlined, "label": "Resumen IA"},
       {"icon": Icons.home_outlined, "label": "Inicio"},
       {"icon": Icons.menu_book_outlined, "label": "Cursos"},

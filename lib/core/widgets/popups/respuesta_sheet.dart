@@ -23,11 +23,11 @@ class RespuestaSheet extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Color accentColor =
-        isCorrect ? AppColors.secundario : const Color(0xFFFF4B4B);
+        isCorrect ? AppColors.secundario : AppColors.rojo1;
 
     final Color bgBadge = isCorrect
         ? AppColors.secundario.withValues(alpha: 0.2)
-        : const Color(0xFFFF4B4B).withValues(alpha: 0.2);
+        : AppColors.rojo1.withValues(alpha: 0.2);
 
     final Color bodyBg = isDark
         ? AppColors.fondoOscuroSecundario
