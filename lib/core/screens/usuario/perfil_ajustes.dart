@@ -28,10 +28,10 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
 
     return Scaffold(
       backgroundColor:
-          isDark ? AppColors.fondoOscuro : const Color(0xFFF2F4F7),
+          isDark ? AppColors.fondoOscuro : Colors.white,
       appBar: AppBar(
         backgroundColor:
-            isDark ? AppColors.fondoOscuro : const Color(0xFFF2F4F7),
+            isDark ? AppColors.fondoOscuro : Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: BotonAtras(onPressed: () => Navigator.maybePop(context)),
@@ -40,7 +40,7 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: isDark ? AppColors.textoClaro : AppColors.textoSecundario,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -60,12 +60,12 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                       clipBehavior: Clip.none,
                       children: [
                         CircleAvatar(
-                          radius: 44,
+                          radius: 50,
                           backgroundColor: isDark
                               ? AppColors.fondoOscuroSecundario
                               : AppColors.fondoSecundario,
                           child: const Text(
-                            'A',
+                            'G',
                             style: TextStyle(
                               color: AppColors.primario,
                               fontWeight: FontWeight.bold,
@@ -74,17 +74,17 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                           ),
                         ),
                         Positioned(
-                          right: -2,
-                          bottom: -2,
+                          right: -3,
+                          bottom: -3,
                           child: Container(
                             padding: const EdgeInsets.all(5),
                             decoration: const BoxDecoration(
-                              color: AppColors.naranja1,
+                              color: AppColors.secundario,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.local_fire_department,
-                              size: 14,
+                              Icons.edit,
+                              size: 25,
                               color: Colors.white,
                             ),
                           ),
@@ -95,13 +95,13 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                     const Text(
                       'Alex Alex Alex',
                       style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w900),
+                          fontSize: 24, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Aprendiz Intermedio • Nivel 12',
                       style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade500),
+                          fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75))
                     ),
                     const SizedBox(height: 10),
                     // Badges
@@ -122,12 +122,8 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                         _Badge(
                           icon: Icons.emoji_events_outlined,
                           label: '10 Insignias',
-                          color: const Color(0xFFE8A838),
-                          onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      const InsigniasScreen())),
+                          color: AppColors.amarillo1,
+                          onTap: _abrirPerfil,
                         ),
                       ],
                     ),
@@ -176,7 +172,7 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                 trailing: Switch(
                   value: _modoDoscuro,
                   onChanged: (v) => setState(() => _modoDoscuro = v),
-                  activeColor: AppColors.secundario,
+                  activeThumbColor: AppColors.secundario,
                 ),
               ),
             ]),
@@ -197,13 +193,13 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
             // Cerrar sesión — tarjeta separada
             Container(
               decoration: BoxDecoration(
-                color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+                color: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 2,
+                    offset: const Offset(3, 3),
                   ),
                 ],
               ),
@@ -212,16 +208,16 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: AppColors.rojo1.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const Icon(Icons.logout, color: Colors.redAccent,
+                  child: const Icon(Icons.logout, color: AppColors.rojo1,
                       size: 18),
                 ),
                 title: const Text(
                   'Cerrar sesión',
                   style: TextStyle(
-                      color: Colors.redAccent,
+                      color: AppColors.rojo1,
                       fontWeight: FontWeight.w700,
                       fontSize: 14),
                 ),
@@ -232,7 +228,7 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
             Center(
               child: Text(
                 'Tepetl v2.4.0 (Build 342)',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
               ),
             ),
             const SizedBox(height: 24),
@@ -256,63 +252,14 @@ class PerfilDetalleScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor:
-          isDark ? AppColors.fondoOscuro : const Color(0xFFF2F4F7),
+          isDark ? AppColors.fondoOscuro : Colors.white,
       appBar: AppBar(
         backgroundColor:
-            isDark ? AppColors.fondoOscuro : const Color(0xFFF2F4F7),
+            isDark ? AppColors.fondoOscuro : Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: BotonAtras(onPressed: () => Navigator.maybePop(context)),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/logo50.png', width: 22, height: 22,
-                errorBuilder: (_, _, _) =>
-                    Icon(Icons.terrain, color: AppColors.primario, size: 22)),
-            const SizedBox(width: 8),
-            const Text(
-              'TEPETL',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                color: AppColors.primario,
-                letterSpacing: 1.4,
-              ),
-            ),
-          ],
-        ),
         centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: isDark
-                      ? AppColors.fondoOscuroSecundario
-                      : AppColors.fondoSecundario,
-                  child: const Text('A',
-                      style: TextStyle(
-                          color: AppColors.primario,
-                          fontWeight: FontWeight.bold)),
-                ),
-                Positioned(
-                  right: -3,
-                  bottom: -3,
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                        color: AppColors.naranja1, shape: BoxShape.circle),
-                    child: const Icon(Icons.local_fire_department,
-                        size: 11, color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -327,7 +274,7 @@ class PerfilDetalleScreen extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       CircleAvatar(
-                        radius: 40,
+                        radius: 50,
                         backgroundColor: isDark
                             ? AppColors.fondoOscuroSecundario
                             : AppColors.fondoSecundario,
@@ -337,28 +284,16 @@ class PerfilDetalleScreen extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                                 fontSize: 30)),
                       ),
-                      Positioned(
-                        right: -2,
-                        bottom: -2,
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: const BoxDecoration(
-                              color: AppColors.naranja1,
-                              shape: BoxShape.circle),
-                          child: const Icon(Icons.local_fire_department,
-                              size: 13, color: Colors.white),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   const Text('Alex',
                       style: TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.w900)),
+                          fontSize: 24, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 4),
                   Text('GUERRERO',
                       style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.secundario,
                           letterSpacing: 1.0)),
@@ -373,7 +308,7 @@ class PerfilDetalleScreen extends StatelessWidget {
                 Expanded(
                   child: _StatCard(
                     icono: Icons.star_outline,
-                    iconColor: Color(0xFF5B8DEF),
+                    iconColor: AppColors.azul1,
                     label: 'Palabras nuevas',
                     valor: '150',
                     delta: '+14%',
@@ -395,7 +330,7 @@ class PerfilDetalleScreen extends StatelessWidget {
                 Expanded(
                   child: _StatCard(
                     icono: Icons.diamond_outlined,
-                    iconColor: Color(0xFF5B8DEF),
+                    iconColor: AppColors.verde1,
                     label: 'Jade',
                     valor: '2.4k',
                     delta: '+600',
@@ -412,11 +347,9 @@ class PerfilDetalleScreen extends StatelessWidget {
               children: [
                 Text('Insignias',
                     style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? AppColors.textoClaro
-                            : AppColors.textoSecundario)),
+                        color: Theme.of(context).colorScheme.onSurface)),
                 GestureDetector(
                   onTap: () => Navigator.push(
                       context,
@@ -448,11 +381,9 @@ class PerfilDetalleScreen extends StatelessWidget {
             // ── Camino de insignias ──────────────────────────────────
             Text('Camino de insignias',
                 style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.textoClaro
-                        : AppColors.textoSecundario)),
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 16),
             _CaminoInsignias(isDark: isDark),
             const SizedBox(height: 24),
@@ -474,10 +405,6 @@ class PerfilDetalleScreen extends StatelessWidget {
 class RachaDiariaScreen extends StatelessWidget {
   const RachaDiariaScreen({super.key});
 
-  static const List<String> _diasCortos = [
-    'Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'
-  ];
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -487,7 +414,7 @@ class RachaDiariaScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor:
-          isDark ? AppColors.fondoOscuro : const Color(0xFFF2F4F7),
+          isDark ? AppColors.fondoOscuro : Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
@@ -497,9 +424,7 @@ class RachaDiariaScreen extends StatelessWidget {
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: isDark
-                    ? AppColors.textoClaro
-                    : AppColors.textoSecundario)),
+                color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -513,9 +438,9 @@ class RachaDiariaScreen extends StatelessWidget {
             Text(
               '¡Tu fuego interno brilla con fuerza!',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w900,
-                color: isDark ? AppColors.textoClaro : AppColors.textoSecundario,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -523,8 +448,8 @@ class RachaDiariaScreen extends StatelessWidget {
             Text(
               'Has estudiado náhuatl por 12 días seguidos.\nTonatiuh te sonríe hoy.',
               style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade500,
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
                   height: 1.5),
               textAlign: TextAlign.center,
             ),
@@ -544,9 +469,9 @@ class RachaDiariaScreen extends StatelessWidget {
                 icon: const Icon(Icons.local_fire_department, size: 18),
                 label: const Text('Mantener el Fuego',
                     style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w800)),
+                        fontSize: 16, fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF5B731),
+                  backgroundColor: AppColors.amarillo1,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -594,7 +519,7 @@ class InsigniasScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor:
-          isDark ? AppColors.fondoOscuro : const Color(0xFFF2F4F7),
+          isDark ? AppColors.fondoOscuro : Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
@@ -604,9 +529,7 @@ class InsigniasScreen extends StatelessWidget {
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: isDark
-                    ? AppColors.textoClaro
-                    : AppColors.textoSecundario)),
+                color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -622,9 +545,9 @@ class InsigniasScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.secundario.withValues(alpha: 0.35),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 2,
+                    offset: const Offset(3, 3),
                   ),
                 ],
               ),
@@ -635,16 +558,14 @@ class InsigniasScreen extends StatelessWidget {
             Text(
               'Explora tus medallas obtenidas',
               style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? AppColors.textoClaro
-                      : AppColors.textoSecundario),
+                  color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 6),
             Text(
               '10 de 100 desbloqueados',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75)),
             ),
             const SizedBox(height: 20),
             // Barra de progreso
@@ -653,9 +574,7 @@ class InsigniasScreen extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: 0.1,
                 minHeight: 6,
-                backgroundColor: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.grey.shade200,
+                backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
                 valueColor:
                     AlwaysStoppedAnimation<Color>(AppColors.secundario),
               ),
@@ -742,10 +661,10 @@ class _SeccionLabel extends StatelessWidget {
     return Text(
       label,
       style: TextStyle(
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: FontWeight.w800,
         letterSpacing: 1.2,
-        color: Colors.grey.shade500,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
@@ -762,13 +681,13 @@ class _GrupoAjustes extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+        color: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 2,
+              offset: const Offset(3, 3)),
         ],
       ),
       child: Column(
@@ -782,7 +701,7 @@ class _GrupoAjustes extends StatelessWidget {
                     height: 1,
                     indent: 56,
                     endIndent: 0,
-                    color: Colors.grey.withValues(alpha: 0.1)),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.1)),
             ],
           );
         }).toList(),
@@ -812,7 +731,6 @@ class _ItemAjuste extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       onTap: onTap,
       leading: Container(
@@ -828,14 +746,14 @@ class _ItemAjuste extends StatelessWidget {
           style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textoClaro : AppColors.textoSecundario)),
+              color: Theme.of(context).colorScheme.onSurfaceVariant)),
       subtitle: subtitulo != null
           ? Text(subtitulo!,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500))
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75)))
           : null,
       trailing: trailing ??
           (onTap != null
-              ? Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20)
+              ? Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75), size: 20)
               : null),
     );
   }
@@ -866,30 +784,28 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+        color: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 2,
+              offset: const Offset(3, 3)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icono, color: iconColor, size: 16),
+          Icon(icono, color: iconColor, size: 22),
           const SizedBox(height: 6),
           Text(label,
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+              style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75))),
           const SizedBox(height: 4),
           Text(valor,
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
-                  color: isDark
-                      ? AppColors.textoClaro
-                      : AppColors.textoSecundario)),
+                      color: Theme.of(context).colorScheme.onSurface)),
           Text(delta,
               style: TextStyle(
                   fontSize: 11,
@@ -924,15 +840,13 @@ class _InsigniaCirculo extends StatelessWidget {
           height: 60,
           decoration: BoxDecoration(
             color: desbloqueada
-                ? AppColors.secundario.withValues(alpha: 0.15)
-                : (isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.grey.shade100),
+                ? AppColors.secundario.withValues(alpha: 0.2)
+                : (Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
             shape: BoxShape.circle,
             border: Border.all(
               color: desbloqueada
                   ? AppColors.secundario.withValues(alpha: 0.3)
-                  : Colors.grey.shade300,
+                  : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -940,12 +854,12 @@ class _InsigniaCirculo extends StatelessWidget {
             child: desbloqueada
                 ? Text(emoji, style: const TextStyle(fontSize: 26))
                 : Icon(Icons.lock_outline,
-                    color: Colors.grey.shade400, size: 22),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75), size: 22),
           ),
         ),
         const SizedBox(height: 6),
         Text(label,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75))),
       ],
     );
   }
@@ -963,14 +877,14 @@ class _CaminoInsignias extends StatelessWidget {
       _Etapa(
           nombre: 'Fuego Maestro',
           nivel: 'EXPERTO',
-          nivelColor: const Color(0xFF5B8DEF),
+          nivelColor: AppColors.azul1,
           desc: 'Master fluency and complex metaphors.',
           completada: false,
           activa: false),
       _Etapa(
           nombre: 'Espada de Jade',
           nivel: 'AVANZADO',
-          nivelColor: const Color(0xFF5B8DEF),
+          nivelColor: AppColors.azul1,
           desc: 'Conversational skills and storytelling.',
           completada: false,
           activa: false),
@@ -1047,9 +961,7 @@ class _FilaEtapa extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: etapa.completada || etapa.activa
                         ? AppColors.secundario
-                        : (isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.grey.shade300),
+                        : (Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
                     shape: BoxShape.circle,
                     border: etapa.activa
                         ? Border.all(
@@ -1065,9 +977,7 @@ class _FilaEtapa extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.grey.shade200,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
                     ),
                   ),
               ],
@@ -1098,9 +1008,7 @@ class _FilaEtapa extends StatelessWidget {
                                   style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w800,
-                                      color: isDark
-                                          ? AppColors.textoClaro
-                                          : AppColors.textoSecundario)),
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.85))),
                               const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -1122,7 +1030,7 @@ class _FilaEtapa extends StatelessWidget {
                           Text(etapa.desc,
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
                                   height: 1.4)),
                           if (etapa.xp != null) ...[
                             const SizedBox(height: 10),
@@ -1138,7 +1046,7 @@ class _FilaEtapa extends StatelessWidget {
                                 Text('Week ly',
                                     style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.grey.shade500)),
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75))),
                               ],
                             ),
                           ],
@@ -1154,9 +1062,7 @@ class _FilaEtapa extends StatelessWidget {
                                 style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? AppColors.textoClaro
-                                        : AppColors.textoSecundario)),
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.85))),
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -1179,7 +1085,7 @@ class _FilaEtapa extends StatelessWidget {
                         Text(etapa.desc,
                             style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey.shade500,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
                                 height: 1.4)),
                       ],
                     ),
@@ -1202,10 +1108,10 @@ class _RetoSemanal extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.secundario.withValues(alpha: 0.1),
+        color: AppColors.secundario.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: AppColors.secundario.withValues(alpha: 0.25)),
+            color: AppColors.secundario.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1217,21 +1123,19 @@ class _RetoSemanal extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
-                      color: isDark
-                          ? AppColors.textoClaro
-                          : AppColors.textoSecundario)),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.85))),
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8A838).withValues(alpha: 0.15),
+                  color: AppColors.naranja1.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text('Esta semana',
                     style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFE8A838))),
+                        color: AppColors.naranja1)),
               ),
             ],
           ),
@@ -1240,7 +1144,7 @@ class _RetoSemanal extends StatelessWidget {
             'Completa 5 lecciones de "Comida y Mercado" para ganar el escudo Azteca.',
             style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
                 height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -1249,9 +1153,7 @@ class _RetoSemanal extends StatelessWidget {
             child: LinearProgressIndicator(
               value: 0.4,
               minHeight: 7,
-              backgroundColor: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.grey.shade200,
+              backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
               valueColor:
                   AlwaysStoppedAnimation<Color>(AppColors.secundario),
             ),
@@ -1281,7 +1183,7 @@ class _SolRacha extends StatelessWidget {
             width: 110,
             height: 110,
             decoration: const BoxDecoration(
-              color: Color(0xFFF5B731),
+              color: AppColors.amarillo1,
               shape: BoxShape.circle,
             ),
             child: Column(
@@ -1321,12 +1223,12 @@ class _SolPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paintAmarillo = Paint()
-      ..color = const Color(0xFFF5B731)
+      ..color = AppColors.amarillo1
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
     final paintGris = Paint()
-      ..color = const Color(0xFFD1D5DB)
+      ..color = AppColors.textoSecundario40
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -1401,14 +1303,12 @@ class _DiasSemanales extends StatelessWidget {
                 color: completado
                     ? AppColors.secundario
                     : esHoy
-                        ? const Color(0xFFF5B731)
-                        : (isDark
-                            ? Colors.white.withValues(alpha: 0.07)
-                            : Colors.grey.shade100),
+                        ? AppColors.amarillo1.withValues(alpha: 0.2)
+                        : (Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
                 shape: BoxShape.circle,
                 border: esHoy && !completado
                     ? Border.all(
-                        color: const Color(0xFFF5B731), width: 2)
+                        color: AppColors.amarillo1, width: 2)
                     : null,
               ),
               child: Icon(
@@ -1416,13 +1316,13 @@ class _DiasSemanales extends StatelessWidget {
                 size: 16,
                 color: completado || esHoy
                     ? Colors.white
-                    : Colors.grey.shade400,
+                    : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
               ),
             ),
             const SizedBox(height: 6),
             Text(_labels[i],
                 style:
-                    TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                    TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.65))),
           ],
         );
       }),
@@ -1445,13 +1345,13 @@ class _CalendarioRacha extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+        color: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 3)),
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 2,
+              offset: const Offset(3, 3)),
         ],
       ),
       child: Column(
@@ -1464,15 +1364,13 @@ class _CalendarioRacha extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: isDark
-                          ? AppColors.textoClaro
-                          : AppColors.textoSecundario)),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
               Row(
                 children: [
                   Icon(Icons.chevron_left,
-                      color: Colors.grey.shade400, size: 20),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5), size: 20),
                   Icon(Icons.chevron_right,
-                      color: Colors.grey.shade400, size: 20),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5), size: 20),
                 ],
               ),
             ],
@@ -1489,7 +1387,7 @@ class _CalendarioRacha extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: Colors.grey)),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.75))),
                     ))
                 .toList(),
           ),
@@ -1546,7 +1444,7 @@ class _GridCalendario extends StatelessWidget {
               margin: const EdgeInsets.symmetric(vertical: 2),
               decoration: BoxDecoration(
                 color: esHoy
-                    ? const Color(0xFFF5B731)
+                    ?  AppColors.amarillo1
                     : tieneRacha
                         ? Colors.transparent
                         : Colors.transparent,
@@ -1556,7 +1454,7 @@ class _GridCalendario extends StatelessWidget {
                 child: tieneRacha && !esHoy
                     ? const Text('★',
                         style: TextStyle(
-                            fontSize: 14, color: Color(0xFFF5B731)))
+                            fontSize: 14, color: AppColors.amarillo1))
                     : Text(
                         '$dia',
                         style: TextStyle(
@@ -1566,9 +1464,7 @@ class _GridCalendario extends StatelessWidget {
                               : FontWeight.w500,
                           color: esHoy
                               ? Colors.white
-                              : (isDark
-                                  ? AppColors.textoClaro
-                                  : AppColors.textoSecundario),
+                              : (Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.65)),
                         ),
                       ),
               ),
@@ -1593,10 +1489,10 @@ class _ProtectorRacha extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.fondoOscuroSecundario
-            : const Color(0xFFF0F8FF),
+            : AppColors.fondoSecundario,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: const Color(0xFF5B8DEF).withValues(alpha: 0.2)),
+            color: AppColors.azul1.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -1604,11 +1500,11 @@ class _ProtectorRacha extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF5B8DEF).withValues(alpha: 0.12),
+              color: AppColors.azul1.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.shield_outlined,
-                color: Color(0xFF5B8DEF), size: 20),
+                color: AppColors.azul1, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1619,15 +1515,13 @@ class _ProtectorRacha extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? AppColors.textoClaro
-                            : AppColors.textoSecundario)),
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 3),
                 Text(
                   'Equipado. Tu racha está segura por hoy si olvidas practicar.',
                   style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade500,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
                       height: 1.4),
                 ),
               ],
@@ -1668,15 +1562,13 @@ class _GridInsignia extends StatelessWidget {
           height: 72,
           decoration: BoxDecoration(
             color: insignia.desbloqueada
-                ? AppColors.secundario.withValues(alpha: 0.12)
-                : (isDark
-                    ? Colors.white.withValues(alpha: 0.04)
-                    : Colors.grey.shade100),
+                ? AppColors.secundario.withValues(alpha: 0.2)
+                : (Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
             shape: BoxShape.circle,
             border: Border.all(
               color: insignia.desbloqueada
-                  ? AppColors.secundario.withValues(alpha: 0.25)
-                  : Colors.grey.shade200,
+                  ? AppColors.secundario.withValues(alpha: 0.3)
+                  : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -1685,7 +1577,7 @@ class _GridInsignia extends StatelessWidget {
                 ? Text(insignia.emoji,
                     style: const TextStyle(fontSize: 30))
                 : Icon(Icons.lock_outline,
-                    color: Colors.grey.shade300, size: 26),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5), size: 26),
           ),
         ),
         const SizedBox(height: 8),
@@ -1695,14 +1587,14 @@ class _GridInsignia extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textoClaro : AppColors.textoSecundario,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         if (!insignia.desbloqueada)
           Text(
             'Bloqueado',
             style:
-                TextStyle(fontSize: 10, color: Colors.grey.shade400),
+                TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.65)),
           ),
       ],
     );

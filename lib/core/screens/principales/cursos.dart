@@ -649,7 +649,7 @@ class _TarjetaSugerencia extends StatelessWidget {
           const Spacer(), // Empuja el botón obligatoriamente hacia el fondo de la tarjeta
           SizedBox(
             width: double.infinity,
-            height: 38,
+            height: 43,
             child: sugerencia.botonOscuro
                 ? ElevatedButton.icon(
                     onPressed: () {
@@ -664,7 +664,7 @@ class _TarjetaSugerencia extends StatelessWidget {
                     label: Text(
                       sugerencia.botonLabel,
                       style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w700),
+                          fontSize: 12, fontWeight: FontWeight.w700),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primario,
@@ -693,7 +693,7 @@ class _TarjetaSugerencia extends StatelessWidget {
                     child: Text(
                       sugerencia.botonLabel,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

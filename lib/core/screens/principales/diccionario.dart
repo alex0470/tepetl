@@ -243,7 +243,7 @@ class _DiccionarioScreenState extends State<DiccionarioScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sw = MediaQuery.of(context).size.width;
-    final isWide = sw > 900;
+    final isWide = sw > 1000;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.fondoOscuro : Colors.white,
