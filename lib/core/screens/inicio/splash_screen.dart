@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/autenticacion/inicio_sesion.dart';
 import 'dart:async';
 
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/screens/inicio/landing_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -73,8 +73,8 @@ class _SplashScreenState extends State<SplashScreen>
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const LandingPage(),
-          transitionsBuilder: (_, anim, __, child) =>
+          pageBuilder: (_, _, _) => const LoginScreen(),
+          transitionsBuilder: (_, anim, _, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 600),
         ),

@@ -2,22 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/principales/cursos.dart';
 import 'package:tepetl/core/screens/principales/diccionario.dart';
 import 'package:tepetl/core/screens/principales/resumen_ia.dart';
+import 'package:tepetl/core/screens/principalesadmin/analisis_ia_admin.dart';
+import 'package:tepetl/core/screens/principalesadmin/gestion_usuarios.dart';
+import 'package:tepetl/core/screens/principalesadmin/inicio_admin.dart';
+// Importa la pantalla de gestión de cursos que creamos anteriormente
+import 'package:tepetl/core/screens/principalesadmin/cursos_admin.dart'; 
 import 'package:tepetl/core/widgets/bars/bottom_nav.dart';
 import 'package:tepetl/core/widgets/bars/inicio_appbar.dart';
 
-// IMPORTA TUS PANTALLAS
 import 'contexto_cultural.dart';
 import 'inicio.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final bool isAdmin; 
+
+  const MainScreen({
+    super.key, 
+    this.isAdmin = true, 
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int currentIndex = 2; // Inicio por defecto
+  int currentIndex = 2; 
 
   late final List<Widget> screens;
 
@@ -27,10 +36,24 @@ class _MainScreenState extends State<MainScreen> {
 
     screens = [
       const DescubrirScreen(),
-      const ResumenIAScreen(),
-      const InicioScreen(),
-      const CursosScreen(),
-      const DiccionarioScreen(),
+      
+      // 1. Pestaña de Estadísticas IA
+      widget.isAdmin 
+          ? const AnalisisGeneralContent() 
+          : const ResumenIAScreen(),
+          
+      // 2. Pestaña de Inicio (Gestión de Lecciones / Mapa de Progreso)
+      widget.isAdmin 
+          ? const InicioAdminScreen() 
+          : const InicioScreen(),
+          
+      // 3. Pestaña de Cursos (NUEVO AJUSTE)
+      widget.isAdmin 
+          ? const CursosAdminScreen() // Pantalla administrativa de cursos
+          : const CursosScreen(),        // Catálogo para estudiantes
+      widget.isAdmin 
+          ? const DirectorioUsuariosScreen() // Pantalla de gestión de usuarios
+          : const DiccionarioScreen(),
     ];
   }
 
@@ -40,12 +63,10 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: InicioAppBar(isDark: isDark),
-
       body: IndexedStack(
         index: currentIndex,
         children: screens,
       ),
-
       bottomNavigationBar: BottomNav(
         isDark: isDark,
         currentIndex: currentIndex,

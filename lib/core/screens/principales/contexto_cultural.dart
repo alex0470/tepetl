@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
 
+// ── TEMPORAL: cambia esta variable para probar los dos roles ─────────────────
+// true  → administrador (ve el botón + para añadir artículos)
+// false → usuario normal (sin botón +)
+const bool kEsAdmin = true;
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Modelo de artículo ────────────────────────────────────────────────────────
 
 class _Articulo {
@@ -186,9 +192,9 @@ const List<_Articulo> _infoArticulos = [
         'que algunos interpretaron como un impulso monoteísta dentro del politeísmo náhuatl.\n\n'
         'Sus poemas, transmitidos oralmente durante generaciones y recopilados por frailes tras la conquista, '
         'siguen emocionando a lectores de todo el mundo. Su pregunta más famosa resuena '
-        'con fuerza intacta: "¿Es verdad que se vive en la tierra? No para siempre en la tierra, '
+        'con fuerza intacta: ¿Es verdad que se vive en la tierra? No para siempre en la tierra, '
         'solo un poco aquí. Aunque sea de jade se quiebra, aunque sea de oro se rompe, '
-        'aunque sea plumaje de quetzal se desgarra. No para siempre en la tierra, solo un poco aquí."\n\n'
+        'aunque sea plumaje de quetzal se desgarra. No para siempre en la tierra, solo un poco aquí.\n\n'
         'La tradición poética náhuatl sobrevivió a la conquista en manuscritos como el '
         'Cantares Mexicanos y los Romances de los Señores de Nueva España, '
         'testimonios únicos de una literatura oral de extraordinaria belleza y complejidad filosófica.',
@@ -233,7 +239,11 @@ const List<_Articulo> _infoArticulos = [
 // ── Pantalla principal ────────────────────────────────────────────────────────
 
 class DescubrirScreen extends StatefulWidget {
-  const DescubrirScreen({super.key});
+  // Cuando integres auth real, pasa el rol desde fuera.
+  // Por ahora usa la variable temporal kEsAdmin.
+  final bool esAdmin;
+
+  const DescubrirScreen({super.key, this.esAdmin = kEsAdmin});
 
   @override
   State<DescubrirScreen> createState() => _DescubrirScreenState();
@@ -255,6 +265,12 @@ class _DescubrirScreenState extends State<DescubrirScreen> {
     );
   }
 
+  void _abrirAnadirArticulo() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const _AnadirArticuloScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -263,6 +279,17 @@ class _DescubrirScreenState extends State<DescubrirScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
+      // ── FAB: solo visible para administrador ────────────────────────
+      floatingActionButton: widget.esAdmin
+          ? FloatingActionButton(
+              onPressed: _abrirAnadirArticulo,
+              backgroundColor: AppColors.secundario,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, size: 28),
+            )
+          : null,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -302,6 +329,571 @@ class _DescubrirScreenState extends State<DescubrirScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PANTALLA — Añadir Artículo (solo admin)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _AnadirArticuloScreen extends StatefulWidget {
+  const _AnadirArticuloScreen();
+
+  @override
+  State<_AnadirArticuloScreen> createState() => _AnadirArticuloScreenState();
+}
+
+class _AnadirArticuloScreenState extends State<_AnadirArticuloScreen> {
+  final _tituloCtrl = TextEditingController();
+  final _cuerpoCtrl = TextEditingController();
+  final _datoCuriosoTituloCtrl = TextEditingController();
+  final _datoCuriosoDescCtrl = TextEditingController();
+  String _categoriaSeleccionada = 'Cosmovisión';
+  String _tiempoLectura = '';
+  bool _tieneImagen = false;
+
+  static const _categorias = [
+    'Cosmovisión',
+    'Mitología',
+    'Historia',
+    'Filosofía',
+    'Poesía',
+    'Deidades',
+  ];
+
+  @override
+  void dispose() {
+    _tituloCtrl.dispose();
+    _cuerpoCtrl.dispose();
+    _datoCuriosoTituloCtrl.dispose();
+    _datoCuriosoDescCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sw = MediaQuery.of(context).size.width;
+    final isWide = sw > 700;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.close,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Text(
+          'Añadir artículo',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isWide ? sw * 0.20 : 20,
+          vertical: 20,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Imagen de portada ───────────────────────────────────
+            GestureDetector(
+              onTap: () => setState(() => _tieneImagen = !_tieneImagen),
+              child: Container(
+                width: double.infinity,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.fondoOscuroSecundario
+                      : AppColors.fondoSecundario,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.secundario.withValues(alpha: 0.3),
+                    width: 1.5,
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
+                ),
+                child: _tieneImagen
+                    ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Container(color: AppColors.secundario.withValues(alpha: 0.2)),
+                          ),
+                          Center(
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 40,
+                              color: AppColors.secundario,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.secundario.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.add_photo_alternate_outlined,
+                              color: AppColors.secundario,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Cargar imagen de Portada',
+                            style: TextStyle(
+                              color: AppColors.secundario,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '1200 × 675 RECOMENDADO',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.secundario.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Título ──────────────────────────────────────────────
+            _FormLabel(text: 'TÍTULO DEL ARTÍCULO'),
+            const SizedBox(height: 8),
+            _CampoTexto(
+              controller: _tituloCtrl,
+              hint: 'Ej. El simbolismo del Quetzal',
+              isDark: isDark,
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Categoría + Tiempo de lectura ───────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _FormLabel(text: 'CATEGORÍA'),
+                      const SizedBox(height: 8),
+                      _DropdownCategorias(
+                        value: _categoriaSeleccionada,
+                        categorias: _categorias,
+                        isDark: isDark,
+                        onChanged: (v) =>
+                            setState(() => _categoriaSeleccionada = v!),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _FormLabel(text: 'TIEMPO DE LECTURA'),
+                      const SizedBox(height: 8),
+                      _CampoTexto(
+                        controller: TextEditingController(text: _tiempoLectura),
+                        hint: '8 min',
+                        isDark: isDark,
+                        keyboardType: TextInputType.text,
+                        suffixIcon: Icon(
+                          Icons.access_time_outlined,
+                          size: 18,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.4),
+                        ),
+                        onChanged: (v) => _tiempoLectura = v,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Cuerpo del artículo ─────────────────────────────────
+            _FormLabel(text: 'CUERPO DEL ARTÍCULO'),
+            const SizedBox(height: 8),
+            // Barra de formato
+            _BarraFormato(isDark: isDark),
+            const SizedBox(height: 4),
+            _CampoTexto(
+              controller: _cuerpoCtrl,
+              hint: 'Escribe la historia aquí...',
+              isDark: isDark,
+              maxLines: 8,
+            ),
+
+            const SizedBox(height: 28),
+
+            // ── Datos curiosos ──────────────────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.lightbulb_outline,
+                      size: 16,
+                      color: AppColors.secundario,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'DATOS CURIOSOS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.add, size: 14, color: AppColors.secundario),
+                  label: const Text(
+                    'Añadir Dato',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secundario,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    backgroundColor: AppColors.secundario.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _CampoTexto(
+              controller: _datoCuriosoTituloCtrl,
+              hint: 'Título del dato curioso',
+              isDark: isDark,
+            ),
+            const SizedBox(height: 10),
+            _CampoTexto(
+              controller: _datoCuriosoDescCtrl,
+              hint: 'Describe el dato brevemente...',
+              isDark: isDark,
+              maxLines: 3,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 13,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.4),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '* Todo dato curioso aparecerá como una tarjeta pequeña al final del artículo.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.4),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 36),
+
+            // ── Botones de acción ───────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Borrador guardado')),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(
+                        color: AppColors.secundario.withValues(alpha: 0.5),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Guardar Borrador',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.maybePop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Artículo publicado correctamente'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.send_outlined, size: 18),
+                    label: const Text(
+                      'Publicar Artículo',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: AppColors.secundario,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Widgets auxiliares del formulario ─────────────────────────────────────────
+
+class _FormLabel extends StatelessWidget {
+  final String text;
+  const _FormLabel({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.1,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+      ),
+    );
+  }
+}
+
+class _CampoTexto extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool isDark;
+  final int maxLines;
+  final TextInputType? keyboardType;
+  final Widget? suffixIcon;
+  final ValueChanged<String>? onChanged;
+
+  const _CampoTexto({
+    required this.controller,
+    required this.hint,
+    required this.isDark,
+    this.maxLines = 1,
+    this.keyboardType,
+    this.suffixIcon,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      onChanged: onChanged,
+      style: TextStyle(
+        fontSize: 14,
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          fontSize: 14,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+        ),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppColors.secundario,
+            width: 1.5,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
+    );
+  }
+}
+
+class _DropdownCategorias extends StatelessWidget {
+  final String value;
+  final List<String> categorias;
+  final bool isDark;
+  final ValueChanged<String?> onChanged;
+
+  const _DropdownCategorias({
+    required this.value,
+    required this.categorias,
+    required this.isDark,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButton<String>(
+        value: value,
+        isExpanded: true,
+        underline: const SizedBox(),
+        dropdownColor: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+          size: 20,
+        ),
+        style: TextStyle(
+          fontSize: 14,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+        items: categorias
+            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _BarraFormato extends StatelessWidget {
+  final bool isDark;
+  const _BarraFormato({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      child: Row(
+        children: [
+          _FormatBtn(label: 'B', bold: true),
+          _FormatBtn(label: 'I', italic: true),
+          _FormatBtn(label: '≡'),
+          _FormatBtn(label: '•'),
+          _FormatBtn(label: '🔗'),
+          const Spacer(),
+          Icon(
+            Icons.open_in_full,
+            size: 16,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FormatBtn extends StatelessWidget {
+  final String label;
+  final bool bold;
+  final bool italic;
+
+  const _FormatBtn({required this.label, this.bold = false, this.italic = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: GestureDetector(
+        onTap: () {},
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: bold ? FontWeight.w900 : FontWeight.w500,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
           ),
         ),
       ),
@@ -358,31 +950,18 @@ class _WideLayout extends StatelessWidget {
             ],
           ),
         ),
-
         const SizedBox(width: 20),
-
         Expanded(
           flex: 45,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SectionTitle(
-                isDark: isDark,
-                text: '¿Lo sabías?',
-              ),
-
+              _SectionTitle(isDark: isDark, text: '¿Lo sabías?'),
               const SizedBox(height: 12),
-
               ...infoArticulos.map(
-                (a) => _InfoCard(
-                  isDark: isDark,
-                  articulo: a,
-                  onTap: () => onTap(a),
-                ),
+                (a) => _InfoCard(isDark: isDark, articulo: a, onTap: () => onTap(a)),
               ),
-
               const SizedBox(height: 16),
-
               _QuizCard(),
             ],
           ),
@@ -967,9 +1546,7 @@ class _ArticuloScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  BotonAtras(
-                    onPressed: () => Navigator.maybePop(context),
-                  ),
+                  BotonAtras(onPressed: () => Navigator.maybePop(context)),
                   Expanded(
                     child: Text(
                       articulo.categoria,
@@ -1014,7 +1591,6 @@ class _ArticuloWide extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Columna izquierda: imagen + meta ────────────────────────
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.35,
             child: Column(
@@ -1061,10 +1637,7 @@ class _ArticuloWide extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(width: 48),
-
-          // ── Columna derecha: texto ──────────────────────────────────
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1088,9 +1661,7 @@ class _ArticuloWide extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 22),
-                Divider(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-                ),
+                Divider(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
                 const SizedBox(height: 20),
                 Text(
                   articulo.contenido,
@@ -1185,9 +1756,7 @@ class _ArticuloNarrow extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Divider(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-          ),
+          Divider(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
           const SizedBox(height: 16),
           Text(
             articulo.contenido,

@@ -48,10 +48,7 @@ class InicioAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: GestureDetector(
             // Navegar a PerfilScreen en lugar de seleccionar foto
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PerfilAjustesScreen()),
-              );
+              Navigator.pushNamed(context, "/ajustes");
             },
             child: Stack(
               clipBehavior: Clip.none,

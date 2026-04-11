@@ -1,30 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 
+// ── TEMPORAL: cambia esta variable para probar los dos roles ─────────────────
+// true  → muestra "Usuarios" (administrador)
+// false → muestra "Diccionario" (usuario normal)
+const bool kEsAdmin = true;
+// ─────────────────────────────────────────────────────────────────────────────
+
 class BottomNav extends StatelessWidget {
   final bool isDark;
   final int currentIndex;
   final Function(int) onTap;
+
+  // Si no se pasa el rol desde fuera, usa la variable local temporal
+  final bool esAdmin;
 
   const BottomNav({
     super.key,
     required this.isDark,
     required this.currentIndex,
     required this.onTap,
+    this.esAdmin = kEsAdmin,
   });
 
   @override
   Widget build(BuildContext context) {
     final bgColor = isDark ? AppColors.fondoOscuro : Colors.white;
     final activeColor = AppColors.secundario;
-    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85);
+    final inactiveColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85);
+
+    // Último ítem cambia según el rol
+    final lastItem = esAdmin
+        ? {"icon": Icons.people_outline, "label": "Usuarios"}
+        : {"icon": Icons.translate_outlined, "label": "Diccionario"};
 
     final navItems = [
       {"icon": Icons.nature_people_outlined, "label": "Cultura"},
       {"icon": Icons.auto_awesome_outlined, "label": "Resumen IA"},
       {"icon": Icons.home_outlined, "label": "Inicio"},
       {"icon": Icons.menu_book_outlined, "label": "Cursos"},
-      {"icon": Icons.translate_outlined, "label": "Diccionario"},
+      lastItem,
     ];
 
     return Container(
