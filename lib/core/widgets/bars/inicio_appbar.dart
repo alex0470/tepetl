@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
-import 'package:tepetl/core/screens/usuario/perfil_ajustes.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 // Importa tu archivo donde esté PerfilScreen, por ejemplo:
 // import 'package:tepetl/core/screens/perfil_screen.dart';

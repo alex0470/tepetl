@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-// Asumiendo que AppColors tiene definiciones similares a tu archivo previo
-// Si no, puedes reemplazar con Colors.green, Colors.orange, etc.
-import 'package:tepetl/core/theme/app_colors.dart';
 
 class AnalisisGeneralContent extends StatelessWidget {
   const AnalisisGeneralContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
