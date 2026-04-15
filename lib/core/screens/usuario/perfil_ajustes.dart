@@ -1,5 +1,8 @@
 import 'dart:math' as math;
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tepetl/core/screens/autenticacion/inicio_sesion.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
@@ -36,11 +39,62 @@ class PerfilAjustesScreen extends StatefulWidget {
 
 class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
   late bool _modoDoscuro;
+  String _nombre = 'Cargando...';
+  String _rol = '';
+  String _nivel = '';
+  String _inicial = '';
 
   @override
   void initState() {
     super.initState();
     _modoDoscuro = widget.currentThemeMode == ThemeMode.dark;
+    _cargarDatosUsuario();
+  }
+
+  Future<void> _cargarDatosUsuario() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          
+          setState(() {
+            // Asigna el nombre
+            _nombre = data['nombre'] ?? 'Usuario';
+            
+            // Asigna y capitaliza la primera letra del rol (ej: "estudiante" -> "Estudiante")
+            String rolCrudo = data['rol'] ?? 'Estudiante';
+            if (rolCrudo.isNotEmpty) {
+              _rol = rolCrudo[0].toUpperCase() + rolCrudo.substring(1);
+            }
+            
+            // Asigna el nivel (si guardas algo como "basico", puedes formatearlo aquí)
+            _nivel = data['nivel'] ?? '1'; 
+            if (_nivel == 'basico') _nivel = 'Básico';
+            if (_nivel == 'intermedio') _nivel = 'Intermedio';
+
+            // Toma la primera letra del nombre para el avatar
+            _inicial = _nombre.isNotEmpty ? _nombre[0].toUpperCase() : 'U';
+          });
+        }
+      } catch (e) {
+        print('❌ Error al cargar datos del perfil: $e');
+      }
+    } else {
+      // 👇 SI EL USUARIO ES NULL (Ej. recargó la página sin sesión) 👇
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const LoginScreen(),
+            settings: const RouteSettings(name: '/'),
+          ),
+          (route) => false,
+        );
+      }
+    }
   }
 
   void _abrirPerfil() => Navigator.push(
@@ -159,8 +213,8 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                   backgroundColor: isDark
                       ? AppColors.fondoOscuroSecundario
                       : AppColors.fondoSecundario,
-                  child: const Text(
-                    'G',
+                  child: Text(
+                    _inicial,
                     style: TextStyle(
                       color: AppColors.primario,
                       fontWeight: FontWeight.bold,
@@ -190,13 +244,13 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            const Text(
-              'Alex Alex Alex',
+            Text(
+              _nombre,
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 4),
             Text(
-              'Aprendiz Intermedio • Nivel 12',
+              '$_rol • Nivel $_nivel',
               style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(context)
@@ -328,7 +382,42 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                   fontWeight: FontWeight.w700,
                   fontSize: 14),
             ),
-            onTap: () {},
+            onTap: () async {
+              // Mostramos un mini diálogo de carga por si tarda
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                // 1. Cerramos sesión en Firebase
+                await FirebaseAuth.instance.signOut();
+                
+                // Quitamos el diálogo de carga
+                if (context.mounted) Navigator.pop(context);
+
+                // 2. Mandamos al usuario a la pantalla de Login y borramos el historial
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(), 
+                      settings: const RouteSettings(name: '/'),
+                    ),
+                    (route) => false, // Elimina las pantallas previas
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) Navigator.pop(context); // Quitamos la carga
+                // Mostramos un error si falla
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al cerrar sesión: $e')),
+                  );
+                }
+              }
+            },
           ),
         ),
         const SizedBox(height: 24),

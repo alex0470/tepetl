@@ -18,7 +18,7 @@ class MainScreen extends StatefulWidget {
 
   const MainScreen({
     super.key, 
-    this.isAdmin = true, 
+    this.isAdmin = false, 
   });
 
   @override

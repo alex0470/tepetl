@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "690753911366",
+    "project_id": "tepetl-a9d78",
+    "storage_bucket": "tepetl-a9d78.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:690753911366:android:108efca11cbc2b2ca12847",
+        "android_client_info": {
+          "package_name": "com.example.tepetl"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRyVhKeUMQHWpjq1TTDr89ITqRJGGyT10"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

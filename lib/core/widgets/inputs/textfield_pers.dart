@@ -8,6 +8,7 @@ class TextfieldPers extends StatelessWidget {
   final bool obscure;
   final Widget? suffixIcon;
   final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
 
   const TextfieldPers({
     super.key,
@@ -17,6 +18,7 @@ class TextfieldPers extends StatelessWidget {
     this.obscure = false,
     this.suffixIcon,
     this.keyboardType,
+    this.onChanged,
   });
 
   @override

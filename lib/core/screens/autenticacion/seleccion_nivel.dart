@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tepetl/core/screens/principales/main_screen.dart';
+
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
@@ -26,6 +30,57 @@ class NivelSeleccionScreen extends StatelessWidget {
         offset: const Offset(4, 4),
       ),
     ];
+  }
+
+  Future<void> _guardarNivel(BuildContext context, String nivel) async {
+    // Mostramos un diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Cambia 'usuarios' si tu colección tiene otro nombre (ej. 'users')
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set(
+              {'nivel': nivel}, 
+              SetOptions(merge: true),
+            );
+      }
+
+      if (context.mounted) Navigator.pop(context);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('¡Nivel seleccionado correctamente!'),
+            backgroundColor: AppColors.primario,
+          ),
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MainScreen(isAdmin: false), 
+          ),
+          (route) => false, 
+        ); 
+      }
+    } catch (e) {
+      if (context.mounted) Navigator.pop(context); // Quitamos la carga en caso de error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar el nivel. Intenta de nuevo.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -93,6 +148,7 @@ class NivelSeleccionScreen extends StatelessWidget {
                   title: 'Básico',
                   subtitle: '(Tlapehualiztli)',
                   desc: 'Empiezas desde cero. Palabras simples y saludos.',
+                  onTap: () => _guardarNivel(context, 'basico'),
                 ),
                 const SizedBox(height: 12),
                 _levelTile(
@@ -103,17 +159,9 @@ class NivelSeleccionScreen extends StatelessWidget {
                   title: 'Intermedio',
                   subtitle: '(Tlahco)',
                   desc: 'Puedes formar frases y entender contextos cotidianos.',
+                  onTap: () => _guardarNivel(context, 'intermedio'),
                 ),
-                const SizedBox(height: 12),
-                _levelTile(
-                  context,
-                  icon: Icons.auto_stories_outlined,
-                  iconBg: AppColors.morado1.withValues(alpha: 0.2),
-                  iconColor: AppColors.morado1,
-                  title: 'Avanzado',
-                  subtitle: '(Hueyi)',
-                  desc: 'Conversación fluida y textos complejos tradicionales.',
-                ),
+                // Nivel Avanzado eliminado
               ],
             ),
           ),
@@ -190,6 +238,7 @@ class NivelSeleccionScreen extends StatelessWidget {
                                 title: 'Básico',
                                 subtitle: '(Tlapehualiztli)',
                                 desc: 'Empiezas desde cero. Palabras simples y saludos.',
+                                onTap: () => _guardarNivel(context, 'basico'),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -202,20 +251,10 @@ class NivelSeleccionScreen extends StatelessWidget {
                                 title: 'Intermedio',
                                 subtitle: '(Tlahco)',
                                 desc: 'Puedes formar frases y entender contextos cotidianos.',
+                                onTap: () => _guardarNivel(context, 'intermedio'),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _levelCard(
-                                context,
-                                icon: Icons.auto_stories_outlined,
-                                iconBg: AppColors.morado1.withValues(alpha: 0.2),
-                                iconColor: AppColors.morado1,
-                                title: 'Avanzado',
-                                subtitle: '(Hueyi)',
-                                desc: 'Conversación fluida y textos complejos tradicionales.',
-                              ),
-                            ),
+                            // Nivel Avanzado eliminado
                           ],
                         ),
                       ),
@@ -368,7 +407,14 @@ class NivelSeleccionScreen extends StatelessWidget {
                     width: double.infinity,
                     child: BotonesSombra(
                       text: 'Comenzar prueba',
-                      onPressed: () {},
+                      onPressed: () {
+                        // Acción temporal hasta que entrenes a tu IA
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('La evaluación con IA estará disponible muy pronto.'),
+                          ),
+                        );
+                      },
                       width: 250,
                       height: 50,
                       backgroundColor: AppColors.primario,
@@ -413,9 +459,10 @@ class NivelSeleccionScreen extends StatelessWidget {
     required String title,
     required String subtitle,
     required String desc,
+    required VoidCallback onTap, // Añadido onTap
   }) {
     return _PressableCard(
-      onTap: () {},
+      onTap: onTap, // Conectado
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -492,10 +539,10 @@ class NivelSeleccionScreen extends StatelessWidget {
     required String title,
     required String subtitle,
     required String desc,
+    required VoidCallback onTap, // Añadido onTap
   }) {
-    // ── Reemplazado InkWell → _PressableCard ──
     return _PressableCard(
-      onTap: () {},
+      onTap: onTap, // Conectado
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -593,8 +640,8 @@ class _PressableCardState extends State<_PressableCard>
   }
 
   void _onTapDown(TapDownDetails _) => _ctrl.forward();
-  void _onTapUp(TapUpDetails _)     => _ctrl.reverse();
-  void _onTapCancel()               => _ctrl.reverse();
+  void _onTapUp(TapUpDetails _) => _ctrl.reverse();
+  void _onTapCancel() => _ctrl.reverse();
 
   @override
   Widget build(BuildContext context) {

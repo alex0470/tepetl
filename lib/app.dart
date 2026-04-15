@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tepetl/core/screens/usuario/perfil_ajustes.dart';
+import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'core/screens/inicio/splash_screen.dart';
 import 'core/screens/inicio/landing_page.dart';
@@ -13,10 +15,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // Estado global del tema
   ThemeMode _themeMode = ThemeMode.system;
 
-  // Función para cambiar el tema desde los ajustes
   void toggleTheme(bool isDark) {
     setState(() {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
@@ -28,18 +28,32 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "Tepetl: Lenguas Vivas",
-
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: _themeMode, // Usamos la variable de estado
+      themeMode: _themeMode,
 
-      home: kIsWeb 
-          ? const LandingPage() 
-          : const SplashScreen(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          // Mientras Firebase verifica la sesión (especialmente útil en Web)
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // Si snapshot tiene datos, significa que el usuario está autenticado
+          if (snapshot.hasData) {
+            return const MainScreen();
+          }
+
+          // Si no hay datos, mostramos la Landing o Splash según la plataforma
+          return kIsWeb ? const LandingPage() : const SplashScreen();
+        },
+      ),
 
       routes: {
         "/home": (context) => const LandingPage(),
-        // Pasamos la función y el estado actual a la pantalla de ajustes
         "/ajustes": (context) => PerfilAjustesScreen(
           onThemeChanged: toggleTheme,
           currentThemeMode: _themeMode,

@@ -22,7 +22,7 @@ class LandingPage extends StatelessWidget {
             onTap: () {
               Navigator.of(context).pushReplacement(
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const LandingPage(),
+                  pageBuilder: (_, _, _) => const LandingPage(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),
@@ -57,7 +57,7 @@ class LandingPage extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).push(
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => const LoginScreen(),
+                          pageBuilder: (_, _, _) => const LoginScreen(),
                           transitionDuration: Duration.zero,
                           reverseTransitionDuration: Duration.zero,
                         ),
@@ -74,7 +74,7 @@ class LandingPage extends StatelessWidget {
                     onPressed: () {
                     Navigator.of(context).push(
                       PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => const RegistroScreen(),
+                          pageBuilder: (_, _, _) => const RegistroScreen(),
                           transitionDuration: Duration.zero,
                           reverseTransitionDuration: Duration.zero,
                         ),
@@ -135,10 +135,7 @@ class LandingPage extends StatelessWidget {
                               onPressed: () {
                                 Navigator.of(context).push(
                                   PageRouteBuilder(
-                                    pageBuilder: (_, __, ___) => const RegistroScreen(),
-                                    transitionsBuilder: (_, anim, __, child) =>
-                                        FadeTransition(opacity: anim, child: child),
-                                    transitionDuration: const Duration(milliseconds: 500),
+                                    pageBuilder: (_, _, _) => const RegistroScreen(),
                                     ),
                                   );
                               },
@@ -284,10 +281,7 @@ class LandingPage extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).push(
                         PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => const RegistroScreen(),
-                          transitionsBuilder: (_, anim, __, child) =>
-                              FadeTransition(opacity: anim, child: child),
-                          transitionDuration: const Duration(milliseconds: 500),
+                          pageBuilder: (_, _, _) => const RegistroScreen(),
                           ),
                       );
                     },

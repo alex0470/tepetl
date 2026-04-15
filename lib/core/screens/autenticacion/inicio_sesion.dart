@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tepetl/core/services/firestore_service.dart';
 import 'package:tepetl/core/screens/autenticacion/recuperar_contra.dart';
+import 'package:tepetl/core/screens/autenticacion/registro.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
@@ -13,14 +16,17 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
 
   bool _obscurePass = true;
+  bool _isLoading = false; // Para el estado de carga
 
-  late final TabController _tabCtrl = TabController(length: 2, vsync: this);
+  // Variables para los mensajes de error
+  String? _emailError;
+  String? _passError;
+  String? _generalError;
 
   static const double _kBreakpoint = 700;
 
@@ -28,8 +34,87 @@ class _LoginScreenState extends State<LoginScreen>
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
-    _tabCtrl.dispose();
     super.dispose();
+  }
+
+  // Lógica de validación
+  bool _validarCampos() {
+    bool isValid = true;
+    setState(() {
+      _emailError = null;
+      _passError = null;
+      _generalError = null;
+
+      final email = _emailCtrl.text.trim();
+      final pass = _passCtrl.text;
+
+      if (email.isEmpty) {
+        _emailError = 'El correo es requerido.';
+        isValid = false;
+      } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+        _emailError = 'Ingresa un correo electrónico válido.';
+        isValid = false;
+      }
+
+      if (pass.isEmpty) {
+        _passError = 'La contraseña es requerida.';
+        isValid = false;
+      }
+    });
+    return isValid;
+  }
+
+  // Lógica de inicio de sesión con Firebase
+  Future<void> _iniciarSesion() async {
+    if (!_validarCampos()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text.trim(),
+      );
+
+      if (credential.user != null) {
+        // 1. Obtener el rol de la base de datos
+        final firestore = FirestoreService();
+        String rol = await firestore.getUserRole(credential.user!.uid);
+        bool esAdmin = (rol == 'admin');
+
+        // 2. Pasar el resultado al MainScreen
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => MainScreen(isAdmin: esAdmin)),
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'user-not-found' ||
+            e.code == 'wrong-password' ||
+            e.code == 'invalid-credential') {
+          _generalError = 'Credenciales incorrectas. Verifica tus datos.';
+        } else if (e.code == 'user-disabled') {
+          _generalError = 'Esta cuenta ha sido deshabilitada.';
+        } else {
+          _generalError = 'Ocurrió un error. Inténtalo más tarde.';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _generalError = 'Ocurrió un error inesperado.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -68,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen>
             ],
           ),
         ),
-
         Expanded(
           flex: 5,
           child: Center(
@@ -101,19 +185,16 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
           ),
-
           Padding(
             padding: EdgeInsets.symmetric(vertical: vh * 0.03),
             child: _logoPanel(vw: vw, vh: vh, isWide: false),
           ),
-
           Center(
             child: SizedBox(
               width: formWidth,
               child: _formSection(vw: vw, vh: vh),
             ),
           ),
-
           SizedBox(height: vh * 0.04),
         ],
       ),
@@ -125,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen>
     required double vh,
     required bool isWide,
   }) {
-    final double logoSize = isWide ? vw * 0.13  : vw * 0.28;
+    final double logoSize = isWide ? vw * 0.13 : vw * 0.28;
     final double titleSize = isWide ? vw * 0.032 : vw * 0.09;
     final double subtitleSize = isWide ? vw * 0.012 : vw * 0.035;
     final double descSize = isWide ? vw * 0.010 : vw * 0.030;
@@ -181,29 +262,11 @@ class _LoginScreenState extends State<LoginScreen>
     final colorScheme = Theme.of(context).colorScheme;
     final double fieldGap = vh * 0.018;
     final double buttonW = (vw * 1).clamp(250, 300);
-    final double buttonH = (vh * 1).clamp(50,  50);
-    final double fontSize = (vw * 0.022).clamp(11, 15);
+    final double buttonH = (vh * 1).clamp(50, 50);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-
-        TabBar(
-          controller: _tabCtrl,
-          labelColor: AppColors.secundario,
-          unselectedLabelColor: colorScheme.onSurfaceVariant,
-          indicatorColor: AppColors.secundario,
-          indicatorSize: TabBarIndicatorSize.tab,
-          labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: fontSize),
-          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w400, fontSize: fontSize),
-          tabs: const [
-            Tab(text: 'Usuario'),
-            Tab(text: 'Administrador'),
-          ],
-        ),
-
-        SizedBox(height: vh * 0.025),
-
         _fieldLabel('Correo electrónico'),
         TextfieldPers(
           controller: _emailCtrl,
@@ -211,6 +274,15 @@ class _LoginScreenState extends State<LoginScreen>
           prefixIcon: Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
         ),
+        // Error de correo
+        if (_emailError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              _emailError!,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
 
         SizedBox(height: fieldGap),
 
@@ -257,92 +329,81 @@ class _LoginScreenState extends State<LoginScreen>
             onPressed: () => setState(() => _obscurePass = !_obscurePass),
           ),
         ),
+        // Error de contraseña
+        if (_passError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              _passError!,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
 
         SizedBox(height: vh * 0.035),
 
-        Center(
-          child: BotonesSombra(
-            text: 'Iniciar Sesión',
-            onPressed: () {
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (_, _, _) => const MainScreen(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              );
-            },
-            width: buttonW,
-            height: buttonH,
-            backgroundColor: AppColors.primario,
+        // Error general (Credenciales incorrectas)
+        if (_generalError != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _generalError!,
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
+
+        Center(
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : BotonesSombra(
+                  text: 'Iniciar Sesión',
+                  onPressed: _iniciarSesion,
+                  width: buttonW,
+                  height: buttonH,
+                  backgroundColor: AppColors.primario,
+                ),
         ),
 
         SizedBox(height: vh * 0.018),
 
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: TextStyle(
-              fontSize: (vw * 0.026).clamp(11, 15),
-              color: colorScheme.onSurface,
-            ),
-            children: [
-              const TextSpan(text: '¿No tienes cuenta? '),
-              TextSpan(
-                text: 'Crea una',
-                style: TextStyle(
-                  color: AppColors.secundario,
-                  fontWeight: FontWeight.w500,
-                ),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => RegistroScreen()));
+          },
+          child: RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: (vw * 0.026).clamp(11, 15),
+                color: colorScheme.onSurface,
               ),
-            ],
+              children: [
+                const TextSpan(text: '¿No tienes cuenta? '),
+                TextSpan(
+                  text: 'Crea una',
+                  style: TextStyle(
+                    color: AppColors.secundario,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-
-        SizedBox(height: vh * 0.025),
-
-        Row(
-          children: [
-            Expanded(child: Divider(color: colorScheme.outlineVariant)),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: vw * 0.03),
-              child: Text(
-                'O inicia sesión con',
-                style: TextStyle(
-                  fontSize: (vw * 0.020).clamp(10, 13),
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            Expanded(child: Divider(color: colorScheme.outlineVariant)),
-          ],
-        ),
-
-        SizedBox(height: vh * 0.020),
-
-        Row(
-          children: [
-            Expanded(
-              child: BotonesSombra(
-                text: 'Google',
-                onPressed: () {},
-                width: buttonW,
-                height: buttonH,
-                backgroundColor: AppColors.primario,
-              ),
-            ),
-            SizedBox(width: vw * 0.03),
-            Expanded(
-              child: BotonesSombra(
-                text: 'Apple',
-                onPressed: () {},
-                width: buttonW,
-                height: buttonH,
-                backgroundColor: AppColors.primario,
-              ),
-            ),
-          ],
         ),
 
         SizedBox(height: vh * 0.010),
@@ -356,7 +417,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: Text(
         text,
         style: const TextStyle(
-          fontSize:   12,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.primario,
         ),
