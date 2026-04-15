@@ -5,7 +5,6 @@ import 'package:tepetl/core/screens/principales/resumen_ia.dart';
 import 'package:tepetl/core/screens/principalesadmin/analisis_ia_admin.dart';
 import 'package:tepetl/core/screens/principalesadmin/gestion_usuarios.dart';
 import 'package:tepetl/core/screens/principalesadmin/inicio_admin.dart';
-// Importa la pantalla de gestión de cursos que creamos anteriormente
 import 'package:tepetl/core/screens/principalesadmin/cursos_admin.dart'; 
 import 'package:tepetl/core/widgets/bars/bottom_nav.dart';
 import 'package:tepetl/core/widgets/bars/inicio_appbar.dart';
