@@ -1,12 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Ya no necesitamos el import de CSV ni rootBundle en este archivo
-// si ya no vas a hacer migraciones masivas desde aquí.
-
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // GUARDAR USUARIO
   Future<void> saveUser(String uid, String email) async {
     try {
       await _db.collection('users').doc(uid).set({
