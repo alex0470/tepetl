@@ -5,14 +5,19 @@ import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
 import 'package:tepetl/core/models/modelo_ejercicio.dart';
 
 class PlantillaEscribir extends StatefulWidget {
-  // ── Igual que PlantillaCompletar: recibe el modelo y el callback ──────────
   final EjercicioModel ejercicio;
-  final Function(bool) onCompletado;
+
+  /// Callback al terminar: (esCorrecto)
+  final Function(bool isCorrect, bool pistaUsada) onCompletado;
+
+  /// Callback que se dispara la primera vez que el usuario abre la pista
+  final VoidCallback? onPistaUsada;
 
   const PlantillaEscribir({
     super.key,
     required this.ejercicio,
     required this.onCompletado,
+    this.onPistaUsada,
   });
 
   @override
@@ -20,10 +25,10 @@ class PlantillaEscribir extends StatefulWidget {
 }
 
 class _PlantillaEscribirState extends State<PlantillaEscribir> {
-  // ── Estado ────────────────────────────────────────────────────────────────
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _hintVisible = false;
+  bool _hintReported = false; // evita contar la pista más de una vez
   bool _verified = false;
 
   late String _correctAnswer;
@@ -42,7 +47,6 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
     final match = RegExp(r"'([^']+)'").firstMatch(_contenido);
     if (match != null) {
       _palabraNahuatl = match.group(1)!;
-
       _instruccion = _contenido
           .replaceAll("'$_palabraNahuatl'", '')
           .replaceAll(RegExp(r'\s{2,}'), ' ')
@@ -64,11 +68,21 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
       .replaceAll('ú', 'u')
       .replaceAll('ü', 'u');
 
+  void _togglePista() {
+    setState(() => _hintVisible = !_hintVisible);
+
+    // Notificar al padre solo la primera vez que se abre la pista
+    if (_hintVisible && !_hintReported) {
+      _hintReported = true;
+      widget.onPistaUsada?.call();
+    }
+  }
+
   void _verify() {
     if (_controller.text.trim().isEmpty || _verified) return;
 
-    _focusNode.unfocus(); // Cierra el teclado
-    
+    _focusNode.unfocus();
+
     final String userInput = _normalize(_controller.text);
     final String correct = _normalize(_correctAnswer);
     final bool isCorrect = userInput == correct;
@@ -77,7 +91,6 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
       _verified = true;
     });
 
-    // Mostramos el popup
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -85,9 +98,11 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => RespuestaSheet(
         isCorrect: isCorrect,
-        explanation: isCorrect ? "¡Muy bien $_palabraNahuatl se traduce a $_correctAnswer!" : "La respuesta era: $_correctAnswer",
+        explanation: isCorrect
+            ? '¡Muy bien! "$_palabraNahuatl" se traduce a "$_correctAnswer".'
+            : 'La respuesta era: $_correctAnswer',
         correctAnswer: _correctAnswer,
-        onContinue: () => Navigator.of(ctx).pop(), 
+        onContinue: () => Navigator.of(ctx).pop(),
       ),
     ).then((_) {
       if (!mounted) return;
@@ -95,7 +110,7 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
         _verified = false;
         _controller.clear();
       });
-      widget.onCompletado(isCorrect);
+      widget.onCompletado(isCorrect, _hintReported);
     });
   }
 
@@ -140,23 +155,20 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
                           children: [
                             SizedBox(height: sh * 0.03),
 
-                            // ── Instrucción ──────────────────────────────
                             Center(
                               child: Text(
                                 'Lee y escribe',
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
 
                             SizedBox(height: sh * 0.02),
 
-                            // ── Texto de instrucción de Firestore ─────────
                             if (_instruccion.isNotEmpty)
                               Center(
                                 child: Text(
@@ -174,7 +186,6 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
 
                             SizedBox(height: sh * 0.025),
 
-                            // ── Palabra en náhuatl destacada ──────────────
                             if (_palabraNahuatl.isNotEmpty)
                               Center(
                                 child: Container(
@@ -208,19 +219,18 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
 
                             SizedBox(height: sh * 0.03),
 
-                            // ── Label campo ──────────────────────────────
                             Text(
                               'Tu traducción',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
 
                             const SizedBox(height: 10),
 
-                            // ── Campo de texto ───────────────────────────
                             _TranslationField(
                               controller: _controller,
                               focusNode: _focusNode,
@@ -230,17 +240,14 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
 
                             SizedBox(height: sh * 0.035),
 
-                            // ── Pista visible ────────────────────────────
                             if (_hintVisible && _hintText.isNotEmpty) ...[
                               _HintBox(text: _hintText),
                               const SizedBox(height: 16),
                             ],
 
-                            // ── Botón pista ──────────────────────────────
                             if (_hintText.isNotEmpty)
                               GestureDetector(
-                                onTap: () => setState(
-                                    () => _hintVisible = !_hintVisible),
+                                onTap: _togglePista,
                                 child: Row(
                                   children: [
                                     Icon(Icons.lightbulb_outline,
@@ -262,7 +269,6 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
 
                             SizedBox(height: sh * 0.03),
 
-                            // ── Botón verificar ──────────────────────────
                             BotonVerificarEjercicio(
                               enabled: hasInput && !_verified,
                               onPressed: _verify,

@@ -8,14 +8,16 @@ import 'package:tepetl/core/models/modelo_ejercicio.dart';
 /// Par label + URL de imagen que se construye consultando Firestore.
 class ImageOption {
   final String label;
-  final String? imageUrl; // null mientras carga o si no se encontró
+  final String? imageUrl;
 
   const ImageOption({required this.label, this.imageUrl});
 }
 
 class PlantillaIdentificarImagen extends StatefulWidget {
   final EjercicioModel ejercicio;
-  final Function(bool) onCompletado;
+
+  /// Callback al terminar que envía si es correcto y si se usó la pista
+  final Function(bool isCorrect, bool onPistaUsada) onCompletado;
 
   const PlantillaIdentificarImagen({
     super.key,
@@ -30,42 +32,34 @@ class PlantillaIdentificarImagen extends StatefulWidget {
 
 class _PlantillaIdentificarImagenState
     extends State<PlantillaIdentificarImagen> {
-  // ── Estado ────────────────────────────────────────────────────────────────
   int? _selectedIndex;
   bool _verified = false;
   bool _hintVisible = false;
+  bool _hintReported = false; // evita contar la pista más de una vez
   bool _loadingImages = true;
 
-  // ── Datos dinámicos ───────────────────────────────────────────────────────
-  late String _palabraNahuatl; // extraída del contenido entre comillas simples
+  late String _palabraNahuatl;
   late String _correctAnswer;
   late String _hintText;
   late int _correctIndex;
   List<ImageOption> _options = [];
 
   @override
-  @override
   void initState() {
     super.initState();
     _correctAnswer = widget.ejercicio.respuesta;
     _hintText = widget.ejercicio.pista;
 
-    // Extraer la palabra en náhuatl del contenido
-    final match = RegExp(r"'([^']+)'").firstMatch(widget.ejercicio.contenido);
-    _palabraNahuatl = match != null ? match.group(1)! : widget.ejercicio.contenido;
+    final match =
+        RegExp(r"'([^']+)'").firstMatch(widget.ejercicio.contenido);
+    _palabraNahuatl =
+        match != null ? match.group(1)! : widget.ejercicio.contenido;
 
-    // 1. Copiamos las opciones para no modificar la lista original
     List<String> opcionesMezcladas = List.from(widget.ejercicio.opciones);
-
-    // 2. ¡LA MAGIA! Mezclamos la lista al azar
     opcionesMezcladas.shuffle();
 
-    // 3. Inicializamos las opciones de imagen con la lista ya mezclada
-    _options = opcionesMezcladas
-        .map((label) => ImageOption(label: label))
-        .toList();
-
-    // 4. Calculamos en qué índice quedó la respuesta correcta tras mezclar
+    _options =
+        opcionesMezcladas.map((label) => ImageOption(label: label)).toList();
     _correctIndex = opcionesMezcladas.indexOf(_correctAnswer);
 
     _cargarImagenes();
@@ -73,9 +67,7 @@ class _PlantillaIdentificarImagenState
 
   Future<void> _cargarImagenes() async {
     final db = FirebaseFirestore.instance;
-    
-    // Usamos _options porque ya están mezcladas. 
-    // Si usamos widget.ejercicio.opciones, ¡desharíamos la mezcla al terminar de cargar!
+
     final futures = _options.map((opcionActual) async {
       try {
         final snap = await db
@@ -89,8 +81,7 @@ class _PlantillaIdentificarImagenState
           return ImageOption(label: opcionActual.label, imageUrl: url);
         }
       } catch (_) {}
-      
-      // Si no encontramos nada, devolvemos sin imagen
+
       return ImageOption(label: opcionActual.label);
     });
 
@@ -98,18 +89,23 @@ class _PlantillaIdentificarImagenState
 
     if (!mounted) return;
     setState(() {
-      // Guardamos los resultados que ya traen las imágenes y respetan el orden mezclado
       _options = results;
       _loadingImages = false;
     });
   }
 
-  // ── Lógica de verificación ─────────────────────────────────────────────────
+  void _togglePista() {
+    setState(() => _hintVisible = !_hintVisible);
+
+    // Marcar que la pista se usó al menos una vez
+    if (_hintVisible && !_hintReported) {
+      _hintReported = true;
+    }
+  }
+
   void _verify() {
     if (_selectedIndex == null || _verified) return;
 
-    // Guard: si _correctIndex es -1 (respuesta no encontrada en opciones),
-    // comparamos por label directamente
     final bool isCorrect = _correctIndex != -1
         ? _selectedIndex == _correctIndex
         : _options[_selectedIndex!].label == _correctAnswer;
@@ -141,15 +137,17 @@ class _PlantillaIdentificarImagenState
           _verified = false;
           _selectedIndex = null;
         });
-        widget.onCompletado(isCorrect);
+        // Se envían AMBAS variables a la pantalla principal
+        widget.onCompletado(isCorrect, _hintReported);
       });
     });
   }
 
-  // ── Colores de borde según estado ─────────────────────────────────────────
   Color _borderColor(int index) {
     if (!_verified) {
-      return index == _selectedIndex ? AppColors.secundario : Colors.transparent;
+      return index == _selectedIndex
+          ? AppColors.secundario
+          : Colors.transparent;
     }
     if (index == _correctIndex) return AppColors.secundario;
     if (index == _selectedIndex) return Colors.red.shade400;
@@ -158,7 +156,9 @@ class _PlantillaIdentificarImagenState
 
   double _borderWidth(int index) {
     if (!_verified && index == _selectedIndex) return 3;
-    if (_verified && (index == _correctIndex || index == _selectedIndex)) return 3;
+    if (_verified && (index == _correctIndex || index == _selectedIndex)) {
+      return 3;
+    }
     return 0;
   }
 
@@ -189,7 +189,6 @@ class _PlantillaIdentificarImagenState
                       children: [
                         SizedBox(height: sh * 0.03),
 
-                        // ── Instrucción ──────────────────────────────────
                         Text(
                           'Selecciona la imagen correcta para',
                           textAlign: TextAlign.center,
@@ -202,7 +201,6 @@ class _PlantillaIdentificarImagenState
 
                         const SizedBox(height: 6),
 
-                        // ── Palabra en náhuatl ────────────────────────────
                         Text(
                           "'$_palabraNahuatl'",
                           textAlign: TextAlign.center,
@@ -232,7 +230,7 @@ class _PlantillaIdentificarImagenState
                         // ── Grid de imágenes ──────────────────────────────
                         _loadingImages
                             ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 48),
+                                padding: EdgeInsets.symmetric(vertical: 40),
                                 child: CircularProgressIndicator(),
                               )
                             : SizedBox(
@@ -242,64 +240,39 @@ class _PlantillaIdentificarImagenState
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: _options.length,
                                   gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
-                                    crossAxisSpacing: 14,
-                                    mainAxisSpacing: 14,
-                                    childAspectRatio: isWide ? 1.1 : 1.05,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                    childAspectRatio: 1,
                                   ),
-                                  itemBuilder: (context, index) {
-                                    return _ImageOptionCard(
-                                      option: _options[index],
-                                      isSelected: _selectedIndex == index,
-                                      borderColor: _borderColor(index),
-                                      borderWidth: _borderWidth(index),
-                                      onTap: _verified
-                                          ? null
-                                          : () => setState(
-                                              () => _selectedIndex = index),
-                                    );
-                                  },
+                                  itemBuilder: (_, i) => _ImageOptionCard(
+                                    option: _options[i],
+                                    isSelected: _selectedIndex == i,
+                                    borderColor: _borderColor(i),
+                                    borderWidth: _borderWidth(i),
+                                    onTap: _verified
+                                        ? null
+                                        : () => setState(
+                                            () => _selectedIndex = i),
+                                  ),
                                 ),
                               ),
 
-                        // ── Sección pista + botón (solo en wide) ──────────
-                        if (isWide) ...[
-                          SizedBox(height: sh * 0.04),
-                          if (_hintVisible && _hintText.isNotEmpty) ...[
-                            _HintBox(text: _hintText),
-                            const SizedBox(height: 16),
-                          ],
-                          if (_hintText.isNotEmpty)
-                            _PistaToggle(
-                              visible: _hintVisible,
-                              onTap: () =>
-                                  setState(() => _hintVisible = !_hintVisible),
-                            ),
-                          const SizedBox(height: 18),
-                          BotonVerificarEjercicio(
-                            enabled: hasSelection && !_verified,
-                            onPressed: _verify,
-                          ),
-                          SizedBox(height: sh * 0.02),
-                        ],
+                        SizedBox(height: sh * 0.02),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
-      ),
 
-      // ── Bottom bar móvil ──────────────────────────────────────────────────
-      bottomNavigationBar: !isWide
-          ? SafeArea(
-              top: false,
-              child: Container(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                padding: EdgeInsets.fromLTRB(sw * 0.05, 12, sw * 0.05, 12),
+            // ── Barra inferior: pista + verificar ─────────────────────────
+            // CORRECCIÓN: Se cambió el ternario por un "if" de colección 
+            if (hasSelection || _hintText.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                    sw * 0.05, 0, sw * 0.05, sw * 0.05),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -307,8 +280,7 @@ class _PlantillaIdentificarImagenState
                     if (_hintText.isNotEmpty)
                       _PistaToggle(
                         visible: _hintVisible,
-                        onTap: () =>
-                            setState(() => _hintVisible = !_hintVisible),
+                        onTap: _togglePista,
                       ),
                     if (_hintVisible && _hintText.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -321,9 +293,10 @@ class _PlantillaIdentificarImagenState
                     ),
                   ],
                 ),
-              ),
-            )
-          : null,
+              )
+          ],
+        ),
+      ),
     );
   }
 }
@@ -405,7 +378,6 @@ class _ImageOptionCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // ── Imagen o placeholder ──────────────────────────────────
               option.imageUrl != null && option.imageUrl!.isNotEmpty
                   ? Image.network(
                       option.imageUrl!,
@@ -415,21 +387,22 @@ class _ImageOptionCard extends StatelessWidget {
                           : Container(
                               color: Colors.grey.shade900,
                               child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
-                      errorBuilder: (_, _, _) => _Placeholder(label: option.label),
+                      errorBuilder: (_, _, _) =>
+                          _Placeholder(label: option.label),
                     )
                   : _Placeholder(label: option.label),
 
-              // ── Gradiente + label ─────────────────────────────────────
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
@@ -446,7 +419,9 @@ class _ImageOptionCard extends StatelessWidget {
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
+                      shadows: [
+                        Shadow(color: Colors.black45, blurRadius: 4)
+                      ],
                     ),
                   ),
                 ),

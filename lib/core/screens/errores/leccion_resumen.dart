@@ -1,4 +1,3 @@
-// lesson_summary_screen.dart
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/models/modelo_revision.dart';
 import 'package:tepetl/core/screens/errores/revision_errores.dart';
@@ -17,529 +16,239 @@ class LeccionResumen extends StatelessWidget {
     final double contentWidth =
         isWide ? (sw * 0.75).clamp(800, 1200) : double.infinity;
 
-    void onReviewErrors() {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RevisionErrores(errores: result.errores),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
-            _Header(),
+            // Cabezal con icono de éxito
+            const _HeaderSection(),
 
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.all(sw * 0.04),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Center(
                   child: SizedBox(
                     width: contentWidth,
-                    child: isWide
-                        // ── Desktop: dos columnas ─────────────────────────
-                        ? Padding(
-                            padding: EdgeInsets.all(sw * 0.04),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Columna izquierda
-                                Expanded(
-                                  flex: 5,
-                                  child: Center(
-                                    child: ConstrainedBox(
-                                      constraints: const BoxConstraints(maxWidth: 600),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          _HeroBanner(),
-                                          const SizedBox(height: 24),
-                                          _PrecisionCard(result: result),
-                                          const SizedBox(height: 16),
-                                          _StatsRow(result: result),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        
+                        // 1. Mensaje de la IA (Respuesta del servicio)
+                        _IAMessageCard(mensaje: result.mensajeAI),
 
-                                const SizedBox(width: 20),
+                        const SizedBox(height: 30),
 
-                                // Columna derecha
-                                Expanded(
-                                  flex: 6,
-                                  child: Center(
-                                    child: ConstrainedBox(
-                                      constraints: const BoxConstraints(maxWidth: 650),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          _AIAnalysisCard(message: result.mensajeAI),
-                                          const SizedBox(height: 24),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: _ReviewErrorsButton(onTap: onReviewErrors),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: _ContinueButton(),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        // ── Móvil: columna única ──────────────────────────
-                        : Column(
-                            children: [
-                              _HeroBanner(),
-                              const SizedBox(height: 16),
-                              _PrecisionCard(result: result),
-                              const SizedBox(height: 12),
-                              _StatsRow(result: result),
-                              const SizedBox(height: 16),
-                              _AIAnalysisCard(message: result.mensajeAI),
-                              const SizedBox(height: 24),
-                              _ContinueButton(),
-                              const SizedBox(height: 12),
-                              _ReviewErrorsButton(onTap: onReviewErrors),
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Header ────────────────────────────────────────────────────────────────────
-
-class _Header extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            child: Icon(Icons.close,
-                color: Theme.of(context).colorScheme.onSurface),
-          ),
-          Expanded(
-            child: Text(
-              'RESUMEN DE LA LECCIÓN',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                letterSpacing: 1,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-          const SizedBox(width: 24),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Hero Banner ───────────────────────────────────────────────────────────────
-
-class _HeroBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 2,
-              offset: const Offset(4, 4),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Container(
-              height: 300,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.azulAqua, AppColors.azul1, AppColors.morado1],
-                ),
-              ),
-              child: const Icon(Icons.hide_image, size: 80, color: Colors.white24),
-            ),
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 300,
-              width: double.infinity,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: const BoxDecoration(
-                      color: AppColors.secundario,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.check, color: Colors.white, size: 30),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '¡Lección Completada!',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const Text(
-                    'Has dominado el vocabulario básico.',
-                    style: TextStyle(color: Colors.white70, fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Precision Card ────────────────────────────────────────────────────────────
-
-class _PrecisionCard extends StatelessWidget {
-  final ResultadoLeccion result;
-  const _PrecisionCard({required this.result});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardBg = isDark
-        ? AppColors.fondoOscuroSecundario
-        : AppColors.fondoSecundario;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 2,
-            offset: const Offset(4, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PRECISIÓN',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.55),
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${result.precision}%',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.secundario.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '+${result.precisionDelta}%',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.secundario,
+                        // 2. Cuadrícula de Estadísticas (Precisión, XP, Tiempo)
+                        _StatsGrid(
+                          precision: result.precision,
+                          xp: result.xpGanada,
+                          tiempo: result.tiempo,
                         ),
-                      ),
+
+                        const SizedBox(height: 40),
+
+                        // 3. Botón de Revisar Errores (solo si hubo errores)
+                        if (result.errores.isNotEmpty)
+                          _ActionButton(
+                            text: 'Revisar Errores',
+                            isPrimary: false,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MainScreen(),
+                                ),
+                              );
+                            },
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // 4. Botón de Continuar
+                        _ActionButton(
+                          text: 'Continuar',
+                          isPrimary: true,
+                          onTap: () {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (_) => const MainScreen()),
+                              (route) => false,
+                            );
+                          },
+                        ),
+                        
+                        const SizedBox(height: 30),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── SECCIÓN: Cabezal ─────────────────────────────────────────────────────────
+class _HeaderSection extends StatelessWidget {
+  const _HeaderSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 40, bottom: 20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: AppColors.secundario,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.emoji_events, color: Colors.white, size: 50),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '¡Examen Finalizado!',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          _CircularProgress(value: result.precision / 100),
         ],
       ),
     );
   }
 }
 
-class _CircularProgress extends StatelessWidget {
-  final double value;
-  const _CircularProgress({required this.value});
+// ── SECCIÓN: Mensaje de la IA ────────────────────────────────────────────────
+class _IAMessageCard extends StatelessWidget {
+  final String mensaje;
+
+  const _IAMessageCard({required this.mensaje});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: Stack(
-        alignment: Alignment.center,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.secundario.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.secundario.withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircularProgressIndicator(
-            value: value,
-            strokeWidth: 6,
-            backgroundColor: Theme.of(context)
-                .colorScheme
-                .onSurface
-                .withValues(alpha: 0.1),
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(AppColors.secundario),
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: AppColors.secundario, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'EVALUACIÓN DE IA',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: AppColors.secundario.withOpacity(0.8),
+                ),
+              ),
+            ],
           ),
-          const Icon(Icons.check, color: AppColors.secundario, size: 22),
+          const SizedBox(height: 12),
+          Text(
+            mensaje,
+            style: TextStyle(
+              fontSize: 16,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ── Stats Row (XP + Time) ─────────────────────────────────────────────────────
+// ── SECCIÓN: Grid de Estadísticas ────────────────────────────────────────────
+class _StatsGrid extends StatelessWidget {
+  final int precision;
+  final int xp;
+  final String tiempo;
 
-class _StatsRow extends StatelessWidget {
-  final ResultadoLeccion result;
-  const _StatsRow({required this.result});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            label: 'XP GANADOS',
-            value: '+${result.xpGanada} XP',
-            icon: Icons.bolt,
-            iconColor: AppColors.amarillo1,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            label: 'TIEMPO',
-            value: result.tiempo,
-            icon: Icons.access_time,
-            iconColor: AppColors.azul1,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color iconColor;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.iconColor,
+  const _StatsGrid({
+    required this.precision,
+    required this.xp,
+    required this.tiempo,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardBg = isDark
-        ? AppColors.fondoOscuroSecundario
-        : AppColors.fondoSecundario;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 2,
-            offset: const Offset(4, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.55),
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(icon, color: iconColor, size: 28),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _StatItem(
+          label: 'PRECISIÓN',
+          value: '$precision%',
+          icon: Icons.track_changes,
+          color: Colors.orange,
+        ),
+        _StatItem(
+          label: 'XP GANADA',
+          value: '+$xp',
+          icon: Icons.bolt,
+          color: Colors.yellow.shade700,
+        ),
+        _StatItem(
+          label: 'TIEMPO',
+          value: tiempo,
+          icon: Icons.timer_outlined,
+          color: Colors.blue,
+        ),
+      ],
     );
   }
 }
 
-// ── AI Analysis Card ──────────────────────────────────────────────────────────
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
 
-class _AIAnalysisCard extends StatelessWidget {
-  final String message;
-  const _AIAnalysisCard({required this.message});
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Icon(Icons.auto_awesome,
-                color: AppColors.morado1, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              'Análisis de la IA',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.fondoOscuroSecundario
-                : AppColors.fondoSecundario,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 2,
-                offset: const Offset(4, 4),
-              ),
-            ],
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.morado1.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.record_voice_over,
-                    color: AppColors.morado1, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '¡Gran trabajo!',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      message,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.55),
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
           ),
         ),
       ],
@@ -547,97 +256,45 @@ class _AIAnalysisCard extends StatelessWidget {
   }
 }
 
-// ── Buttons ───────────────────────────────────────────────────────────────────
-
-class _ContinueButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 300,
-        height: 50,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 2,
-              offset: const Offset(3, 3),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (ctx, a1, a2) => const MainScreen(),
-                transitionDuration: Duration.zero,
-                reverseTransitionDuration: Duration.zero,
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secundario,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: const Text(
-            'Continuar',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReviewErrorsButton extends StatelessWidget {
+// ── SECCIÓN: Botones de Acción ───────────────────────────────────────────────
+class _ActionButton extends StatelessWidget {
+  final String text;
+  final bool isPrimary;
   final VoidCallback onTap;
-  const _ReviewErrorsButton({required this.onTap});
+
+  const _ActionButton({
+    required this.text,
+    required this.isPrimary,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 300,
-        height: 50,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 2,
-              offset: const Offset(3, 3),
-            ),
-          ],
-        ),
-        child: TextButton(
-          onPressed: onTap,
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context)
-                .colorScheme
-                .onSurface
-                .withValues(alpha: 0.55),
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.fondoOscuroSecundario
-                : AppColors.fondoSecundario,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isPrimary 
+              ? AppColors.secundario 
+              : Theme.of(context).brightness == Brightness.dark 
+                  ? AppColors.fondoOscuroSecundario 
+                  : Colors.grey.shade200,
+          foregroundColor: isPrimary 
+              ? Colors.white 
+              : Theme.of(context).colorScheme.onSurface,
+          elevation: isPrimary ? 4 : 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: const Text(
-            'Revisar Errores',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
+        ),
+        child: Text(
+          text.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
           ),
         ),
       ),

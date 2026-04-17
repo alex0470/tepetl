@@ -7,12 +7,18 @@ import 'package:tepetl/core/models/modelo_ejercicio.dart';
 
 class PlantillaCompletar extends StatefulWidget {
   final EjercicioModel ejercicio;
-  final Function(bool) onCompletado;
+
+  /// Callback al terminar: (esCorrecto, usedHint)
+  final Function(bool isCorrect, bool usedHint) onCompletado;
+
+  /// Callback que se dispara la primera vez que el usuario abre la pista
+  final VoidCallback? onPistaUsada;
 
   const PlantillaCompletar({
     super.key,
     required this.ejercicio,
     required this.onCompletado,
+    this.onPistaUsada,
   });
 
   @override
@@ -22,14 +28,13 @@ class PlantillaCompletar extends StatefulWidget {
 class _PlantillaCompletarState extends State<PlantillaCompletar> {
   int _selectedIndex = -1;
   bool _hintVisible = false;
+  bool _hintReported = false; // evita contar la pista más de una vez
   bool _verified = false;
 
   late String _correctAnswer;
   late int _correctIndex;
   late String _hintText;
   late List<String> _options;
-
-  // Partes de la frase separadas por el hueco (_____)
   late String _parte1;
   late String _parte2;
 
@@ -38,22 +43,14 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
     super.initState();
     _correctAnswer = widget.ejercicio.respuesta;
     _hintText = widget.ejercicio.pista;
-    
-    // 1. Copiamos las opciones
+
     _options = List.from(widget.ejercicio.opciones);
-
-    // 2. Si la respuesta no está en las opciones, la agregamos (al final)
     if (!_options.contains(_correctAnswer)) {
-      _options.add(_correctAnswer); 
+      _options.add(_correctAnswer);
     }
-
-    // 3. ¡LA MAGIA! Mezclamos la lista de opciones al azar
     _options.shuffle();
-
-    // 4. Ahora sí, guardamos en qué índice (0, 1, 2...) quedó la respuesta correcta
     _correctIndex = _options.indexOf(_correctAnswer);
 
-    // 5. Separar la frase en dos partes para el hueco (tu código original)
     List<String> parts = widget.ejercicio.contenido.split('_____');
     if (parts.length >= 2) {
       _parte1 = parts[0];
@@ -64,11 +61,19 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
     }
   }
 
+  void _togglePista() {
+    setState(() => _hintVisible = !_hintVisible);
+
+    // Notificar al padre solo la primera vez que se abre la pista
+    if (_hintVisible && !_hintReported) {
+      _hintReported = true;
+      widget.onPistaUsada?.call();
+    }
+  }
+
   void _verify() {
     if (_selectedIndex == -1 || _verified) return;
 
-    // Guard: si por algún motivo la respuesta no estaba en opciones,
-    // comparamos por valor en lugar de por índice.
     final bool isCorrect = _correctIndex != -1
         ? _selectedIndex == _correctIndex
         : _options[_selectedIndex] == _correctAnswer;
@@ -100,7 +105,7 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
           _verified = false;
           _selectedIndex = -1;
         });
-        widget.onCompletado(isCorrect);
+        widget.onCompletado(isCorrect, _hintVisible);
       });
     });
   }
@@ -135,7 +140,6 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // ── Panel izquierdo ──────────────────────────
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -149,13 +153,12 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
                                     children: [
                                       _buildIcon(iconSize),
                                       SizedBox(height: sh * 0.04),
-                                      _buildPhrase(context, isWide, selectedWord),
+                                      _buildPhrase(
+                                          context, isWide, selectedWord),
                                     ],
                                   ),
                                 ),
                               ),
-
-                              // ── Panel derecho ────────────────────────────
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -196,7 +199,6 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
                               ),
                             ],
                           )
-                        // ── Versión móvil ──────────────────────────────────
                         : Column(
                             children: [
                               SizedBox(height: sh * 0.04),
@@ -236,8 +238,6 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
     );
   }
 
-  // ── Widgets auxiliares ───────────────────────────────────────────────────
-
   Widget _buildIcon(double size) {
     return Container(
       width: size,
@@ -271,11 +271,12 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30),
       child: GestureDetector(
-        onTap: () => setState(() => _hintVisible = !_hintVisible),
+        onTap: _togglePista,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Icon(Icons.lightbulb_outline, color: AppColors.secundario, size: 18),
+            Icon(Icons.lightbulb_outline,
+                color: AppColors.secundario, size: 18),
             const SizedBox(width: 6),
             Text(
               _hintVisible ? 'Ocultar pista' : '¿Necesitas una pista?',
@@ -291,9 +292,6 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
     );
   }
 
-  /// Construye la frase con el hueco dinámico.
-  /// Usa [_parte1] y [_parte2] calculadas en initState, así el split
-  /// solo ocurre una vez y no en cada rebuild.
   Widget _buildPhrase(BuildContext ctx, bool isWide, String? selectedWord) {
     final TextStyle base = TextStyle(
       fontSize: isWide ? 36 : 26,
@@ -347,7 +345,8 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.lightbulb, color: AppColors.amarillo1, size: 18),
+              const Icon(Icons.lightbulb,
+                  color: AppColors.amarillo1, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
