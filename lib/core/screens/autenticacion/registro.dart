@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/autenticacion/inicio_sesion.dart';
-import 'package:tepetl/core/screens/autenticacion/seleccion_nivel.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
@@ -94,26 +93,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _errorPass    == null &&
         _errorConfirm == null;
   }
-
-  // ── Limpiar formulario al éxito ──────────────────────────────
-  void _resetForm() {
-    _nombreCtrl.clear();
-    _emailCtrl.clear();
-    _passCtrl.clear();
-    _confirmPassCtrl.clear();
-    setState(() {
-      _obscurePass        = true;
-      _obscureConfirm     = true;
-      _idiomaSeleccionado = 'Español';
-      _edadSeleccionada   = 13;
-      _errorNombre        = null;
-      _errorEmail         = null;
-      _errorPass          = null;
-      _errorConfirm       = null;
-    });
-  }
-
-  // ─────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
@@ -385,17 +364,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   'idioma': _idiomaSeleccionado,
                   'edad': _edadSeleccionada,
                   'rol': 'estudiante',
+                  'onboardingCompletado': false,
+                  'nivel_seleccionado': false,
                 });
 
                 if (!mounted) return;
-
-                _resetForm();
-
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const NivelSeleccionScreen(),
-                  ),
-                );
+                  Navigator.of(context).popUntil((route) => route.isFirst);
               } else {
                 setState(() => _errorEmail = error ?? 'Error al registrar usuario');
               }
@@ -474,11 +448,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _reqRow('Mínimo 8 caracteres',                       _passHasMin8),
-        _reqRow('Al menos una mayúscula (A-Z)',               _passHasUpper),
-        _reqRow('Al menos una minúscula (a-z)',               _passHasLower),
-        _reqRow('Al menos un número (0-9)',                   _passHasNumber),
-        _reqRow('Al menos un carácter especial (!@#\$...)',  _passHasSpecial),
+        _reqRow('Mínimo 8 caracteres', _passHasMin8),
+        _reqRow('Al menos una mayúscula (A-Z)', _passHasUpper),
+        _reqRow('Al menos una minúscula (a-z)', _passHasLower),
+        _reqRow('Al menos un número (0-9)', _passHasNumber),
+        _reqRow('Al menos un carácter especial (!@#\$...)', _passHasSpecial),
       ],
     );
   }

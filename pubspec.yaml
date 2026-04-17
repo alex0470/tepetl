@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  csv: ^8.0.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -39,6 +39,9 @@ flutter:
    - assets/logo800.png
    - assets/logoa12.png
    - assets/logo300.png
+   - assets/imagen2.png
+   - assets/imagen3.png
+   - assets/ejercicios.json
 
 flutter_native_splash:
   android: true

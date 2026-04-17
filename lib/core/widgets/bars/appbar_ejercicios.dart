@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/widgets/popups/dialogos_utils.dart';
+import 'package:tepetl/core/widgets/timers/vidas_timer.dart';
 
 class AppbarEjercicios extends StatelessWidget {
   final String title;
@@ -43,58 +45,13 @@ class AppbarEjercicios extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── Corazones ─────────────────────────────────────────────
-          _HeartsChip(hearts: hearts),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Chip de corazones ─────────────────────────────────────────────────────────
-class _HeartsChip extends StatelessWidget {
-  final int hearts;
-
-  const _HeartsChip({required this.hearts});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: hearts > 0 ? AppColors.rojo1 : Colors.grey,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) => ScaleTransition(
-              scale: animation,
-              child: child,
-            ),
-            child: Icon(
-              hearts > 0 ? Icons.favorite : Icons.heart_broken,
-              key: ValueKey(hearts > 0),
-              color: Colors.white,
-              size: 15,
-            ),
-          ),
-          const SizedBox(width: 4),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              '$hearts',
-              key: ValueKey(hearts),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
+          GestureDetector(
+            onTap: () {
+              if (hearts <= 0) {
+                DialogosUtils.mostrarSinCorazones(context, expulsarDePantalla: false);
+              }
+            },
+            child: const WidgetCorazonesTimer(),
           ),
         ],
       ),

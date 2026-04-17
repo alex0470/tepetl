@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:tepetl/core/screens/plantillas_ejercicios/imagenes_ejercicio.dart';
-import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
+import 'package:tepetl/core/models/modelo_ejercicio.dart';
 
 class PlantillaEscribir extends StatefulWidget {
-  const PlantillaEscribir({super.key});
+  // ── Igual que PlantillaCompletar: recibe el modelo y el callback ──────────
+  final EjercicioModel ejercicio;
+  final Function(bool) onCompletado;
+
+  const PlantillaEscribir({
+    super.key,
+    required this.ejercicio,
+    required this.onCompletado,
+  });
 
   @override
   State<PlantillaEscribir> createState() => _PlantillaEscribirState();
@@ -19,21 +25,34 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
   final FocusNode _focusNode = FocusNode();
   bool _hintVisible = false;
   bool _verified = false;
-  int _hearts = 5;
 
-  // ── Constantes del ejercicio ──────────────────────────────────────────────
-  static const String _nahuatlWord = 'Tlazocamati';
-  static const String _correctAnswer = 'Gracias';
-  static const String _imageAsset = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSE7yMfNNvo3tR8ceeaG0-GbZi0YWo4kjRTcg&s'; // imagen del ejercicio
-  static const String _imageCategory = 'Cultura Azteca';
-  static const String _imageDescription = 'Uso ceremonial';
-  static const String _hintText =
-      '"Tlazocamati" es una expresión de gratitud en náhuatl clásico. Se usa para agradecer algo a alguien.';
+  late String _correctAnswer;
+  late String _hintText;
+  late String _contenido;
+  late String _palabraNahuatl;
+  late String _instruccion;
 
-  // ── Lógica ────────────────────────────────────────────────────────────────
+  @override
+  void initState() {
+    super.initState();
+    _correctAnswer = widget.ejercicio.respuesta;
+    _hintText = widget.ejercicio.pista;
+    _contenido = widget.ejercicio.contenido;
 
-  /// Normaliza texto: sin espacios extra, sin distinción mayúsculas/minúsculas
-  /// y sin acentos para comparación flexible.
+    final match = RegExp(r"'([^']+)'").firstMatch(_contenido);
+    if (match != null) {
+      _palabraNahuatl = match.group(1)!;
+
+      _instruccion = _contenido
+          .replaceAll("'$_palabraNahuatl'", '')
+          .replaceAll(RegExp(r'\s{2,}'), ' ')
+          .trim();
+    } else {
+      _palabraNahuatl = '';
+      _instruccion = _contenido;
+    }
+  }
+
   String _normalize(String s) => s
       .trim()
       .toLowerCase()
@@ -42,49 +61,41 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
       .replaceAll('é', 'e')
       .replaceAll('í', 'i')
       .replaceAll('ó', 'o')
-      .replaceAll('ú', 'u');
+      .replaceAll('ú', 'u')
+      .replaceAll('ü', 'u');
 
   void _verify() {
     if (_controller.text.trim().isEmpty || _verified) return;
 
-    final bool isCorrect =
-        _normalize(_controller.text) == _normalize(_correctAnswer);
+    _focusNode.unfocus(); // Cierra el teclado
+    
+    final String userInput = _normalize(_controller.text);
+    final String correct = _normalize(_correctAnswer);
+    final bool isCorrect = userInput == correct;
 
     setState(() {
       _verified = true;
-      if (!isCorrect && _hearts > 0) _hearts--;
     });
 
-    _focusNode.unfocus();
-
-    Future.delayed(const Duration(milliseconds: 300), () {
+    // Mostramos el popup
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => RespuestaSheet(
+        isCorrect: isCorrect,
+        explanation: isCorrect ? "¡Muy bien $_palabraNahuatl se traduce a $_correctAnswer!" : "La respuesta era: $_correctAnswer",
+        correctAnswer: _correctAnswer,
+        onContinue: () => Navigator.of(ctx).pop(), 
+      ),
+    ).then((_) {
       if (!mounted) return;
-      showModalBottomSheet(
-        context: context,
-        isDismissible: false,
-        enableDrag: false,
-        backgroundColor: Colors.transparent,
-        builder: (_) => RespuestaSheet(
-          isCorrect: isCorrect,
-          explanation: isCorrect
-              ? '"Tlazocamati" significa "gracias" en náhuatl clásico. Es una de las expresiones más comunes de cortesía en esta lengua.'
-              : 'La traducción correcta de "Tlazocamati" es "Gracias". Proviene del verbo "tlazotla" que expresa valorar o apreciar.',
-          correctAnswer: _correctAnswer,
-          onContinue: () => Navigator.of(context).pop(),
-        ),
-      ).then((_) {
-        if (!mounted) return;
-        setState(() {
-          _verified = false;
-        });
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            pageBuilder: (_, _, _) => const PlantillaIdentificarImagen(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
+      setState(() {
+        _verified = false;
+        _controller.clear();
       });
+      widget.onCompletado(isCorrect);
     });
   }
 
@@ -100,41 +111,15 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
     final double sw = MediaQuery.of(context).size.width;
     final double sh = MediaQuery.of(context).size.height;
     final bool isWide = sw > 1000;
-
     final double contentWidth =
         isWide ? (sw * 0.75).clamp(600, 900) : double.infinity;
-    final double progressWidth =
-        isWide ? (sw * 1.0).clamp(600, 1700) : double.infinity;
-
     final bool hasInput = _controller.text.trim().isNotEmpty;
 
     return Scaffold(
-      // Evita que el teclado empuje todo el layout
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
-            // ── AppBar ────────────────────────────────────────────────────
-            AppbarEjercicios(
-              title: 'EXPRESIÓN ESCRITA',
-              hearts: _hearts,
-              onClose: () => Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (_, _, _) => const MainScreen(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-            ),
-
-            // ── Barra de progreso ─────────────────────────────────────────
-            LessonProgressBar(
-              lessonLabel: 'LECCIÓN 2',
-              progress: 0.45,
-              progressWidth: progressWidth,
-            ),
-
-            // ── Contenido scrollable ──────────────────────────────────────
             Expanded(
               child: GestureDetector(
                 onTap: () => _focusNode.unfocus(),
@@ -147,52 +132,83 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
                     child: SizedBox(
                       width: contentWidth,
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 0 : sw * 0.05,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(height: sh * 0.03),
 
-                            // ── Título ──────────────────────────────────────
+                            // ── Instrucción ──────────────────────────────
                             Center(
                               child: Text(
                                 'Lee y escribe',
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface,
                                 ),
                               ),
                             ),
 
-                            SizedBox(height: sh * 0.025),
+                            SizedBox(height: sh * 0.02),
 
-                            // ── Tarjeta de imagen ───────────────────────────
-                            _ImageCard(
-                              imageAsset: _imageAsset,
-                              category: _imageCategory,
-                              description: _imageDescription,
-                            ),
-
-                            SizedBox(height: sh * 0.025),
-
-                            // ── Palabra en náhuatl ──────────────────────────
-                            Center(
-                              child: Text(
-                                _nahuatlWord,
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w900,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
+                            // ── Texto de instrucción de Firestore ─────────
+                            if (_instruccion.isNotEmpty)
+                              Center(
+                                child: Text(
+                                  _instruccion,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
                                 ),
                               ),
-                            ),
+
+                            SizedBox(height: sh * 0.025),
+
+                            // ── Palabra en náhuatl destacada ──────────────
+                            if (_palabraNahuatl.isNotEmpty)
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.secundario
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: AppColors.secundario
+                                          .withValues(alpha: 0.4),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _palabraNahuatl,
+                                    style: TextStyle(
+                                      fontSize: 34,
+                                      fontWeight: FontWeight.w900,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                              ),
 
                             SizedBox(height: sh * 0.03),
 
-                            // ── Label campo ─────────────────────────────────
+                            // ── Label campo ──────────────────────────────
                             Text(
                               'Tu traducción',
                               style: TextStyle(
@@ -204,7 +220,7 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
 
                             const SizedBox(height: 10),
 
-                            // ── Campo de texto ──────────────────────────────
+                            // ── Campo de texto ───────────────────────────
                             _TranslationField(
                               controller: _controller,
                               focusNode: _focusNode,
@@ -214,38 +230,39 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
 
                             SizedBox(height: sh * 0.035),
 
-                            // ── Pista visible ───────────────────────────────
-                            if (_hintVisible) ...[
+                            // ── Pista visible ────────────────────────────
+                            if (_hintVisible && _hintText.isNotEmpty) ...[
                               _HintBox(text: _hintText),
                               const SizedBox(height: 16),
                             ],
 
-                            // ── Botón pista ─────────────────────────────────
-                            GestureDetector(
-                              onTap: () =>
-                                  setState(() => _hintVisible = !_hintVisible),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.lightbulb_outline,
-                                      color: AppColors.secundario, size: 18),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _hintVisible
-                                        ? 'Ocultar pista'
-                                        : '¿Necesitas una pista?',
-                                    style: const TextStyle(
-                                      color: AppColors.secundario,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
+                            // ── Botón pista ──────────────────────────────
+                            if (_hintText.isNotEmpty)
+                              GestureDetector(
+                                onTap: () => setState(
+                                    () => _hintVisible = !_hintVisible),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.lightbulb_outline,
+                                        color: AppColors.secundario, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _hintVisible
+                                          ? 'Ocultar pista'
+                                          : '¿Necesitas una pista?',
+                                      style: const TextStyle(
+                                        color: AppColors.secundario,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
 
                             SizedBox(height: sh * 0.03),
 
-                            // ── Botón verificar ─────────────────────────────
+                            // ── Botón verificar ──────────────────────────
                             BotonVerificarEjercicio(
                               enabled: hasInput && !_verified,
                               onPressed: _verify,
@@ -257,98 +274,6 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Tarjeta de imagen ─────────────────────────────────────────────────────────
-class _ImageCard extends StatelessWidget {
-  final String imageAsset;
-  final String category;
-  final String description;
-
-  const _ImageCard({
-    required this.imageAsset,
-    required this.category,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // ── Imagen ──────────────────────────────────────────────────
-            Image.network(
-              imageAsset,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                color: Colors.grey.shade800,
-                child: const Icon(Icons.image_not_supported,
-                    color: Colors.white54, size: 48),
-              ),
-            ),
-
-            // ── Gradiente inferior ───────────────────────────────────────
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.75),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Badge de categoría
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.secundario.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -376,9 +301,8 @@ class _TranslationField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color fieldBg = isDark
-        ? AppColors.fondoOscuroSecundario
-        : AppColors.fondoSecundario;
+    final Color fieldBg =
+        isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario;
 
     return Container(
       decoration: BoxDecoration(
@@ -412,17 +336,18 @@ class _TranslationField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Escribe en español',
           hintStyle: TextStyle(
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+            color: Theme.of(context)
+                .colorScheme
+                .onSurface
+                .withValues(alpha: 0.35),
             fontSize: 15,
           ),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          // Ícono de micrófono decorativo (igual a la imagen)
-          ),
         ),
-      );
+      ),
+    );
   }
 }
 

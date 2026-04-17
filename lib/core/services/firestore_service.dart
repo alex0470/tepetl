@@ -1,8 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Ya no necesitamos el import de CSV ni rootBundle en este archivo
-// si ya no vas a hacer migraciones masivas desde aquí.
-
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -18,6 +15,8 @@ class FirestoreService {
         'ultima_conexion': FieldValue.serverTimestamp(),
         'insignias_desbloqueadas': [], 
         'createdAt': FieldValue.serverTimestamp(),
+        'onboardingCompletado': false,
+        'nivel_seleccionado': false,
       });
       
       await _db

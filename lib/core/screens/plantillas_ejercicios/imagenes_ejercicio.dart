@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:tepetl/core/screens/principales/main_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
-import 'package:tepetl/core/screens/errores/leccion_resumen.dart';
-import 'package:tepetl/core/models/modelo_revision.dart';
+import 'package:tepetl/core/models/modelo_ejercicio.dart';
 
-/// Modelo de una opción de imagen.
+/// Par label + URL de imagen que se construye consultando Firestore.
 class ImageOption {
-  final String imageUrl;
   final String label;
+  final String? imageUrl; // null mientras carga o si no se encontró
 
-  const ImageOption({required this.imageUrl, required this.label});
+  const ImageOption({required this.label, this.imageUrl});
 }
 
 class PlantillaIdentificarImagen extends StatefulWidget {
-  const PlantillaIdentificarImagen({super.key});
+  final EjercicioModel ejercicio;
+  final Function(bool) onCompletado;
+
+  const PlantillaIdentificarImagen({
+    super.key,
+    required this.ejercicio,
+    required this.onCompletado,
+  });
 
   @override
   State<PlantillaIdentificarImagen> createState() =>
@@ -29,47 +34,93 @@ class _PlantillaIdentificarImagenState
   int? _selectedIndex;
   bool _verified = false;
   bool _hintVisible = false;
-  int _hearts = 5;
+  bool _loadingImages = true;
 
-  // ── Constantes del ejercicio ──────────────────────────────────────────────
-  static const String _nahuatlWord = 'Calli';
-  static const int _correctIndex = 0; // índice de la opción correcta
-  static const String _hintText =
-      '"Calli" en náhuatl significa "casa" o "hogar". Es una de las palabras más básicas del vocabulario cotidiano.';
+  // ── Datos dinámicos ───────────────────────────────────────────────────────
+  late String _palabraNahuatl; // extraída del contenido entre comillas simples
+  late String _correctAnswer;
+  late String _hintText;
+  late int _correctIndex;
+  List<ImageOption> _options = [];
 
-  static const List<ImageOption> _options = [
-    ImageOption(
-      imageUrl:
-          'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400',
-      label: 'Casa',
-    ),
-    ImageOption(
-      imageUrl:
-          'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400',
-      label: 'Agua',
-    ),
-    ImageOption(
-      imageUrl:
-          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-      label: 'Sol',
-    ),
-    ImageOption(
-      imageUrl:
-          'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400',
-      label: 'Árbol',
-    ),
-  ];
+  @override
+  @override
+  void initState() {
+    super.initState();
+    _correctAnswer = widget.ejercicio.respuesta;
+    _hintText = widget.ejercicio.pista;
 
-  // ── Lógica ────────────────────────────────────────────────────────────────
+    // Extraer la palabra en náhuatl del contenido
+    final match = RegExp(r"'([^']+)'").firstMatch(widget.ejercicio.contenido);
+    _palabraNahuatl = match != null ? match.group(1)! : widget.ejercicio.contenido;
+
+    // 1. Copiamos las opciones para no modificar la lista original
+    List<String> opcionesMezcladas = List.from(widget.ejercicio.opciones);
+
+    // 2. ¡LA MAGIA! Mezclamos la lista al azar
+    opcionesMezcladas.shuffle();
+
+    // 3. Inicializamos las opciones de imagen con la lista ya mezclada
+    _options = opcionesMezcladas
+        .map((label) => ImageOption(label: label))
+        .toList();
+
+    // 4. Calculamos en qué índice quedó la respuesta correcta tras mezclar
+    _correctIndex = opcionesMezcladas.indexOf(_correctAnswer);
+
+    _cargarImagenes();
+  }
+
+  Future<void> _cargarImagenes() async {
+    final db = FirebaseFirestore.instance;
+    
+    // Usamos _options porque ya están mezcladas. 
+    // Si usamos widget.ejercicio.opciones, ¡desharíamos la mezcla al terminar de cargar!
+    final futures = _options.map((opcionActual) async {
+      try {
+        final snap = await db
+            .collection('vocabulario')
+            .where('traduccion', isEqualTo: opcionActual.label)
+            .limit(1)
+            .get();
+
+        if (snap.docs.isNotEmpty) {
+          final url = snap.docs.first.data()['imagen_url'] as String?;
+          return ImageOption(label: opcionActual.label, imageUrl: url);
+        }
+      } catch (_) {}
+      
+      // Si no encontramos nada, devolvemos sin imagen
+      return ImageOption(label: opcionActual.label);
+    });
+
+    final results = await Future.wait(futures);
+
+    if (!mounted) return;
+    setState(() {
+      // Guardamos los resultados que ya traen las imágenes y respetan el orden mezclado
+      _options = results;
+      _loadingImages = false;
+    });
+  }
+
+  // ── Lógica de verificación ─────────────────────────────────────────────────
   void _verify() {
     if (_selectedIndex == null || _verified) return;
 
-    final bool isCorrect = _selectedIndex == _correctIndex;
+    // Guard: si _correctIndex es -1 (respuesta no encontrada en opciones),
+    // comparamos por label directamente
+    final bool isCorrect = _correctIndex != -1
+        ? _selectedIndex == _correctIndex
+        : _options[_selectedIndex!].label == _correctAnswer;
 
     setState(() {
       _verified = true;
-      if (!isCorrect && _hearts > 0) _hearts--;
     });
+
+    final String explanation = isCorrect
+        ? 'Excelente! Has seleccionado la imagen correcta de "$_correctAnswer".'
+        : 'La imagen correcta era la de "$_correctAnswer".\n${widget.ejercicio.pista}';
 
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
@@ -80,10 +131,8 @@ class _PlantillaIdentificarImagenState
         backgroundColor: Colors.transparent,
         builder: (_) => RespuestaSheet(
           isCorrect: isCorrect,
-          explanation: isCorrect
-              ? '"Calli" significa "casa" en náhuatl. Representa el hogar y el refugio en la cultura azteca.'
-              : 'La respuesta correcta es "Casa". En náhuatl, "Calli" hace referencia al hogar o lugar de habitación.',
-          correctAnswer: _options[_correctIndex].label,
+          explanation: explanation,
+          correctAnswer: _correctAnswer,
           onContinue: () => Navigator.of(context).pop(),
         ),
       ).then((_) {
@@ -92,13 +141,7 @@ class _PlantillaIdentificarImagenState
           _verified = false;
           _selectedIndex = null;
         });
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            pageBuilder: (_, _, _) => LeccionResumen(result: exampleLessonResult),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
+        widget.onCompletado(isCorrect);
       });
     });
   }
@@ -106,9 +149,7 @@ class _PlantillaIdentificarImagenState
   // ── Colores de borde según estado ─────────────────────────────────────────
   Color _borderColor(int index) {
     if (!_verified) {
-      return index == _selectedIndex
-          ? AppColors.secundario
-          : Colors.transparent;
+      return index == _selectedIndex ? AppColors.secundario : Colors.transparent;
     }
     if (index == _correctIndex) return AppColors.secundario;
     if (index == _selectedIndex) return Colors.red.shade400;
@@ -117,9 +158,7 @@ class _PlantillaIdentificarImagenState
 
   double _borderWidth(int index) {
     if (!_verified && index == _selectedIndex) return 3;
-    if (_verified && (index == _correctIndex || index == _selectedIndex)) {
-      return 3;
-    }
+    if (_verified && (index == _correctIndex || index == _selectedIndex)) return 3;
     return 0;
   }
 
@@ -128,14 +167,10 @@ class _PlantillaIdentificarImagenState
     final double sw = MediaQuery.of(context).size.width;
     final double sh = MediaQuery.of(context).size.height;
     final bool isWide = sw > 600;
-
     final double contentWidth =
         isWide ? (sw * 0.75).clamp(600, 900) : double.infinity;
     final double gridWidth =
         isWide ? (sw * 1).clamp(520, 620) : double.infinity;
-    final double progressWidth =
-        isWide ? (sw * 1.0).clamp(600, 1700) : double.infinity;
-
     final bool hasSelection = _selectedIndex != null;
 
     return Scaffold(
@@ -143,27 +178,6 @@ class _PlantillaIdentificarImagenState
       body: SafeArea(
         child: Column(
           children: [
-            // ── AppBar ────────────────────────────────────────────────────
-            AppbarEjercicios(
-              title: 'IDENTIFICAR TEXTOS',
-              hearts: _hearts,
-              onClose: () => Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (_, _, _) => const MainScreen(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-            ),
-
-            // ── Barra de progreso ─────────────────────────────────────────
-            LessonProgressBar(
-              lessonLabel: 'LECCIÓN 2',
-              progress: 0.45,
-              progressWidth: progressWidth,
-            ),
-
-            // ── Contenido scrollable ──────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
@@ -175,9 +189,9 @@ class _PlantillaIdentificarImagenState
                       children: [
                         SizedBox(height: sh * 0.03),
 
-                        // ── Título ──────────────────────────────────────
+                        // ── Instrucción ──────────────────────────────────
                         Text(
-                          'Seleccione la imagen correcta para',
+                          'Selecciona la imagen correcta para',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 22,
@@ -188,12 +202,12 @@ class _PlantillaIdentificarImagenState
 
                         const SizedBox(height: 6),
 
-                        // ── Palabra en náhuatl ──────────────────────────
+                        // ── Palabra en náhuatl ────────────────────────────
                         Text(
-                          "'$_nahuatlWord'",
+                          "'$_palabraNahuatl'",
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 24,
+                            fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: AppColors.secundario,
                           ),
@@ -215,76 +229,58 @@ class _PlantillaIdentificarImagenState
 
                         SizedBox(height: sh * 0.025),
 
-                        // ── Grid de imágenes ────────────────────────────
-                        SizedBox(
-                          width: gridWidth,
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _options.length,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                              childAspectRatio: isWide ? 1.1 : 1.05,
-                            ),
-                            itemBuilder: (context, index) {
-                              return _ImageOptionCard(
-                                option: _options[index],
-                                isSelected: _selectedIndex == index,
-                                borderColor: _borderColor(index),
-                                borderWidth: _borderWidth(index),
-                                onTap: _verified
-                                    ? null
-                                    : () => setState(
-                                        () => _selectedIndex = index),
-                              );
-                            },
-                          ),
-                        ),
+                        // ── Grid de imágenes ──────────────────────────────
+                        _loadingImages
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 48),
+                                child: CircularProgressIndicator(),
+                              )
+                            : SizedBox(
+                                width: gridWidth,
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _options.length,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 14,
+                                    mainAxisSpacing: 14,
+                                    childAspectRatio: isWide ? 1.1 : 1.05,
+                                  ),
+                                  itemBuilder: (context, index) {
+                                    return _ImageOptionCard(
+                                      option: _options[index],
+                                      isSelected: _selectedIndex == index,
+                                      borderColor: _borderColor(index),
+                                      borderWidth: _borderWidth(index),
+                                      onTap: _verified
+                                          ? null
+                                          : () => setState(
+                                              () => _selectedIndex = index),
+                                    );
+                                  },
+                                ),
+                              ),
 
+                        // ── Sección pista + botón (solo en wide) ──────────
                         if (isWide) ...[
-                          SizedBox(height: sh * 0.08),
-
-                          // ── Pista visible ───────────────────────────────
-                          if (_hintVisible) ...[
+                          SizedBox(height: sh * 0.04),
+                          if (_hintVisible && _hintText.isNotEmpty) ...[
                             _HintBox(text: _hintText),
                             const SizedBox(height: 16),
                           ],
-
-                          // ── Botón pista ─────────────────────────────────
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() => _hintVisible = !_hintVisible),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Icon(Icons.lightbulb_outline,
-                                    color: AppColors.secundario, size: 18),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _hintVisible
-                                      ? 'Ocultar pista'
-                                      : '¿Necesitas una pista?',
-                                  style: const TextStyle(
-                                    color: AppColors.secundario,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                          if (_hintText.isNotEmpty)
+                            _PistaToggle(
+                              visible: _hintVisible,
+                              onTap: () =>
+                                  setState(() => _hintVisible = !_hintVisible),
                             ),
-                          ),
-
                           const SizedBox(height: 18),
-
-                          // ── Botón verificar ─────────────────────────────
                           BotonVerificarEjercicio(
                             enabled: hasSelection && !_verified,
                             onPressed: _verify,
                           ),
-
                           SizedBox(height: sh * 0.02),
                         ],
                       ],
@@ -296,6 +292,8 @@ class _PlantillaIdentificarImagenState
           ],
         ),
       ),
+
+      // ── Bottom bar móvil ──────────────────────────────────────────────────
       bottomNavigationBar: !isWide
           ? SafeArea(
               top: false,
@@ -306,28 +304,13 @@ class _PlantillaIdentificarImagenState
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    GestureDetector(
-                      onTap: () => setState(() => _hintVisible = !_hintVisible),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(Icons.lightbulb_outline,
-                              color: AppColors.secundario, size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            _hintVisible
-                                ? 'Ocultar pista'
-                                : '¿Necesitas una pista?',
-                            style: const TextStyle(
-                              color: AppColors.secundario,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                    if (_hintText.isNotEmpty)
+                      _PistaToggle(
+                        visible: _hintVisible,
+                        onTap: () =>
+                            setState(() => _hintVisible = !_hintVisible),
                       ),
-                    ),
-                    if (_hintVisible) ...[
+                    if (_hintVisible && _hintText.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       _HintBox(text: _hintText),
                     ],
@@ -341,6 +324,36 @@ class _PlantillaIdentificarImagenState
               ),
             )
           : null,
+    );
+  }
+}
+
+// ── Botón de pista reutilizable ───────────────────────────────────────────────
+class _PistaToggle extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onTap;
+
+  const _PistaToggle({required this.visible, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Icon(Icons.lightbulb_outline, color: AppColors.secundario, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            visible ? 'Ocultar pista' : '¿Necesitas una pista?',
+            style: const TextStyle(
+              color: AppColors.secundario,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -370,10 +383,7 @@ class _ImageOptionCard extends StatelessWidget {
         curve: Curves.easeOut,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: borderColor,
-            width: borderWidth,
-          ),
+          border: Border.all(color: borderColor, width: borderWidth),
           boxShadow: isSelected
               ? [
                   BoxShadow(
@@ -391,30 +401,35 @@ class _ImageOptionCard extends StatelessWidget {
                 ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(
-              borderWidth > 0 ? 13 : 16),
+          borderRadius: BorderRadius.circular(borderWidth > 0 ? 13 : 16),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // ── Imagen ────────────────────────────────────────────────
-              Image.network(
-                option.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
-                  color: Colors.grey.shade800,
-                  child: const Icon(Icons.image_not_supported,
-                      color: Colors.white54, size: 36),
-                ),
-              ),
+              // ── Imagen o placeholder ──────────────────────────────────
+              option.imageUrl != null && option.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      option.imageUrl!,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (_, child, progress) => progress == null
+                          ? child
+                          : Container(
+                              color: Colors.grey.shade900,
+                              child: const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                      errorBuilder: (_, _, _) => _Placeholder(label: option.label),
+                    )
+                  : _Placeholder(label: option.label),
 
-              // ── Gradiente inferior ────────────────────────────────────
+              // ── Gradiente + label ─────────────────────────────────────
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
@@ -431,18 +446,49 @@ class _ImageOptionCard extends StatelessWidget {
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black45,
-                          blurRadius: 4,
-                        ),
-                      ],
+                      shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
                     ),
                   ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Placeholder cuando no hay imagen disponible.
+class _Placeholder extends StatelessWidget {
+  final String label;
+
+  const _Placeholder({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.secundario.withValues(alpha: 0.15),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_outlined,
+                color: AppColors.secundario.withValues(alpha: 0.5), size: 36),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.5),
+              ),
+            ),
+          ],
         ),
       ),
     );

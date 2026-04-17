@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tepetl/core/services/firestore_service.dart';
 import 'package:tepetl/core/screens/autenticacion/recuperar_contra.dart';
 import 'package:tepetl/core/screens/autenticacion/registro.dart';
-import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
@@ -73,24 +71,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text.trim(),
       );
-
-      if (credential.user != null) {
-        // 1. Obtener el rol de la base de datos
-        final firestore = FirestoreService();
-        String rol = await firestore.getUserRole(credential.user!.uid);
-        bool esAdmin = (rol == 'admin');
-
-        // 2. Pasar el resultado al MainScreen
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => MainScreen(isAdmin: esAdmin)),
-          );
-        }
+      if (mounted) {
+      // Quita la pantalla de login para que se vea lo que el AuthWrapper decidió mostrar
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } on FirebaseAuthException catch (e) {
       setState(() {

@@ -67,6 +67,7 @@ class _MainScreenState extends State<MainScreen> {
         children: screens,
       ),
       bottomNavigationBar: BottomNav(
+        isAdmin: widget.isAdmin,
         isDark: isDark,
         currentIndex: currentIndex,
         onTap: (i) {

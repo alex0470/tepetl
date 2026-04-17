@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tepetl/core/screens/plantillas_ejercicios/completar.dart';
+import 'package:tepetl/core/screens/plantillas_ejercicios/examen_nivel_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 
 class ProgresoMapWidget extends StatelessWidget {
@@ -252,7 +252,7 @@ class ProgresoMapWidget extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push(
                     PageRouteBuilder(
-                      pageBuilder: (_, _, _) => const PlantillaCompletar(),
+                      pageBuilder: (_, _, _) => const ExamenNivelScreen(),
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tepetl/core/screens/principales/main_screen.dart';
-
+import 'package:tepetl/core/screens/plantillas_ejercicios/examen_nivel_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
 import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
@@ -11,10 +10,9 @@ class NivelSeleccionScreen extends StatelessWidget {
   const NivelSeleccionScreen({super.key});
 
   static const double _kBreakpoint = 700;
-
-  static const double _cardWideWidth    = 450;
-  static const double _cardNarrowWidth  = 350;
-  static const double _cardWideHeight   = 550;
+  static const double _cardWideWidth = 450;
+  static const double _cardNarrowWidth = 350;
+  static const double _cardWideHeight = 550;
   static const double _cardNarrowHeight = 400;
 
   Color _cardBg(BuildContext context) {
@@ -32,49 +30,34 @@ class NivelSeleccionScreen extends StatelessWidget {
     ];
   }
 
-  Future<void> _guardarNivel(BuildContext context, String nivel) async {
-    // Mostramos un diálogo de carga
+  Future<void> _finalizarSeleccionNivel(BuildContext context, String nivelSeleccionado) async {
+    // Mostrar indicador de carga
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
+
+    final navigator = Navigator.of(context, rootNavigator: true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Cambia 'usuarios' si tu colección tiene otro nombre (ej. 'users')
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
-            .set(
-              {'nivel': nivel}, 
-              SetOptions(merge: true),
-            );
+            .update({
+              'nivel_educativo': nivelSeleccionado,
+              'nivel_seleccionado': true,
+            });
       }
 
-      if (context.mounted) Navigator.pop(context);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('¡Nivel seleccionado correctamente!'),
-            backgroundColor: AppColors.primario,
-          ),
-        );
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainScreen(isAdmin: false), 
-          ),
-          (route) => false, 
-        ); 
-      }
+      navigator.pop();
     } catch (e) {
-      if (context.mounted) Navigator.pop(context); // Quitamos la carga en caso de error
+      navigator.pop();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Error al guardar el nivel. Intenta de nuevo.'),
             backgroundColor: Colors.red,
           ),
@@ -82,6 +65,8 @@ class NivelSeleccionScreen extends StatelessWidget {
       }
     }
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +79,6 @@ class NivelSeleccionScreen extends StatelessWidget {
       ),
     );
   }
-
   //  LAYOUT ESTRECHO
   Widget _narrowLayout(BuildContext context) {
     return SingleChildScrollView(
@@ -119,9 +103,7 @@ class NivelSeleccionScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             child: _header(context),
           ),
-
           const SizedBox(height: 20),
-
           Center(
             child: SizedBox(
               width: _cardNarrowWidth,
@@ -148,7 +130,7 @@ class NivelSeleccionScreen extends StatelessWidget {
                   title: 'Básico',
                   subtitle: '(Tlapehualiztli)',
                   desc: 'Empiezas desde cero. Palabras simples y saludos.',
-                  onTap: () => _guardarNivel(context, 'basico'),
+                  onTap: () => _finalizarSeleccionNivel(context, 'basico'),
                 ),
                 const SizedBox(height: 12),
                 _levelTile(
@@ -159,9 +141,8 @@ class NivelSeleccionScreen extends StatelessWidget {
                   title: 'Intermedio',
                   subtitle: '(Tlahco)',
                   desc: 'Puedes formar frases y entender contextos cotidianos.',
-                  onTap: () => _guardarNivel(context, 'intermedio'),
+                  onTap: () => _finalizarSeleccionNivel(context, 'intermedio'),
                 ),
-                // Nivel Avanzado eliminado
               ],
             ),
           ),
@@ -171,7 +152,6 @@ class NivelSeleccionScreen extends StatelessWidget {
       ),
     );
   }
-
   //  LAYOUT ANCHO
   Widget _wideLayout(BuildContext context) {
     return SingleChildScrollView(
@@ -238,7 +218,7 @@ class NivelSeleccionScreen extends StatelessWidget {
                                 title: 'Básico',
                                 subtitle: '(Tlapehualiztli)',
                                 desc: 'Empiezas desde cero. Palabras simples y saludos.',
-                                onTap: () => _guardarNivel(context, 'basico'),
+                                onTap: () => _finalizarSeleccionNivel(context, 'basico'),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -251,7 +231,7 @@ class NivelSeleccionScreen extends StatelessWidget {
                                 title: 'Intermedio',
                                 subtitle: '(Tlahco)',
                                 desc: 'Puedes formar frases y entender contextos cotidianos.',
-                                onTap: () => _guardarNivel(context, 'intermedio'),
+                                onTap: () => _finalizarSeleccionNivel(context, 'intermedio'),
                               ),
                             ),
                             // Nivel Avanzado eliminado
@@ -294,7 +274,6 @@ class NivelSeleccionScreen extends StatelessWidget {
       ),
     );
   }
-
   //  WIDGETS COMPARTIDOS
   Widget _header(BuildContext context) {
     return Column(
@@ -408,12 +387,12 @@ class NivelSeleccionScreen extends StatelessWidget {
                     child: BotonesSombra(
                       text: 'Comenzar prueba',
                       onPressed: () {
-                        // Acción temporal hasta que entrenes a tu IA
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('La evaluación con IA estará disponible muy pronto.'),
-                          ),
-                        );
+                        Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ExamenNivelScreen(),
+                        ),
+                      );
                       },
                       width: 250,
                       height: 50,

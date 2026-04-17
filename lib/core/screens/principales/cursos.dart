@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/plantillas_ejercicios/examen_nivel_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/completar.dart';
 
@@ -468,7 +469,7 @@ class _TarjetaCurso extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PlantillaCompletar(),
+                        builder: (context) => const ExamenNivelScreen(),
                       ),
                     );
                   },
@@ -656,7 +657,7 @@ class _TarjetaSugerencia extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PlantillaCompletar(),
+                          builder: (context) => const ExamenNivelScreen(),
                         ),
                       );
                     },
@@ -679,7 +680,7 @@ class _TarjetaSugerencia extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PlantillaCompletar(),
+                          builder: (context) => const ExamenNivelScreen(),
                         ),
                       );
                     },

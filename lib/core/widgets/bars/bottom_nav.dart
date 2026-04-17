@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 
-// ── TEMPORAL: cambia esta variable para probar los dos roles ─────────────────
-// true  → muestra "Usuarios" (administrador)
-// false → muestra "Diccionario" (usuario normal)
-const bool kEsAdmin = true;
-// ─────────────────────────────────────────────────────────────────────────────
-
 class BottomNav extends StatelessWidget {
   final bool isDark;
   final int currentIndex;
   final Function(int) onTap;
-
-  // Si no se pasa el rol desde fuera, usa la variable local temporal
-  final bool esAdmin;
+  final bool isAdmin;
 
   const BottomNav({
     super.key,
     required this.isDark,
     required this.currentIndex,
     required this.onTap,
-    this.esAdmin = kEsAdmin,
+    required this.isAdmin,
   });
 
   @override
@@ -31,7 +23,7 @@ class BottomNav extends StatelessWidget {
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85);
 
     // Último ítem cambia según el rol
-    final lastItem = esAdmin
+    final lastItem = isAdmin
         ? {"icon": Icons.people_outline, "label": "Usuarios"}
         : {"icon": Icons.translate_outlined, "label": "Diccionario"};
 

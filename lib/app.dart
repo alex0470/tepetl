@@ -1,26 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ Nuevo
 import 'package:tepetl/core/screens/usuario/perfil_ajustes.dart';
-import 'package:tepetl/core/screens/principales/main_screen.dart';
+import 'package:tepetl/core/widgets/usuario/wrapper_onboarding.dart';
 import 'core/theme/app_theme.dart';
-import 'core/screens/inicio/splash_screen.dart';
-import 'core/screens/inicio/landing_page.dart';
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final ThemeMode initialTheme; // ✅ Recibe el tema de main.dart
+
+  const MyApp({super.key, required this.initialTheme});
+
+  static _MyAppState of(BuildContext context) => 
+      context.findAncestorStateOfType<_MyAppState>()!;
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  late ThemeMode _themeMode;
 
-  void toggleTheme(bool isDark) {
+  @override
+  void initState() {
+    super.initState();
+    _themeMode = widget.initialTheme;
+  }
+
+  ThemeMode get currentTheme => _themeMode;
+
+  Future<void> toggleTheme(bool isDark) async {
     setState(() {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     });
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme_mode', isDark ? 'dark' : 'light');
   }
 
   @override
@@ -31,33 +44,9 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          // Mientras Firebase verifica la sesión (especialmente útil en Web)
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          // Si snapshot tiene datos, significa que el usuario está autenticado
-          if (snapshot.hasData) {
-            return const MainScreen();
-          }
-
-          // Si no hay datos, mostramos la Landing o Splash según la plataforma
-          return kIsWeb ? const LandingPage() : const SplashScreen();
-        },
-      ),
-
+      home: const AuthWrapper(),
       routes: {
-        "/home": (context) => const LandingPage(),
-        "/ajustes": (context) => PerfilAjustesScreen(
-          onThemeChanged: toggleTheme,
-          currentThemeMode: _themeMode,
-        ),
+        '/ajustes': (_) => const PerfilAjustesScreen(),
       },
     );
   }

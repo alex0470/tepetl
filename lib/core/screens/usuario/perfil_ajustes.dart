@@ -1,14 +1,12 @@
 import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tepetl/app.dart';
 import 'package:tepetl/core/screens/autenticacion/inicio_sesion.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
 
-// ── Helper: insetPadding para diálogos en pantallas anchas ───────────────────
-// En wide (>700px) limita el diálogo al 60% del ancho; en móvil usa el default.
 EdgeInsets _dialogInsetPadding(BuildContext context) {
   final w = MediaQuery.of(context).size.width;
   if (w > 700) {
@@ -18,18 +16,11 @@ EdgeInsets _dialogInsetPadding(BuildContext context) {
   return const EdgeInsets.symmetric(horizontal: 40, vertical: 24);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PANTALLA 1 — Perfil y Ajustes
-// Se abre al tocar el avatar en la AppBar
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class PerfilAjustesScreen extends StatefulWidget {
-  final void Function(bool isDark)? onThemeChanged;
   final ThemeMode? currentThemeMode;
 
   const PerfilAjustesScreen({
     super.key,
-    this.onThemeChanged,
     this.currentThemeMode,
   });
 
@@ -38,7 +29,6 @@ class PerfilAjustesScreen extends StatefulWidget {
 }
 
 class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
-  late bool _modoDoscuro;
   String _nombre = 'Cargando...';
   String _rol = '';
   String _nivel = '';
@@ -47,7 +37,6 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
   @override
   void initState() {
     super.initState();
-    _modoDoscuro = widget.currentThemeMode == ThemeMode.dark;
     _cargarDatosUsuario();
   }
 
@@ -134,14 +123,23 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final globalTheme = MyApp.of(context).currentTheme;
+    bool isDarkMode;
+    
+    if (globalTheme == ThemeMode.system) {
+      // Si está en automático, preguntamos al sistema operativo
+      isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    } else {
+      // Si el usuario eligió uno fijo, usamos ese
+      isDarkMode = globalTheme == ThemeMode.dark;
+    }
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth > 700;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.fondoOscuro : Colors.white,
+      backgroundColor: isDarkMode ? AppColors.fondoOscuro : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDark ? AppColors.fondoOscuro : Colors.white,
+        backgroundColor: isDarkMode ? AppColors.fondoOscuro : Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: BotonAtras(onPressed: () => Navigator.maybePop(context)),
@@ -161,14 +159,14 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
           vertical: 8,
         ),
         child: isWide
-            ? _buildWideLayout(isDark, screenWidth)
-            : _buildNarrowLayout(isDark),
+            ? _buildWideLayout(isDarkMode, screenWidth)
+            : _buildNarrowLayout(isDarkMode),
       ),
     );
   }
 
   // ── Layout ancho (desktop) ───────────────────────────────────────────────
-  Widget _buildWideLayout(bool isDark, double screenWidth) {
+  Widget _buildWideLayout(bool isDarkMode, double screenWidth) {
     // La columna izquierda ocupa ~28% del ancho disponible (era fija en 260)
     final leftWidth = screenWidth * 0.25;
 
@@ -178,23 +176,23 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
         // Columna izquierda: avatar + nombre + badges
         SizedBox(
           width: leftWidth,
-          child: _buildAvatarSection(isDark),
+          child: _buildAvatarSection(isDarkMode),
         ),
         const SizedBox(width: 32),
         // Columna derecha: ajustes
-        Expanded(child: _buildSettingsSections(isDark)),
+        Expanded(child: _buildSettingsSections(isDarkMode)),
       ],
     );
   }
 
   // ── Layout estrecho (móvil) ──────────────────────────────────────────────
-  Widget _buildNarrowLayout(bool isDark) {
+  Widget _buildNarrowLayout(bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildAvatarSection(isDark),
+        _buildAvatarSection(isDarkMode),
         const SizedBox(height: 28),
-        _buildSettingsSections(isDark),
+        _buildSettingsSections(isDarkMode),
       ],
     );
   }
@@ -286,14 +284,14 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
     );
   }
 
-  Widget _buildSettingsSections(bool isDark) {
+  Widget _buildSettingsSections(bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── GENERAL ──────────────────────────────────────────────
-        _SeccionLabel(label: 'GENERAL', isDark: isDark),
+        _SeccionLabel(label: 'GENERAL', isDark: isDarkMode),
         const SizedBox(height: 8),
-        _GrupoAjustes(isDark: isDark, items: [
+        _GrupoAjustes(isDark: isDarkMode, items: [
           _ItemAjuste(
             icono: Icons.school_outlined,
             iconColor: AppColors.secundario,
@@ -319,18 +317,18 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
         const SizedBox(height: 20),
 
         // ── APARIENCIA ────────────────────────────────────────────
-        _SeccionLabel(label: 'APARIENCIA', isDark: isDark),
+        _SeccionLabel(label: 'APARIENCIA', isDark: isDarkMode),
         const SizedBox(height: 8),
-        _GrupoAjustes(isDark: isDark, items: [
+        _GrupoAjustes(isDark: isDarkMode, items: [
           _ItemAjuste(
             icono: Icons.dark_mode_outlined,
             iconColor: AppColors.secundario,
             titulo: 'Modo Oscuro',
             trailing: Switch(
-              value: _modoDoscuro,
-              onChanged: (v) {
-                setState(() => _modoDoscuro = v);
-                widget.onThemeChanged?.call(v);
+              value: isDarkMode,
+              onChanged: (bool newValue) {
+                // Mandamos la orden al controlador global
+                MyApp.of(context).toggleTheme(newValue);
               },
               activeThumbColor: AppColors.secundario,
             ),
@@ -339,9 +337,9 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
         const SizedBox(height: 20),
 
         // ── CUENTA ───────────────────────────────────────────────
-        _SeccionLabel(label: 'CUENTA', isDark: isDark),
+        _SeccionLabel(label: 'CUENTA', isDark: isDarkMode),
         const SizedBox(height: 8),
-        _GrupoAjustes(isDark: isDark, items: [
+        _GrupoAjustes(isDark: isDarkMode, items: [
           _ItemAjuste(
             icono: Icons.security_outlined,
             iconColor: AppColors.secundario,
@@ -353,7 +351,7 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
         // Cerrar sesión
         Container(
           decoration: BoxDecoration(
-            color: isDark
+            color: isDarkMode
                 ? AppColors.fondoOscuroSecundario
                 : AppColors.fondoSecundario,
             borderRadius: BorderRadius.circular(14),
@@ -391,16 +389,13 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
               );
 
               try {
-                // 1. Cerramos sesión en Firebase
                 await FirebaseAuth.instance.signOut();
-                
-                // Quitamos el diálogo de carga
+              
                 if (context.mounted) Navigator.pop(context);
 
                 // 2. Mandamos al usuario a la pantalla de Login y borramos el historial
                 if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
+                  Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (context) => const LoginScreen(), 
                       settings: const RouteSettings(name: '/'),
@@ -460,7 +455,6 @@ class _EditarPerfilDialog extends StatefulWidget {
 class _EditarPerfilDialogState extends State<_EditarPerfilDialog> {
   final _nombreCtrl = TextEditingController(text: 'Alex Alex Alex');
   final _apodoCtrl = TextEditingController(text: 'Aprendiz Intermedio');
-  // En una app real aquí iría el image picker; usamos un placeholder
   String? _imagenSeleccionada;
 
   @override

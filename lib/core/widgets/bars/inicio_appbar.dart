@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/widgets/timers/vidas_timer.dart';
 // Importa tu archivo donde esté PerfilScreen, por ejemplo:
 // import 'package:tepetl/core/screens/perfil_screen.dart';
 
@@ -42,6 +43,11 @@ class InicioAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
+        const Center(
+          child: WidgetCorazonesTimer(),
+        ),
+        
+        const SizedBox(width: 8),
         Padding(
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(

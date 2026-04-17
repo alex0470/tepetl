@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/inputs/respuestas_chips.dart';
-import 'package:tepetl/core/screens/plantillas_ejercicios/escribir.dart';
 import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
-import 'package:tepetl/core/screens/principales/main_screen.dart';
+import 'package:tepetl/core/models/modelo_ejercicio.dart';
 
 class PlantillaCompletar extends StatefulWidget {
-  const PlantillaCompletar({super.key});
+  final EjercicioModel ejercicio;
+  final Function(bool) onCompletado;
+
+  const PlantillaCompletar({
+    super.key,
+    required this.ejercicio,
+    required this.onCompletado,
+  });
 
   @override
   State<PlantillaCompletar> createState() => _PlantillaCompletarState();
@@ -18,35 +23,63 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
   int _selectedIndex = -1;
   bool _hintVisible = false;
   bool _verified = false;
-  int _hearts = 5;
 
-  // Constantes del ejercicio
-  static const String _correctAnswer = 'nitlahtoa';
-  static const int _correctIndex = 1;
-  static const String _hintText =
-      'La palabra que buscas significa "hablar". En náhuatl, los verbos en primera persona comienzan con "ni-".';
+  late String _correctAnswer;
+  late int _correctIndex;
+  late String _hintText;
+  late List<String> _options;
 
-  static const List<String> _options = [
-    'niquihtoa',
-    'nitlahtoa',
-    'nimitztlazohtla',
-  ];
+  // Partes de la frase separadas por el hueco (_____)
+  late String _parte1;
+  late String _parte2;
 
-  static const List<String> _explanations = [
-    '"Niquihtoa" significa "yo digo" o "yo declaro", no "yo hablo". Recuerda que buscamos el verbo para hablar un idioma.',
-    '"Nitlahtoa" significa "yo hablo". Es el verbo "tlahtoa" conjugado en primera persona con el prefijo "ni-", propio del náhuatl clásico.',
-    '"Nimitztlazohtla" significa "te amo" o "te quiero". Recuerda que buscamos el verbo para hablar un idioma.',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _correctAnswer = widget.ejercicio.respuesta;
+    _hintText = widget.ejercicio.pista;
+    
+    // 1. Copiamos las opciones
+    _options = List.from(widget.ejercicio.opciones);
+
+    // 2. Si la respuesta no está en las opciones, la agregamos (al final)
+    if (!_options.contains(_correctAnswer)) {
+      _options.add(_correctAnswer); 
+    }
+
+    // 3. ¡LA MAGIA! Mezclamos la lista de opciones al azar
+    _options.shuffle();
+
+    // 4. Ahora sí, guardamos en qué índice (0, 1, 2...) quedó la respuesta correcta
+    _correctIndex = _options.indexOf(_correctAnswer);
+
+    // 5. Separar la frase en dos partes para el hueco (tu código original)
+    List<String> parts = widget.ejercicio.contenido.split('_____');
+    if (parts.length >= 2) {
+      _parte1 = parts[0];
+      _parte2 = parts.length > 2 ? parts.sublist(1).join('_____') : parts[1];
+    } else {
+      _parte1 = parts.isNotEmpty ? parts[0] : '';
+      _parte2 = '';
+    }
+  }
 
   void _verify() {
     if (_selectedIndex == -1 || _verified) return;
 
-    final bool isCorrect = _selectedIndex == _correctIndex;
+    // Guard: si por algún motivo la respuesta no estaba en opciones,
+    // comparamos por valor en lugar de por índice.
+    final bool isCorrect = _correctIndex != -1
+        ? _selectedIndex == _correctIndex
+        : _options[_selectedIndex] == _correctAnswer;
 
     setState(() {
       _verified = true;
-      if (!isCorrect && _hearts > 0) _hearts--;
     });
+
+    final String explanationText = isCorrect
+        ? '¡Correcto! "$_correctAnswer" completa la frase adecuadamente.'
+        : 'La respuesta correcta era "$_correctAnswer".\n$_hintText';
 
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
@@ -57,7 +90,7 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
         backgroundColor: Colors.transparent,
         builder: (ctx) => RespuestaSheet(
           isCorrect: isCorrect,
-          explanation: _explanations[_selectedIndex],
+          explanation: explanationText,
           correctAnswer: _correctAnswer,
           onContinue: () => Navigator.of(ctx).pop(),
         ),
@@ -67,13 +100,7 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
           _verified = false;
           _selectedIndex = -1;
         });
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            pageBuilder: (ctx, a1, a2) => const PlantillaEscribir(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
+        widget.onCompletado(isCorrect);
       });
     });
   }
@@ -85,9 +112,6 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
     final bool isWide = sw > 1000;
 
     final double contentWidth = isWide ? sw * 0.96 : double.infinity;
-    final double progressWidth =
-        isWide ? (sw * 1.0).clamp(600, 1700) : double.infinity;
-
     final String? selectedWord =
         _selectedIndex != -1 ? _options[_selectedIndex] : null;
     final double iconSize = isWide ? 120 : sw * 0.2;
@@ -99,27 +123,6 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── AppBar ──────────────────────────────────────────────────
-            AppbarEjercicios(
-              title: 'EXPRESIÓN ESCRITA',
-              hearts: _hearts,
-              onClose: () => Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (ctx, a1, a2) => const MainScreen(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-            ),
-
-            // ── Barra de progreso ────────────────────────────────────────
-            LessonProgressBar(
-              lessonLabel: 'LECCIÓN 2',
-              progress: 0.45,
-              progressWidth: progressWidth,
-            ),
-
-            // ── Contenido ────────────────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -128,288 +131,209 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
                     width: contentWidth,
                     child: isWide
                         ? Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Panel izquierdo
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 24,
-                                  horizontal: 32,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: iconSize,
-                                      height: iconSize,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.secundario
-                                            .withValues(alpha: 0.3),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.record_voice_over_outlined,
-                                        color: Colors.white,
-                                        size: 48,
-                                      ),
-                                    ),
-                                    SizedBox(height: sh * 0.04),
-                                    _buildPhrase(
-                                      context,
-                                      isWide,
-                                      selectedWord,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 24,
-                                  horizontal: 32,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'SELECCIONA LA PALABRA QUE FALTA',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.5),
-                                        letterSpacing: 1,
-                                      ),
-                                    ),
-                                    SizedBox(height: instructionSpacing),
-                                    OptionsGrid(
-                                      options: _options,
-                                      selectedIndex: _selectedIndex,
-                                      correctIndex: _correctIndex,
-                                      verified: _verified,
-                                      onSelect: (i) =>
-                                          setState(() => _selectedIndex = i),
-                                    ),
-                                    SizedBox(height: instructionSpacing),
-                                    GestureDetector(
-                                      onTap: () => setState(
-                                        () => _hintVisible = !_hintVisible,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Icon(
-                                            Icons.lightbulb_outline,
-                                            color: AppColors.secundario,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            _hintVisible
-                                                ? 'Ocultar pista'
-                                                : '¿Necesitas una pista?',
-                                            style: TextStyle(
-                                              color: AppColors.secundario,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: hintTextSize,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (_hintVisible) ...[
-                                      const SizedBox(height: 10),
-                                      _buildHint(context),
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // ── Panel izquierdo ──────────────────────────
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 24,
+                                    horizontal: 32,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      _buildIcon(iconSize),
+                                      SizedBox(height: sh * 0.04),
+                                      _buildPhrase(context, isWide, selectedWord),
                                     ],
-                                    const SizedBox(height: 28),
-                                    BotonVerificarEjercicio(
-                                      enabled:
-                                          _selectedIndex != -1 && !_verified,
-                                      onPressed: _verify,
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          children: [
-                            SizedBox(height: sh * 0.04),
 
-                            // Ícono
-                            Container(
-                              width: iconSize,
-                              height: iconSize,
-                              constraints: const BoxConstraints(
-                                maxWidth: 80,
-                                maxHeight: 80,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.secundario
-                                    .withValues(alpha: 0.3),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.record_voice_over_outlined,
-                                color: Colors.white,
-                                size: 38,
-                              ),
-                            ),
-
-                            SizedBox(height: sh * 0.03),
-
-                            // Frase principal
-                            _buildPhrase(context, isWide, selectedWord),
-
-                            SizedBox(height: sh * 0.04),
-
-                            // Pista
-                            if (_hintVisible) _buildHint(context),
-
-                            const SizedBox(height: 20),
-
-                            Text(
-                              'SELECCIONA LA PALABRA QUE FALTA',
-                              style: TextStyle(
-                                fontSize: titleFontSize,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.4),
-                                letterSpacing: 1,
-                              ),
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Opciones
-                            OptionsGrid(
-                              options: _options,
-                              selectedIndex: _selectedIndex,
-                              correctIndex: _correctIndex,
-                              verified: _verified,
-                              onSelect: (i) =>
-                                  setState(() => _selectedIndex = i),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Botón pista
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 30,
-                              ),
-                              child: GestureDetector(
-                                onTap: () => setState(
-                                  () => _hintVisible = !_hintVisible,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.lightbulb_outline,
-                                      color: AppColors.secundario,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      _hintVisible
-                                          ? 'Ocultar pista'
-                                          : '¿Necesitas una pista?',
-                                      style: const TextStyle(
-                                        color: AppColors.secundario,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
+                              // ── Panel derecho ────────────────────────────
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 24,
+                                    horizontal: 32,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      _buildInstruccion(20),
+                                      SizedBox(height: instructionSpacing),
+                                      OptionsGrid(
+                                        options: _options,
+                                        selectedIndex: _selectedIndex,
+                                        correctIndex: _correctIndex,
+                                        verified: _verified,
+                                        onSelect: (i) =>
+                                            setState(() => _selectedIndex = i),
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(height: instructionSpacing),
+                                      _buildPistaToggle(hintTextSize),
+                                      if (_hintVisible &&
+                                          _hintText.isNotEmpty) ...[
+                                        const SizedBox(height: 10),
+                                        _buildHint(context),
+                                      ],
+                                      const SizedBox(height: 28),
+                                      BotonVerificarEjercicio(
+                                        enabled:
+                                            _selectedIndex != -1 && !_verified,
+                                        onPressed: _verify,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Botón verificar
-                            BotonVerificarEjercicio(
-                              enabled: _selectedIndex != -1 && !_verified,
-                              onPressed: _verify,
-                            ),
-                          ],
-                        ),
+                            ],
+                          )
+                        // ── Versión móvil ──────────────────────────────────
+                        : Column(
+                            children: [
+                              SizedBox(height: sh * 0.04),
+                              _buildIcon(iconSize),
+                              SizedBox(height: sh * 0.03),
+                              _buildPhrase(context, isWide, selectedWord),
+                              SizedBox(height: sh * 0.04),
+                              if (_hintVisible && _hintText.isNotEmpty)
+                                _buildHint(context),
+                              const SizedBox(height: 20),
+                              _buildInstruccion(titleFontSize),
+                              const SizedBox(height: 16),
+                              OptionsGrid(
+                                options: _options,
+                                selectedIndex: _selectedIndex,
+                                correctIndex: _correctIndex,
+                                verified: _verified,
+                                onSelect: (i) =>
+                                    setState(() => _selectedIndex = i),
+                              ),
+                              const SizedBox(height: 24),
+                              _buildPistaToggle(14),
+                              const SizedBox(height: 20),
+                              BotonVerificarEjercicio(
+                                enabled: _selectedIndex != -1 && !_verified,
+                                onPressed: _verify,
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
               ),
             ),
-          ),
           ],
         ),
       ),
     );
   }
 
+  // ── Widgets auxiliares ───────────────────────────────────────────────────
+
+  Widget _buildIcon(double size) {
+    return Container(
+      width: size,
+      height: size,
+      constraints: const BoxConstraints(maxWidth: 80, maxHeight: 80),
+      decoration: BoxDecoration(
+        color: AppColors.secundario.withValues(alpha: 0.3),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.record_voice_over_outlined,
+        color: Colors.white,
+        size: 38,
+      ),
+    );
+  }
+
+  Widget _buildInstruccion(double fontSize) {
+    return Text(
+      'SELECCIONA LA PALABRA QUE FALTA',
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+        letterSpacing: 1,
+      ),
+    );
+  }
+
+  Widget _buildPistaToggle(double fontSize) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 30),
+      child: GestureDetector(
+        onTap: () => setState(() => _hintVisible = !_hintVisible),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Icon(Icons.lightbulb_outline, color: AppColors.secundario, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              _hintVisible ? 'Ocultar pista' : '¿Necesitas una pista?',
+              style: TextStyle(
+                color: AppColors.secundario,
+                fontWeight: FontWeight.w600,
+                fontSize: fontSize,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Construye la frase con el hueco dinámico.
+  /// Usa [_parte1] y [_parte2] calculadas en initState, así el split
+  /// solo ocurre una vez y no en cada rebuild.
   Widget _buildPhrase(BuildContext ctx, bool isWide, String? selectedWord) {
     final TextStyle base = TextStyle(
-      fontSize: isWide ? 36 : 30,
+      fontSize: isWide ? 36 : 26,
       fontWeight: FontWeight.bold,
       color: Theme.of(ctx).colorScheme.onSurface,
     );
 
     final InlineSpan blank = TextSpan(
       text: selectedWord ?? '_______',
-      style: const TextStyle(
+      style: TextStyle(
+        fontSize: isWide ? 36 : 26,
+        fontWeight: FontWeight.bold,
         color: AppColors.secundario,
-        decoration: TextDecoration.underline, decorationColor: AppColors.secundario
+        decoration: TextDecoration.underline,
+        decorationColor: AppColors.secundario,
       ),
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text.rich(
-          TextSpan(
-            style: base,
-            children: [
-              const TextSpan(text: 'Nehuatl '),
-              blank,
-              const TextSpan(text: ' '),
-              TextSpan(text: 'Nahuatlahtolli', style: base),
-            ],
-          ),
-          textAlign: TextAlign.center,
-          softWrap: true,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Text.rich(
+        TextSpan(
+          style: base,
+          children: [
+            TextSpan(text: _parte1),
+            blank,
+            TextSpan(text: _parte2),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          '(Hablo Náhuatl)',
-          style: TextStyle(
-            fontSize: isWide ? 18 : 15,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        textAlign: TextAlign.center,
+        softWrap: true,
+      ),
     );
   }
 
-  // FIX: recibe BuildContext como parámetro en lugar de usar context directamente
   Widget _buildHint(BuildContext context) {
     final double sw = MediaQuery.of(context).size.width;
-    const double horizontalPadding = 24;
 
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: sw > 1000 ? 0 : horizontalPadding,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: sw > 1000 ? 0 : 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
         child: Container(

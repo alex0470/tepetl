@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tepetl/core/screens/autenticacion/inicio_sesion.dart';
-import 'package:tepetl/core/screens/principales/main_screen.dart';
-import 'package:tepetl/core/services/firestore_service.dart';
 import 'dart:async';
 
 import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/widgets/usuario/wrapper_onboarding.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -75,29 +72,14 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 400));
     
     if (mounted) {
-      final user = FirebaseAuth.instance.currentUser;
-      Widget nextScreen;
-
-      if (user != null) {
-        final firestore = FirestoreService();
-        String rol = await firestore.getUserRole(user.uid);
-        bool esAdmin = (rol == 'admin');
-        nextScreen = MainScreen(isAdmin: esAdmin);
-      } else {
-        nextScreen = const LoginScreen();
-      }
-
-      // Verificamos nuevamente mounted por si el await de getUserRole tardó
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, _, _) => nextScreen,
-            transitionsBuilder: (_, anim, _, child) =>
-                FadeTransition(opacity: anim, child: child),
-            transitionDuration: const Duration(milliseconds: 600),
-          ),
-        );
-      }
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, _, _) => const AuthWrapper(),
+          transitionsBuilder: (_, anim, _, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
     }
   }
 
