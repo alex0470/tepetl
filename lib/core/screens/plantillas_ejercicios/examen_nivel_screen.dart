@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tepetl/core/models/modelo_ejercicio.dart';
 import 'package:tepetl/core/models/modelo_revision.dart';
 import 'package:tepetl/core/screens/errores/leccion_resumen.dart';
-import 'package:tepetl/core/screens/errores/revision_errores.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/completar.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/escribir.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/imagenes_ejercicio.dart';

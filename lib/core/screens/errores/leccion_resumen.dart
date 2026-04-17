@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/models/modelo_revision.dart';
-import 'package:tepetl/core/screens/errores/revision_errores.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 
