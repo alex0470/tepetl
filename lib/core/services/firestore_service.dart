@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // GUARDAR USUARIO
   Future<void> saveUser(String uid, String email) async {
     try {
       await _db.collection('users').doc(uid).set({
