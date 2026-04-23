@@ -84,64 +84,6 @@ class FirestoreService {
     }
   }
 
-  Future<void> inicializarEstructuraCompleta() async {
-    try {
-      final batch = _db.batch();
-
-      // 1. CULTURA
-      final artRef = _db.collection('articulos_cultura').doc('ejemplo_1');
-      batch.set(artRef, {
-        'titulo': 'El Origen del Náhuatl',
-        'descripcion_corta': 'Una breve introducción a la lengua de los aztecas.',
-        'contenido': 'Aquí irá el texto largo del artículo...',
-        'imagen_url': 'https://link-a-imagen.com/foto.jpg',
-        'fecha_publicacion': FieldValue.serverTimestamp(),
-        'autor': 'Admin Tepetl'
-      });
-
-      // 2. INSIGNIAS
-      final insRef = _db.collection('insignias_y_logros').doc('piedra_solar');
-      batch.set(insRef, {
-        'titulo': 'Piedra Solar',
-        'descripcion': 'Completa tu primera semana de racha.',
-        'imagen_url': 'https://link-a-insignia.com/sol.png',
-        'xp_recompensa': 100,
-        'tipo_condicion': 'racha_7'
-      });
-
-      // 3. CURSOS
-      final cursoId = 'curso_basico_1';
-      final cursoRef = _db.collection('cursos').doc(cursoId);
-      batch.set(cursoRef, {
-        'titulo': 'Náhuatl para Principiantes',
-        'descripcion': 'Aprende las bases de la lengua.',
-        'nivel': 'básico',
-        'imagen_url': 'https://link-imagen.com/portada.jpg'
-      });
-      
-      final moduloRef = cursoRef.collection('modulos').doc('modulo_1');
-      batch.set(moduloRef, {
-        'titulo': 'Módulo 1: Saludos',
-        'descripcion': 'Primeros pasos para hablar.',
-        'orden': 1
-      });
-
-      final leccionRef = moduloRef.collection('lecciones').doc('leccion_1');
-      batch.set(leccionRef, {
-        'titulo': 'Hola y Adiós',
-        'descripcion': 'Aprende a saludar.',
-        'orden': 1,
-        'ejercicios_ids': ['E0001', 'E0002'] 
-      });
-
-      await batch.commit();
-      print('✅ Estructura base creada en Firebase');
-
-    } catch (e) {
-      print('❌ Error al inicializar: $e');
-    }
-  }
-
   // OBTENER ROL DEL USUARIO
   Future<String> getUserRole(String uid) async {
     try {

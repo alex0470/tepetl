@@ -10,7 +10,7 @@ import 'package:tepetl/core/widgets/botones/boton_atras.dart';
 EdgeInsets _dialogInsetPadding(BuildContext context) {
   final w = MediaQuery.of(context).size.width;
   if (w > 700) {
-    final hPad = w * 0.20; // 20% cada lado → diálogo ocupa 60% del ancho
+    final hPad = w * 0.20;
     return EdgeInsets.symmetric(horizontal: hPad, vertical: 24);
   }
   return const EdgeInsets.symmetric(horizontal: 40, vertical: 24);
@@ -381,7 +381,6 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                   fontSize: 14),
             ),
             onTap: () async {
-              // Mostramos un mini diálogo de carga por si tarda
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -393,7 +392,6 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
               
                 if (context.mounted) Navigator.pop(context);
 
-                // 2. Mandamos al usuario a la pantalla de Login y borramos el historial
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
@@ -404,8 +402,7 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
                   );
                 }
               } catch (e) {
-                if (context.mounted) Navigator.pop(context); // Quitamos la carga
-                // Mostramos un error si falla
+                if (context.mounted) Navigator.pop(context);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error al cerrar sesión: $e')),

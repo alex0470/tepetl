@@ -36,22 +36,22 @@ class _MainScreenState extends State<MainScreen> {
     screens = [
       const DescubrirScreen(),
       
-      // 1. Pestaña de Estadísticas IA
+      // 1.Pestaña de Estadísticas IA
       widget.isAdmin 
           ? const AnalisisGeneralContent() 
           : const ResumenIAScreen(),
           
-      // 2. Pestaña de Inicio (Gestión de Lecciones / Mapa de Progreso)
+      // 2.Pestaña de Inicio (Gestión de Lecciones / Mapa de Progreso)
       widget.isAdmin 
           ? const InicioAdminScreen() 
           : const InicioScreen(),
           
-      // 3. Pestaña de Cursos (NUEVO AJUSTE)
+      // 3.Pestaña de Cursos (NUEVO AJUSTE)
       widget.isAdmin 
-          ? const CursosAdminScreen() // Pantalla administrativa de cursos
-          : const CursosScreen(),        // Catálogo para estudiantes
+          ? const CursosAdminScreen()
+          : const CursosScreen(),
       widget.isAdmin 
-          ? const DirectorioUsuariosScreen() // Pantalla de gestión de usuarios
+          ? const DirectorioUsuariosScreen()
           : const DiccionarioScreen(),
     ];
   }

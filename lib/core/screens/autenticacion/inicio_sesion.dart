@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
 
   bool _obscurePass = true;
-  bool _isLoading = false; // Para el estado de carga
+  bool _isLoading = false;
 
   // Variables para los mensajes de error
   String? _emailError;
@@ -76,7 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passCtrl.text.trim(),
       );
       if (mounted) {
-      // Quita la pantalla de login para que se vea lo que el AuthWrapper decidió mostrar
       Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } on FirebaseAuthException catch (e) {

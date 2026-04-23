@@ -145,7 +145,7 @@ class _RecuperarContraScreenState extends State<RecuperarContraScreen> {
     required double vh,
     required bool isWide,
   }) {
-    final double iconSize = isWide ? (vw * 0.06).clamp(60, 90)  : (vw * 0.18).clamp(64, 100);
+    final double iconSize = isWide ? (vw * 0.06).clamp(60, 90) : (vw * 0.18).clamp(64, 100);
     final double titleSize = isWide ? (vw * 0.024).clamp(20, 32) : (vw * 0.075).clamp(26, 38);
     final double descSize = isWide ? (vw * 0.010).clamp(12, 15) : (vw * 0.032).clamp(13, 16);
     final double buttonH = (vh * 0.065).clamp(44, 56);

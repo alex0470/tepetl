@@ -22,7 +22,7 @@ class BottomNav extends StatelessWidget {
     final inactiveColor =
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85);
 
-    // Último ítem cambia según el rol
+    //Último ítem cambia según el rol
     final lastItem = isAdmin
         ? {"icon": Icons.people_outline, "label": "Usuarios"}
         : {"icon": Icons.translate_outlined, "label": "Diccionario"};

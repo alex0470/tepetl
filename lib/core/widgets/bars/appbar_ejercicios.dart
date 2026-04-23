@@ -86,7 +86,7 @@ class LessonProgressBar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Etiqueta ──────────────────────────────────────────────
+              //Etiqueta
               Text(
                 lessonLabel,
                 style: const TextStyle(
@@ -98,7 +98,7 @@ class LessonProgressBar extends StatelessWidget {
               ),
               const SizedBox(height: 6),
  
-              // ── Barra + porcentaje ────────────────────────────────────
+              // Barra + porcentaje
               Row(
                 children: [
                   Expanded(

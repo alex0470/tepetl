@@ -40,8 +40,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
   static const double _kBreakpoint = 700;
 
-  // ── Validadores ──────────────────────────────────────────────
-
+  //Validadores
   bool get _passHasMin8    => _passCtrl.text.length >= 8;
   bool get _passHasUpper   => _passCtrl.text.contains(RegExp(r'[A-Z]'));
   bool get _passHasLower   => _passCtrl.text.contains(RegExp(r'[a-z]'));

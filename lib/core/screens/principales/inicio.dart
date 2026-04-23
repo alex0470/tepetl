@@ -26,7 +26,6 @@ class _InicioScreenState extends State<InicioScreen> {
     {"titulo": "Verbos de Movimiento", "detalle": "10 min new lesson", "nivel": "NUEVO"},
   ];
 
-  // Progreso por curso
   final List<List<Map<String, dynamic>>> progresoPorCurso = [
     [
       {"label": "LA CIMA", "icon": Icons.lock_outline, "color": AppColors.textoSecundario40, "active": false, "current": false},
