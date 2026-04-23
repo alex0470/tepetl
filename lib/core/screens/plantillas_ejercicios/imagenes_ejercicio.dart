@@ -470,7 +470,6 @@ class _Placeholder extends StatelessWidget {
   }
 }
 
-// ── Caja de pista ─────────────────────────────────────────────────────────────
 class _HintBox extends StatelessWidget {
   final String text;
 

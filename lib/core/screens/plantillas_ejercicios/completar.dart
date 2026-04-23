@@ -64,7 +64,6 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
   void _togglePista() {
     setState(() => _hintVisible = !_hintVisible);
 
-    // Notificar al padre solo la primera vez que se abre la pista
     if (_hintVisible && !_hintReported) {
       _hintReported = true;
       widget.onPistaUsada?.call();

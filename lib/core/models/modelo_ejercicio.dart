@@ -29,7 +29,6 @@ class EjercicioModel {
       vocabId: data['vocab_id'] ?? '',
       contenido: data['contenido'] ?? '',
       respuesta: data['respuesta'] ?? '',
-      // Asegurarnos de que las opciones sean una lista de strings
       opciones: List<String>.from(data['opciones'] ?? []), 
       categoria: data['categoria'] ?? '',
       dificultad: data['dificultad'] ?? 'basico',

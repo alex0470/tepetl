@@ -75,10 +75,6 @@ class RevisionErrores extends StatelessWidget {
   }
 }
 
-//
-// ── HEADER ─────────────────────────────────────────
-//
-
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

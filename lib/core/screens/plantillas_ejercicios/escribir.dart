@@ -28,7 +28,7 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _hintVisible = false;
-  bool _hintReported = false; // evita contar la pista más de una vez
+  bool _hintReported = false;
   bool _verified = false;
 
   late String _correctAnswer;

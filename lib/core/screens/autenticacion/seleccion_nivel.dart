@@ -31,7 +31,6 @@ class NivelSeleccionScreen extends StatelessWidget {
   }
 
   Future<void> _finalizarSeleccionNivel(BuildContext context, String nivelSeleccionado) async {
-    // Mostrar indicador de carga
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -66,8 +65,6 @@ class NivelSeleccionScreen extends StatelessWidget {
     }
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,6 +76,7 @@ class NivelSeleccionScreen extends StatelessWidget {
       ),
     );
   }
+
   //  LAYOUT ESTRECHO
   Widget _narrowLayout(BuildContext context) {
     return SingleChildScrollView(
@@ -152,6 +150,7 @@ class NivelSeleccionScreen extends StatelessWidget {
       ),
     );
   }
+
   //  LAYOUT ANCHO
   Widget _wideLayout(BuildContext context) {
     return SingleChildScrollView(
@@ -274,6 +273,7 @@ class NivelSeleccionScreen extends StatelessWidget {
       ),
     );
   }
+
   //  WIDGETS COMPARTIDOS
   Widget _header(BuildContext context) {
     return Column(

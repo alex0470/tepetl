@@ -20,7 +20,6 @@ class LeccionResumen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Cabezal con icono de éxito
             const _HeaderSection(),
 
             Expanded(

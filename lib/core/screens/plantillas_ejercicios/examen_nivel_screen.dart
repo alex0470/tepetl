@@ -22,16 +22,16 @@ class ExamenNivelScreen extends StatefulWidget {
 }
 
 class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
-  // ── Ejercicios ──────────────────────────────────────────────────────────────
+  //Ejercicios
   List<EjercicioModel> _ejercicios = [];
   int _indiceActual = 0;
   bool _isLoading = true;
-  bool _finalizando = false; // bloquea doble-tap al terminar el último ejercicio
+  bool _finalizando = false;
 
-  // ── Vidas ───────────────────────────────────────────────────────────────────
+  //Vidas
   int _hearts = 20;
 
-  // ── Métricas para la IA ─────────────────────────────────────────────────────
+  //Métricas para la IA
   int _aciertosTotales = 0;
   int _vidasPerdidas = 0;
   int _pistasUsadas = 0;
@@ -55,7 +55,7 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     _cronometro.start();
   }
 
-  // ── Carga de corazones ──────────────────────────────────────────────────────
+  //Carga de corazones
   Future<void> _cargarCorazones() async {
     final corazonesGuardados = await VidasService.obtenerCorazones();
     setState(() => _hearts = corazonesGuardados);
@@ -65,7 +65,7 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     }
   }
 
-  // ── Descarga de ejercicios ──────────────────────────────────────────────────
+  //Descarga de ejercicios
   Future<void> _descargarEjercicios() async {
     try {
       final int randomNum = Random().nextInt(4000) + 1;
@@ -93,7 +93,7 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     }
   }
 
-  // ── Callback principal al terminar un ejercicio ─────────────────────────────
+  //Callback principal al terminar un ejercicio
   /// [esCorrecto] – si acertó
   /// [pistaUsada] - si el usuario utilizó la pista en este ejercicio
   /// [tipo]       – 'leer_escribir' | 'completar_frase' | 'seleccionar_imagen'
@@ -103,7 +103,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
       _pistasUsadas++;
     }
 
-    // 2. Actualizar métricas de aciertos / errores
     if (esCorrecto) {
       _aciertosTotales++;
       _rachaActual++;
@@ -144,7 +143,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
       }
     }
 
-    // 3. Avanzar o finalizar
     if (_indiceActual < _ejercicios.length - 1) {
       setState(() => _indiceActual++);
     } else {
@@ -152,7 +150,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     }
   }
 
-  // ── Finalización: llama a la IA, determina nivel y navega ──────────────────
   Future<void> _finalizarExamen() async {
     if (_finalizando) return;
     setState(() {
@@ -163,7 +160,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     final int totalEjercicios = _ejercicios.length;
     final int tiempoSegundos = _cronometro.elapsed.inSeconds;
 
-    // 1. Solicitar la evaluación a la IA
     final Map<String, dynamic> resultadoIA = await IAService.evaluarExamen(
       aciertosTotales: _aciertosTotales,
       totalEjercicios: totalEjercicios,
@@ -176,7 +172,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
       tiempoSegundos: tiempoSegundos,
     );
 
-    // 2. Extraer datos de la respuesta de la IA
     final String mensajeAI =
         resultadoIA['mensaje_ai'] as String? ?? 'Buen esfuerzo.';
     
@@ -189,12 +184,10 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
                 
     final int xpGanada = (resultadoIA['xp'] as num?)?.toInt() ?? 0;
 
-    // EL NIVEL ES DETERMINADO EXCLUSIVAMENTE POR LA IA (busca 'nivel_sugerido' o 'nivel_educativo' o 'nivel')
     final String nivelDeterminado = resultadoIA['nivel_predicho'] ?? 
                                     resultadoIA['nivel'] ?? 
-                                    'basico'; // Fallback de seguridad
+                                    'basico';
 
-    // 3. Actualizar Firestore con los campos solicitados
     await _actualizarNivelFirestore(nivelDeterminado);
 
     final int minutos = tiempoSegundos ~/ 60;
@@ -202,7 +195,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     final String tiempoFormateado =
         '${minutos.toString().padLeft(2, '0')}:${segundos.toString().padLeft(2, '0')}';
 
-    // 4. Navegar al resumen
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
@@ -221,7 +213,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     );
   }
 
-  // ── Escritura en Firestore ──────────────────────────────────────────────────
   Future<void> _actualizarNivelFirestore(String nuevoNivel) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -247,7 +238,6 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     }
   }
 
-  // ── UI ──────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {

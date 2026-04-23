@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class IAService {
-  // ⚠️ Cambia esta URL cada vez que reinicies ngrok
   static const String _baseUrl = 'https://bebe-quixotic-stalkily.ngrok-free.dev';
 
   static Future<Map<String, dynamic>> evaluarExamen({
@@ -21,7 +20,6 @@ class IAService {
         Uri.parse('$_baseUrl/predecir'),
         headers: {
           'Content-Type': 'application/json',
-          // ngrok a veces requiere este header para evitar la página de advertencia
           'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
