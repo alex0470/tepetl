@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/examen_nivel_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/screens/plantillas_ejercicios/completar.dart';
 
 // ── Modelos ───────────────────────────────────────────────────────────────────
 
