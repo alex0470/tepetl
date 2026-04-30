@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,7 +10,6 @@ import 'package:tepetl/core/widgets/admin_widgets.dart';
 
 class EditCursoScreen extends StatefulWidget {
   final CursoModel curso;
-
   const EditCursoScreen({super.key, required this.curso});
 
   @override
@@ -22,19 +21,24 @@ class _EditCursoScreenState extends State<EditCursoScreen> {
   late String _nivelSeleccionado;
   late final TextEditingController _tituloCtrl;
   late final TextEditingController _descripcionCtrl;
-  File? _imagenLocal;
+
+  // Web-safe image state
+  XFile? _xfile;
+  Uint8List? _imageBytes;
+
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     _isPublicado = widget.curso.publicado;
-    final nivelesValidos = ['Básico', 'Básico+', 'Intermedio'];
+    const nivelesValidos = ['Básico', 'Básico+', 'Intermedio'];
     _nivelSeleccionado = nivelesValidos.contains(widget.curso.nivel)
         ? widget.curso.nivel
         : 'Básico';
     _tituloCtrl = TextEditingController(text: widget.curso.titulo);
-    _descripcionCtrl = TextEditingController(text: widget.curso.descripcion);
+    _descripcionCtrl =
+        TextEditingController(text: widget.curso.descripcion);
   }
 
   @override
@@ -47,20 +51,27 @@ class _EditCursoScreenState extends State<EditCursoScreen> {
   Future<void> _pickImagen() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _imagenLocal = File(picked.path));
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _xfile = picked;
+        _imageBytes = bytes;
+      });
+    }
   }
 
   Future<void> _guardar() async {
     if (_tituloCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('El título es obligatorio')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('El título es obligatorio')));
       return;
     }
     setState(() => _isSaving = true);
     try {
       String imagenUrl = widget.curso.imagenUrl;
-      if (_imagenLocal != null) {
-        imagenUrl = await CursosService.subirImagen(_imagenLocal!, widget.curso.id);
+      if (_xfile != null) {
+        imagenUrl = await CursosService.subirImagenWeb(
+            _xfile!, widget.curso.id);
       }
       await CursosService.actualizarCurso(widget.curso.id, {
         'titulo': _tituloCtrl.text.trim(),
@@ -70,8 +81,8 @@ class _EditCursoScreenState extends State<EditCursoScreen> {
         'imagen_url': imagenUrl,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Curso actualizado ✅')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Curso actualizado ✅')));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -101,140 +112,173 @@ class _EditCursoScreenState extends State<EditCursoScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: _pickImagen,
-              child: Container(
-                width: double.infinity,
-                height: 160,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
-                ),
-                child: _imagenLocal != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.file(_imagenLocal!, fit: BoxFit.cover))
-                    : widget.curso.imagenUrl.isNotEmpty
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final hPad = constraints.maxWidth > 600 ? 48.0 : 24.0;
+          return SingleChildScrollView(
+            padding:
+                EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: _pickImagen,
+                  child: Container(
+                    width: double.infinity,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.3)),
+                    ),
+                    child: _imageBytes != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: Image.network(widget.curso.imagenUrl,
+                            child: Image.memory(_imageBytes!,
                                 fit: BoxFit.cover))
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.image_outlined,
-                                  size: 40, color: AppColors.textoSecundario40),
-                              const SizedBox(height: 8),
-                              Text('Cambiar imagen de portada',
-                                  style: TextStyle(
-                                      color: AppColors.textoSecundario40, fontSize: 14)),
-                            ],
-                          ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Label(text: 'Título del Curso'),
-            AppTextField(controller: _tituloCtrl, hint: 'Ej. Náhuatl Básico A1'),
-            const SizedBox(height: 20),
-            const Label(text: 'Descripción'),
-            AppTextField(
-                controller: _descripcionCtrl,
-                hint: 'Describe brevemente el curso...',
-                maxLines: 3),
-            const SizedBox(height: 20),
-            const Label(text: 'Nivel'),
-            NivelDropdown(
-              value: _nivelSeleccionado,
-              onChanged: (v) => setState(() => _nivelSeleccionado = v!),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.secundario.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                      _isPublicado
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: AppColors.secundario),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Visibilidad',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text(
-                            _isPublicado
-                                ? 'Público para estudiantes'
-                                : 'Privado (Borrador)',
-                            style: TextStyle(
-                                fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
-                      ],
-                    ),
+                        : widget.curso.imagenUrl.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.network(
+                                    widget.curso.imagenUrl,
+                                    fit: BoxFit.cover))
+                            : Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.image_outlined,
+                                      size: 40,
+                                      color:
+                                          AppColors.textoSecundario40),
+                                  const SizedBox(height: 8),
+                                  Text('Cambiar imagen de portada',
+                                      style: TextStyle(
+                                          color:
+                                              AppColors.textoSecundario40,
+                                          fontSize: 14)),
+                                ],
+                              ),
                   ),
-                  Switch(
-                    value: _isPublicado,
-                    activeThumbColor: AppColors.secundario,
-                    onChanged: (val) => setState(() => _isPublicado = val),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => ModulosAdminScreen(
-                          cursoId: widget.curso.id,
-                          cursoTitulo: widget.curso.titulo))),
-              icon: const Icon(Icons.view_module_outlined,
-                  color: AppColors.secundario),
-              label: const Text('Gestionar Módulos',
-                  style: TextStyle(color: AppColors.secundario)),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                side: const BorderSide(color: AppColors.secundario),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _guardar,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primario,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
                 ),
-                child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('GUARDAR CAMBIOS',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16)),
-              ),
+                const SizedBox(height: 24),
+                const Label(text: 'Título del Curso'),
+                AppTextField(
+                    controller: _tituloCtrl,
+                    hint: 'Ej. Náhuatl Básico A1'),
+                const SizedBox(height: 20),
+                const Label(text: 'Descripción'),
+                AppTextField(
+                    controller: _descripcionCtrl,
+                    hint: 'Describe brevemente el curso...',
+                    maxLines: 3),
+                const SizedBox(height: 20),
+                const Label(text: 'Nivel'),
+                NivelDropdown(
+                  value: _nivelSeleccionado,
+                  onChanged: (v) =>
+                      setState(() => _nivelSeleccionado = v!),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color:
+                        AppColors.secundario.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                          _isPublicado
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: AppColors.secundario),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            const Text('Visibilidad',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14)),
+                            Text(
+                                _isPublicado
+                                    ? 'Público para estudiantes'
+                                    : 'Privado (Borrador)',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.7))),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _isPublicado,
+                        activeThumbColor: AppColors.secundario,
+                        onChanged: (val) =>
+                            setState(() => _isPublicado = val),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => ModulosAdminScreen(
+                              cursoId: widget.curso.id,
+                              cursoTitulo: widget.curso.titulo))),
+                  icon: const Icon(Icons.view_module_outlined,
+                      color: AppColors.secundario),
+                  label: const Text('Gestionar Módulos',
+                      style: TextStyle(color: AppColors.secundario)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    side: const BorderSide(color: AppColors.secundario),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _guardar,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primario,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: _isSaving
+                        ? const CircularProgressIndicator(
+                            color: Colors.white)
+                        : const Text('GUARDAR CAMBIOS',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
+                  ),
+                ),
+                const SizedBox(height: 30),
+              ],
             ),
-            const SizedBox(height: 30),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

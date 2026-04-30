@@ -111,6 +111,7 @@ class EjercicioModel {
   final String pista;
   final String categoria;
   final String vocabId;
+  final String imagenUrl;
   final List<dynamic> opciones;
 
   EjercicioModel({
@@ -122,6 +123,7 @@ class EjercicioModel {
     required this.pista,
     this.categoria = '',
     this.vocabId = '',
+    this.imagenUrl = '',
     this.opciones = const [],
   });
 
@@ -136,6 +138,7 @@ class EjercicioModel {
       pista: data['pista'] ?? '',
       categoria: data['categoria'] ?? '',
       vocabId: data['vocab_id'] ?? '',
+      imagenUrl: data['imagen_url'] ?? '',
       opciones: data['opciones'] ?? [],
     );
   }
@@ -148,6 +151,49 @@ class EjercicioModel {
         'pista': pista,
         'categoria': categoria,
         'vocab_id': vocabId,
+        'imagen_url': imagenUrl,
         'opciones': opciones,
+      };
+}
+
+class PalabraModel {
+  final String id;
+  final String categoria;
+  final String dificultad;
+  final String imagenUrl;
+  final String palabraNahuatl;
+  final String traduccionEspanol;
+  final String varianteNahuatl;
+
+  PalabraModel({
+    required this.id,
+    required this.categoria,
+    required this.dificultad,
+    required this.imagenUrl,
+    required this.palabraNahuatl,
+    required this.traduccionEspanol,
+    required this.varianteNahuatl,
+  });
+
+  factory PalabraModel.fromDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return PalabraModel(
+      id: doc.id,
+      categoria: data['categoria'] ?? '',
+      dificultad: data['dificultad'] ?? '',
+      imagenUrl: data['imagen_url'] ?? '',
+      palabraNahuatl: data['palabra_nahuatl'] ?? '',
+      traduccionEspanol: data['traduccion_espanol'] ?? '',
+      varianteNahuatl: data['variante_nahuatl'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'categoria': categoria,
+        'dificultad': dificultad,
+        'imagen_url': imagenUrl,
+        'palabra_nahuatl': palabraNahuatl,
+        'traduccion_espanol': traduccionEspanol,
+        'variante_nahuatl': varianteNahuatl,
       };
 }

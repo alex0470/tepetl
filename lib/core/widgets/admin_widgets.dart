@@ -844,13 +844,14 @@ class InputCard extends StatelessWidget {
 class MediaButton extends StatelessWidget {
   final String text;
   final IconData icon;
+  final VoidCallback? onPressed;
 
-  const MediaButton({required this.text, required this.icon, super.key});
+  const MediaButton({required this.text, required this.icon, this.onPressed, super.key});
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      onPressed: () {},
+      onPressed: onPressed ?? () {},
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 24),
         side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),

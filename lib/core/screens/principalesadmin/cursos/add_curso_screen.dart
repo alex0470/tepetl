@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tepetl/core/models/curso_models.dart';
@@ -17,7 +18,11 @@ class AddCursoScreen extends StatefulWidget {
 class _AddCursoScreenState extends State<AddCursoScreen> {
   bool _isPublicado = true;
   bool _isSaving = false;
-  File? _imagenLocal;
+
+  // Web-safe image state
+  XFile? _xfile;
+  Uint8List? _imageBytes;
+
   String _nivelSeleccionado = 'Básico';
 
   final _tituloCtrl = TextEditingController();
@@ -34,7 +39,13 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
   Future<void> _pickImagen() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _imagenLocal = File(picked.path));
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _xfile = picked;
+        _imageBytes = bytes;
+      });
+    }
   }
 
   Future<void> _guardarCurso() async {
@@ -53,8 +64,9 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
         publicado: _isPublicado,
       ));
 
-      if (_imagenLocal != null) {
-        final url = await CursosService.subirImagen(_imagenLocal!, cursoId);
+      if (_xfile != null) {
+        final url =
+            await CursosService.subirImagenWeb(_xfile!, cursoId);
         await CursosService.actualizarCurso(cursoId, {'imagen_url': url});
       }
 
@@ -62,11 +74,10 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
         await CursosService.crearModulo(
           cursoId,
           ModuloModel(
-            id: '',
-            titulo: _modulosTitulos[i],
-            descripcion: '',
-            orden: i,
-          ),
+              id: '',
+              titulo: _modulosTitulos[i],
+              descripcion: '',
+              orden: i),
         );
       }
 
@@ -88,14 +99,16 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
   }
 
   void _mostrarSnackbar(String msg) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(msg)));
 
   void _showAddModuloPopup() {
     final ctrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Nuevo Módulo',
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
@@ -108,16 +121,20 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+              child: const Text('Cancelar',
+                  style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             onPressed: () {
               if (ctrl.text.isNotEmpty) {
-                setState(() => _modulosTitulos.add(ctrl.text.trim()));
+                setState(
+                    () => _modulosTitulos.add(ctrl.text.trim()));
                 Navigator.pop(ctx);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.secundario),
-            child: const Text('Añadir', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secundario),
+            child: const Text('Añadir',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -146,90 +163,107 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
           TextButton(
             onPressed: _isSaving ? null : _guardarBorrador,
             child: const Text('Guardar Borrador',
-                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildImagePicker(),
-            const SizedBox(height: 24),
-            const Label(text: 'Título del Curso'),
-            AppTextField(controller: _tituloCtrl, hint: 'Ej. Náhuatl Básico A1'),
-            const SizedBox(height: 20),
-            _buildVisibilityToggle(),
-            const SizedBox(height: 20),
-            const Label(text: 'Descripción'),
-            AppTextField(
-                controller: _descripcionCtrl,
-                hint: 'Describe brevemente el curso...',
-                maxLines: 3),
-            const SizedBox(height: 20),
-            const Label(text: 'Nivel'),
-            NivelDropdown(
-              value: _nivelSeleccionado,
-              onChanged: (v) => setState(() => _nivelSeleccionado = v!),
-            ),
-            const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final hPad = constraints.maxWidth > 600 ? 48.0 : 24.0;
+          return SingleChildScrollView(
+            padding:
+                EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Módulos del Curso',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                TextButton.icon(
-                  onPressed: _showAddModuloPopup,
-                  icon: const Icon(Icons.add,
-                      size: 18, color: AppColors.secundario),
-                  label: const Text('AÑADIR',
-                      style: TextStyle(
-                          color: AppColors.secundario,
-                          fontWeight: FontWeight.bold)),
+                _buildImagePicker(),
+                const SizedBox(height: 24),
+                const Label(text: 'Título del Curso'),
+                AppTextField(
+                    controller: _tituloCtrl,
+                    hint: 'Ej. Náhuatl Básico A1'),
+                const SizedBox(height: 20),
+                _buildVisibilityToggle(),
+                const SizedBox(height: 20),
+                const Label(text: 'Descripción'),
+                AppTextField(
+                    controller: _descripcionCtrl,
+                    hint: 'Describe brevemente el curso...',
+                    maxLines: 3),
+                const SizedBox(height: 20),
+                const Label(text: 'Nivel'),
+                NivelDropdown(
+                  value: _nivelSeleccionado,
+                  onChanged: (v) =>
+                      setState(() => _nivelSeleccionado = v!),
                 ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Módulos del Curso',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    TextButton.icon(
+                      onPressed: _showAddModuloPopup,
+                      icon: const Icon(Icons.add,
+                          size: 18, color: AppColors.secundario),
+                      label: const Text('AÑADIR',
+                          style: TextStyle(
+                              color: AppColors.secundario,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _modulosTitulos.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) => ModuleCardAdmin(
+                    index: index + 1,
+                    title: _modulosTitulos[index],
+                    onTap: () {},
+                    onDelete: () =>
+                        setState(() => _modulosTitulos.removeAt(index)),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _guardarCurso,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primario,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: _isSaving
+                        ? const CircularProgressIndicator(
+                            color: Colors.white)
+                        : Text(
+                            _isPublicado
+                                ? 'PUBLICAR CURSO'
+                                : 'GUARDAR PRIVADO',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 30),
               ],
             ),
-            const SizedBox(height: 12),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _modulosTitulos.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) => ModuleCardAdmin(
-                index: index + 1,
-                title: _modulosTitulos[index],
-                onTap: () {},
-                onDelete: () => setState(() => _modulosTitulos.removeAt(index)),
-              ),
-            ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _guardarCurso,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primario,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        _isPublicado ? 'PUBLICAR CURSO' : 'GUARDAR PRIVADO',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -240,7 +274,8 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
       decoration: BoxDecoration(
         color: AppColors.secundario.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.secundario.withOpacity(0.1)),
+        border:
+            Border.all(color: AppColors.secundario.withOpacity(0.1)),
       ),
       child: Row(
         children: [
@@ -255,12 +290,14 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Visibilidad',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14)),
                 Text(
                     _isPublicado
                         ? 'Público para estudiantes'
                         : 'Privado (Borrador)',
-                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                    style:
+                        const TextStyle(fontSize: 11, color: Colors.grey)),
               ],
             ),
           ),
@@ -284,12 +321,15 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
           color: Theme.of(context).colorScheme.surfaceVariant,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+              color: Theme.of(context)
+                  .colorScheme
+                  .outline
+                  .withOpacity(0.2)),
         ),
-        child: _imagenLocal != null
+        child: _imageBytes != null
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.file(_imagenLocal!, fit: BoxFit.cover))
+                child: Image.memory(_imageBytes!, fit: BoxFit.cover))
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -297,7 +337,8 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
                       size: 40, color: Colors.grey[400]),
                   const SizedBox(height: 8),
                   Text('Subir imagen de portada',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                      style: TextStyle(
+                          color: Colors.grey[600], fontSize: 14)),
                 ],
               ),
       ),
