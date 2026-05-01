@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -62,6 +63,7 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
         nivel: _nivelSeleccionado,
         imagenUrl: '',
         publicado: _isPublicado,
+        creadoPor: FirebaseAuth.instance.currentUser!.uid,
       ));
 
       if (_xfile != null) {

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,8 +15,9 @@ import 'package:tepetl/core/widgets/admin_widgets.dart';
 Future<XFile?> _pickImageSafe({bool fromCamera = false}) async {
   final picker = ImagePicker();
   // Camera not supported on Web → fall back to gallery
-  final source =
-      (!kIsWeb && fromCamera) ? ImageSource.camera : ImageSource.gallery;
+  final source = (!kIsWeb && fromCamera)
+      ? ImageSource.camera
+      : ImageSource.gallery;
   return picker.pickImage(source: source);
 }
 
@@ -43,8 +45,6 @@ class _CrearLeerYEscribirScreenState extends State<CrearLeerYEscribirScreen> {
   final instruccionCtrl = TextEditingController();
   final contenidoCtrl = TextEditingController();
   final respuestaCtrl = TextEditingController();
-  bool ignoreAccents = true;
-  int toleranceIndex = 1;
   bool isSaving = false;
   PalabraModel? selectedPalabra;
 
@@ -96,7 +96,9 @@ class _CrearLeerYEscribirScreenState extends State<CrearLeerYEscribirScreen> {
         contenidoCtrl.text.isEmpty ||
         respuestaCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa instrucción, texto y respuesta')),
+        const SnackBar(
+          content: Text('Completa instrucción, texto y respuesta'),
+        ),
       );
       return;
     }
@@ -118,12 +120,14 @@ class _CrearLeerYEscribirScreenState extends State<CrearLeerYEscribirScreen> {
           id: '',
           tipoEjercicio: 'leer_y_escribir',
           contenido: contenidoCtrl.text.trim(),
-          dificultad: 'BÁSICO',
+          dificultad: selectedPalabra?.dificultad.toUpperCase() ?? 'BÁSICO',
           respuesta: respuestaCtrl.text.trim(),
-          pista: ignoreAccents ? 'Ignorar mayúsculas y acentos' : '',
+          pista: selectedPalabra?.categoria ?? '',
           categoria: selectedPalabra?.categoria ?? '',
           vocabId: selectedPalabra?.id ?? '',
           imagenUrl: imagenUrl,
+          opciones: [],
+          creadoPor: FirebaseAuth.instance.currentUser!.uid,
         ),
       );
 
@@ -195,18 +199,6 @@ class _CrearLeerYEscribirScreenState extends State<CrearLeerYEscribirScreen> {
           hint: 'Niltze, ¿quién tiene?',
           icon: Icons.check_circle_outline,
         ),
-        const SizedBox(height: 20),
-        const SectionHeader(text: 'TOLERANCIA DE ESCRITURA (IA)'),
-        ToggleButtonGroup(
-          options: const ['Permisivo', 'Equilibrado', 'Estricto'],
-          selectedIndex: toleranceIndex,
-          onChanged: (value) => setState(() => toleranceIndex = value),
-        ),
-        const SizedBox(height: 20),
-        ConsentCheckbox(
-          checked: ignoreAccents,
-          onChanged: (value) => setState(() => ignoreAccents = value ?? true),
-        ),
       ],
     );
   }
@@ -232,11 +224,9 @@ class CrearImagenYPalabraScreen extends StatefulWidget {
       _CrearImagenYPalabraScreenState();
 }
 
-class _CrearImagenYPalabraScreenState
-    extends State<CrearImagenYPalabraScreen> {
+class _CrearImagenYPalabraScreenState extends State<CrearImagenYPalabraScreen> {
   final palabraCtrl = TextEditingController();
   final objetivoCtrl = TextEditingController();
-  int toleranceIndex = 1;
   int correctImageIndex = 0;
   bool isSaving = false;
   PalabraModel? selectedPalabra;
@@ -248,8 +238,10 @@ class _CrearImagenYPalabraScreenState
   // 4 option images (web-safe)
   final List<XFile?> _optionXFiles = List.filled(4, null);
   final List<Uint8List?> _optionBytes = List.filled(4, null);
-  final List<TextEditingController> _altControllers =
-      List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _altControllers = List.generate(
+    4,
+    (_) => TextEditingController(),
+  );
 
   @override
   void dispose() {
@@ -306,7 +298,9 @@ class _CrearImagenYPalabraScreenState
   Future<void> _guardarEjercicio() async {
     if (palabraCtrl.text.isEmpty || objetivoCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa la palabra y el texto objetivo')),
+        const SnackBar(
+          content: Text('Completa la palabra y el texto objetivo'),
+        ),
       );
       return;
     }
@@ -318,7 +312,9 @@ class _CrearImagenYPalabraScreenState
       String imagenUrl = selectedPalabra?.imagenUrl ?? '';
       if (_xfile != null) {
         imagenUrl = await CursosService.subirImagenEjercicioWeb(
-            _xfile!, '${ts}_main');
+          _xfile!,
+          '${ts}_main',
+        );
       }
 
       // Upload option images and build opciones list
@@ -327,7 +323,9 @@ class _CrearImagenYPalabraScreenState
         String optUrl = '';
         if (_optionXFiles[i] != null) {
           optUrl = await CursosService.subirImagenEjercicioWeb(
-              _optionXFiles[i]!, '${ts}_opt$i');
+            _optionXFiles[i]!,
+            '${ts}_opt$i',
+          );
         }
         opciones.add({
           'imagenUrl': optUrl,
@@ -336,6 +334,7 @@ class _CrearImagenYPalabraScreenState
         });
       }
 
+      final dificultad = selectedPalabra?.dificultad.toUpperCase() ?? 'BÁSICO';
       await CursosService.crearEjercicio(
         widget.cursoId,
         widget.moduloId,
@@ -344,13 +343,14 @@ class _CrearImagenYPalabraScreenState
           id: '',
           tipoEjercicio: 'imagen_y_palabra',
           contenido: palabraCtrl.text.trim(),
-          dificultad: toleranceIndex == 0 ? 'BÁSICO' : 'INTERMEDIO',
+          dificultad: dificultad,
           respuesta: objetivoCtrl.text.trim(),
-          pista: ['Permisivo', 'Equilibrado', 'Estricto'][toleranceIndex],
+          pista: selectedPalabra?.categoria ?? '',
           categoria: selectedPalabra?.categoria ?? '',
           vocabId: selectedPalabra?.id ?? '',
           imagenUrl: imagenUrl,
           opciones: opciones,
+          creadoPor: FirebaseAuth.instance.currentUser!.uid,
         ),
       );
 
@@ -432,8 +432,7 @@ class _CrearImagenYPalabraScreenState
                   isCorrect: index == correctImageIndex,
                   imageBytes: _optionBytes[index],
                   altController: _altControllers[index],
-                  onCorrected: () =>
-                      setState(() => correctImageIndex = index),
+                  onCorrected: () => setState(() => correctImageIndex = index),
                   onPickImage: () => _pickOptionImagen(index),
                 );
               },
@@ -448,15 +447,6 @@ class _CrearImagenYPalabraScreenState
           hint: '¿Quén tlenim?',
           icon: Icons.language_outlined,
         ),
-        const SizedBox(height: 20),
-        const SectionHeader(text: 'TOLERANCIA DE ESCRITURA (IA)'),
-        ToggleButtonGroup(
-          options: const ['Permisivo', 'Equilibrado', 'Estricto'],
-          selectedIndex: toleranceIndex,
-          onChanged: (value) => setState(() => toleranceIndex = value),
-        ),
-        const SizedBox(height: 20),
-        ConsentCheckbox(checked: true, onChanged: (_) {}),
       ],
     );
   }
@@ -487,6 +477,7 @@ class _CrearCompletarFraseScreenState extends State<CrearCompletarFraseScreen> {
   final opcionControllers = List.generate(4, (_) => TextEditingController());
   int correctOption = 0;
   bool isSaving = false;
+  PalabraModel? selectedPalabra;
 
   @override
   void dispose() {
@@ -497,12 +488,26 @@ class _CrearCompletarFraseScreenState extends State<CrearCompletarFraseScreen> {
     super.dispose();
   }
 
+  void _showPalabrasSelector() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => PalabrasSelector(
+        onSelect: (palabra) {
+          setState(() {
+            selectedPalabra = palabra;
+          });
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   Future<void> _guardarEjercicio() async {
     if (fraseCtrl.text.isEmpty ||
         opcionControllers[correctOption].text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Escribe la frase y la opción correcta')),
+        const SnackBar(content: Text('Escribe la frase y la opción correcta')),
       );
       return;
     }
@@ -515,9 +520,17 @@ class _CrearCompletarFraseScreenState extends State<CrearCompletarFraseScreen> {
         id: '',
         tipoEjercicio: 'completar_frase',
         contenido: fraseCtrl.text.trim(),
-        dificultad: 'BÁSICO',
+        dificultad: selectedPalabra?.dificultad.toUpperCase() ?? 'BÁSICO',
         respuesta: opcionControllers[correctOption].text.trim(),
-        pista: 'Opción correcta ${correctOption + 1}',
+        pista: selectedPalabra?.categoria ??
+            'Opción correcta ${correctOption + 1}',
+        categoria: selectedPalabra?.categoria ?? '',
+        vocabId: selectedPalabra?.id ?? '',
+        opciones: opcionControllers
+            .map((ctrl) => ctrl.text.trim())
+            .where((text) => text.isNotEmpty)
+            .toList(),
+        creadoPor: FirebaseAuth.instance.currentUser!.uid,
       ),
     );
     setState(() => isSaving = false);
@@ -542,6 +555,22 @@ class _CrearCompletarFraseScreenState extends State<CrearCompletarFraseScreen> {
           maxLines: 3,
         ),
         const SizedBox(height: 20),
+        const SectionHeader(text: 'PALABRA INICIAL'),
+        if (selectedPalabra != null)
+          _PalabraChip(
+            palabra: selectedPalabra!,
+            onClear: () => setState(() => selectedPalabra = null),
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showPalabrasSelector(),
+              icon: const Icon(Icons.library_books_outlined),
+              label: const Text('Seleccionar palabra inicial'),
+            ),
+          ),
+        const SizedBox(height: 20),
         const SectionHeader(text: 'OPCIONES'),
         ...List.generate(
           opcionControllers.length,
@@ -551,8 +580,7 @@ class _CrearCompletarFraseScreenState extends State<CrearCompletarFraseScreen> {
               index: index,
               isCorrect: index == correctOption,
               groupValue: correctOption,
-              onChanged: (value) =>
-                  setState(() => correctOption = value ?? 0),
+              onChanged: (value) => setState(() => correctOption = value ?? 0),
               controller: opcionControllers[index],
             ),
           ),
@@ -612,15 +640,16 @@ class ManualExerciseScreenShell extends StatelessWidget {
         builder: (context, constraints) {
           final hPad = constraints.maxWidth > 600 ? 48.0 : 24.0;
           return SingleChildScrollView(
-            padding:
-                EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   description,
                   style: const TextStyle(
-                      color: AppColors.textoSecundario40, fontSize: 14),
+                    color: AppColors.textoSecundario40,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 ...children,
@@ -648,10 +677,7 @@ class SectionHeader extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: Theme.of(context)
-              .colorScheme
-              .onSurface
-              .withAlpha(179),
+          color: Theme.of(context).colorScheme.onSurface.withAlpha(179),
           letterSpacing: 0.6,
         ),
       ),
@@ -681,9 +707,9 @@ class ToggleButtonGroup extends StatelessWidget {
             onTap: () => onChanged(index),
             child: Container(
               margin: EdgeInsets.only(
-                  right: index < options.length - 1 ? 8 : 0),
-              padding: const EdgeInsets.symmetric(
-                  vertical: 14, horizontal: 12),
+                right: index < options.length - 1 ? 8 : 0,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
               decoration: BoxDecoration(
                 color: selected
                     ? AppColors.secundario.withAlpha(38)
@@ -692,10 +718,7 @@ class ToggleButtonGroup extends StatelessWidget {
                 border: Border.all(
                   color: selected
                       ? AppColors.secundario
-                      : Theme.of(context)
-                          .colorScheme
-                          .outline
-                          .withAlpha(31),
+                      : Theme.of(context).colorScheme.outline.withAlpha(31),
                 ),
               ),
               child: Center(
@@ -704,12 +727,8 @@ class ToggleButtonGroup extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: selected
-                        ? FontWeight.bold
-                        : FontWeight.w500,
-                    color: selected
-                        ? AppColors.secundario
-                        : Colors.grey[700],
+                    fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                    color: selected ? AppColors.secundario : Colors.grey[700],
                   ),
                 ),
               ),
@@ -733,8 +752,8 @@ class PalabrasSelector extends StatefulWidget {
 }
 
 class _PalabrasSelectorState extends State<PalabrasSelector> {
-  String selectedDificultad = 'BÁSICO';
-  final dificultades = ['BÁSICO', 'INTERMEDIO', 'AVANZADO'];
+  String selectedDificultad = 'Básico';
+  final dificultades = ['Básico', 'Básico+', 'Intermedio'];
 
   @override
   Widget build(BuildContext context) {
@@ -743,42 +762,42 @@ class _PalabrasSelectorState extends State<PalabrasSelector> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              Text('Seleccionar Palabra',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Seleccionar Palabra',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const Spacer(),
               IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context)),
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           ToggleButtonGroup(
             options: dificultades,
             selectedIndex: dificultades.indexOf(selectedDificultad),
-            onChanged: (i) => setState(
-                () => selectedDificultad = dificultades[i]),
+            onChanged: (i) =>
+                setState(() => selectedDificultad = dificultades[i]),
           ),
           const SizedBox(height: 16),
           Expanded(
             child: FutureBuilder<List<PalabraModel>>(
-              future: CursosService.getPalabrasByDificultad(
-                  selectedDificultad),
+              future: CursosService.getPalabrasByDificultad(selectedDificultad),
               builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                      child: CircularProgressIndicator());
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(
-                      child: Text('No hay palabras disponibles'));
+                    child: Text('No hay palabras disponibles'),
+                  );
                 }
                 return ListView.builder(
                   itemCount: snapshot.data!.length,
@@ -794,16 +813,17 @@ class _PalabrasSelectorState extends State<PalabrasSelector> {
                                 height: 50,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) =>
-                                    const Icon(
-                                        Icons.image_not_supported),
+                                    const Icon(Icons.image_not_supported),
                               ),
                             )
                           : const Icon(Icons.image_not_supported),
-                      title: Text(palabra.palabraNahuatl,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold)),
+                      title: Text(
+                        palabra.palabraNahuatl,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text(
-                          '${palabra.traduccionEspanol} · ${palabra.categoria}'),
+                        '${palabra.traduccionEspanol} · ${palabra.categoria}',
+                      ),
                       onTap: () => widget.onSelect(palabra),
                     );
                   },
@@ -839,37 +859,46 @@ class _ImagePreview extends StatelessWidget {
       margin: const EdgeInsets.only(top: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: AppColors.secundario.withAlpha(60)),
+        border: Border.all(color: AppColors.secundario.withAlpha(60)),
       ),
       child: Column(
         children: [
           ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.memory(imageBytes,
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Image.memory(
+              imageBytes,
+              height: 160,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
           ),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
-                const Icon(Icons.check_circle,
-                    color: AppColors.secundario, size: 16),
+                const Icon(
+                  Icons.check_circle,
+                  color: AppColors.secundario,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(label,
-                      style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500)),
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
                 IconButton(
-                    icon: const Icon(Icons.clear,
-                        size: 18, color: AppColors.rojo1),
-                    onPressed: onClear),
+                  icon: const Icon(
+                    Icons.clear,
+                    size: 18,
+                    color: AppColors.rojo1,
+                  ),
+                  onPressed: onClear,
+                ),
               ],
             ),
           ),
@@ -900,27 +929,36 @@ class _PalabraChip extends StatelessWidget {
           if (palabra.imagenUrl.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(palabra.imagenUrl,
-                  width: 48, height: 48, fit: BoxFit.cover),
+              child: Image.network(
+                palabra.imagenUrl,
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
+              ),
             ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(palabra.palabraNahuatl,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(palabra.traduccionEspanol,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textoSecundario40)),
+                Text(
+                  palabra.palabraNahuatl,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  palabra.traduccionEspanol,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textoSecundario40,
+                  ),
+                ),
               ],
             ),
           ),
           IconButton(
-              icon: const Icon(Icons.clear,
-                  size: 18, color: AppColors.rojo1),
-              onPressed: onClear),
+            icon: const Icon(Icons.clear, size: 18, color: AppColors.rojo1),
+            onPressed: onClear,
+          ),
         ],
       ),
     );
@@ -1017,29 +1055,33 @@ class _ImageOptionCardStateful extends StatelessWidget {
                   child: imageBytes != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.memory(imageBytes!,
-                              fit: BoxFit.cover,
-                              width: double.infinity),
+                          child: Image.memory(
+                            imageBytes!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
                         )
                       : Container(
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceVariant,
+                            color: Theme.of(context).colorScheme.surfaceVariant,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_photo_alternate_outlined,
-                                  color: AppColors.secundario,
-                                  size: 28),
+                              Icon(
+                                Icons.add_photo_alternate_outlined,
+                                color: AppColors.secundario,
+                                size: 28,
+                              ),
                               const SizedBox(height: 4),
-                              Text('Imagen ${index + 1}',
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color:
-                                          AppColors.textoSecundario40)),
+                              Text(
+                                'Imagen ${index + 1}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textoSecundario40,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1052,22 +1094,25 @@ class _ImageOptionCardStateful extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Texto alt...',
                   hintStyle: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textoSecundario40),
+                    fontSize: 11,
+                    color: AppColors.textoSecundario40,
+                  ),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 6),
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                        color: AppColors.textoSecundario40
-                            .withAlpha(60)),
+                      color: AppColors.textoSecundario40.withAlpha(60),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                        color: AppColors.textoSecundario40
-                            .withAlpha(60)),
+                      color: AppColors.textoSecundario40.withAlpha(60),
+                    ),
                   ),
                 ),
               ),
@@ -1090,15 +1135,11 @@ class _ImageOptionCardStateful extends StatelessWidget {
                   border: Border.all(
                     color: isCorrect
                         ? AppColors.secundario
-                        : Theme.of(context)
-                            .colorScheme
-                            .outline
-                            .withAlpha(80),
+                        : Theme.of(context).colorScheme.outline.withAlpha(80),
                   ),
                 ),
                 child: isCorrect
-                    ? const Icon(Icons.check,
-                        color: Colors.white, size: 16)
+                    ? const Icon(Icons.check, color: Colors.white, size: 16)
                     : null,
               ),
             ),

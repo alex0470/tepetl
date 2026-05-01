@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,9 +14,16 @@ class CursosService {
   // ─── Cursos ───────────────────────────────────────────────────────────────
 
   static Stream<List<CursoModel>> streamCursos() {
-    return _db.collection('cursos').snapshots().map(
-          (snap) => snap.docs.map(CursoModel.fromDoc).toList(),
-        );
+    return _db
+        .collection('cursos')
+        .snapshots()
+        .map((snap) {
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+          return snap.docs
+              .map(CursoModel.fromDoc)
+              .where((curso) => curso.creadoPor == currentUserId)
+              .toList();
+        });
   }
 
   static Future<String> crearCurso(CursoModel curso) async {
@@ -24,7 +32,9 @@ class CursosService {
   }
 
   static Future<void> actualizarCurso(
-      String cursoId, Map<String, dynamic> data) {
+    String cursoId,
+    Map<String, dynamic> data,
+  ) {
     return _db.collection('cursos').doc(cursoId).update(data);
   }
 
@@ -68,8 +78,7 @@ class CursosService {
   }
 
   /// Cross-platform upload using [XFile] (works on Web + Mobile).
-  static Future<String> _uploadXFile(
-      XFile xfile, String storagePath) async {
+  static Future<String> _uploadXFile(XFile xfile, String storagePath) async {
     final extension = _fileExtension(xfile.name);
     final metadata = SettableMetadata(
       contentType: _contentTypeFromExtension(extension),
@@ -105,15 +114,15 @@ class CursosService {
 
   /// Upload exercise image (web-safe, use XFile).
   static Future<String> subirImagenEjercicioWeb(
-          XFile xfile, String ejercicioId) =>
-      _uploadXFile(xfile, 'ejercicios/$ejercicioId/imagen');
+    XFile xfile,
+    String ejercicioId,
+  ) => _uploadXFile(xfile, 'ejercicios/$ejercicioId/imagen');
 
   /// Legacy mobile-only methods kept in case they're used elsewhere.
   static Future<String> subirImagen(File imagen, String cursoId) =>
       _uploadFile(imagen, 'cursos/$cursoId/portada');
 
-  static Future<String> subirImagenEjercicio(
-          File imagen, String ejercicioId) =>
+  static Future<String> subirImagenEjercicio(File imagen, String ejercicioId) =>
       _uploadFile(imagen, 'ejercicios/$ejercicioId/imagen');
 
   static Future<String> subirAudio(File audio, String ejercicioId) =>
@@ -122,18 +131,34 @@ class CursosService {
   // ─── Palabras ─────────────────────────────────────────────────────────────
 
   static Stream<List<PalabraModel>> streamPalabras() {
-    return _db.collection('palabras').snapshots().map(
-          (snap) => snap.docs.map(PalabraModel.fromDoc).toList(),
-        );
+    return _db
+        .collection('palabras')
+        .snapshots()
+        .map((snap) => snap.docs.map(PalabraModel.fromDoc).toList());
+  }
+
+  static String _normalizeTexto(String text) {
+    return text
+        .toLowerCase()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .trim();
   }
 
   static Future<List<PalabraModel>> getPalabrasByDificultad(
-      String dificultad) async {
-    final snap = await _db
-        .collection('palabras')
-        .where('dificultad', isEqualTo: dificultad)
-        .get();
-    return snap.docs.map(PalabraModel.fromDoc).toList();
+    String dificultad,
+  ) async {
+    final normalizedTarget = _normalizeTexto(dificultad);
+    final snap = await _db.collection('palabras').get();
+    return snap.docs
+        .map(PalabraModel.fromDoc)
+        .where(
+          (palabra) => _normalizeTexto(palabra.dificultad) == normalizedTarget,
+        )
+        .toList();
   }
 
   // ─── Módulos ──────────────────────────────────────────────────────────────
@@ -157,7 +182,10 @@ class CursosService {
   }
 
   static Future<void> actualizarModulo(
-      String cursoId, String moduloId, Map<String, dynamic> data) {
+    String cursoId,
+    String moduloId,
+    Map<String, dynamic> data,
+  ) {
     return _db
         .collection('cursos')
         .doc(cursoId)
@@ -166,8 +194,7 @@ class CursosService {
         .update(data);
   }
 
-  static Future<void> eliminarModulo(
-      String cursoId, String moduloId) async {
+  static Future<void> eliminarModulo(String cursoId, String moduloId) async {
     final lecciones = await _db
         .collection('cursos')
         .doc(cursoId)
@@ -189,7 +216,9 @@ class CursosService {
   // ─── Lecciones ────────────────────────────────────────────────────────────
 
   static Stream<List<LeccionModel>> streamLecciones(
-      String cursoId, String moduloId) {
+    String cursoId,
+    String moduloId,
+  ) {
     return _db
         .collection('cursos')
         .doc(cursoId)
@@ -202,7 +231,10 @@ class CursosService {
   }
 
   static Future<void> crearLeccion(
-      String cursoId, String moduloId, LeccionModel leccion) {
+    String cursoId,
+    String moduloId,
+    LeccionModel leccion,
+  ) {
     return _db
         .collection('cursos')
         .doc(cursoId)
@@ -212,8 +244,12 @@ class CursosService {
         .add(leccion.toMap());
   }
 
-  static Future<void> actualizarLeccion(String cursoId, String moduloId,
-      String leccionId, Map<String, dynamic> data) {
+  static Future<void> actualizarLeccion(
+    String cursoId,
+    String moduloId,
+    String leccionId,
+    Map<String, dynamic> data,
+  ) {
     return _db
         .collection('cursos')
         .doc(cursoId)
@@ -225,7 +261,10 @@ class CursosService {
   }
 
   static Future<void> eliminarLeccion(
-      String cursoId, String moduloId, String leccionId) async {
+    String cursoId,
+    String moduloId,
+    String leccionId,
+  ) async {
     await _db
         .collection('cursos')
         .doc(cursoId)
@@ -239,13 +278,13 @@ class CursosService {
   // ─── Ejercicios ───────────────────────────────────────────────────────────
 
   static Future<List<EjercicioModel>> fetchEjerciciosByIds(
-      List<String> ids) async {
+    List<String> ids,
+  ) async {
     if (ids.isEmpty) return [];
 
     final chunks = <List<String>>[];
     for (var i = 0; i < ids.length; i += 30) {
-      chunks.add(ids.sublist(
-          i, i + 30 > ids.length ? ids.length : i + 30));
+      chunks.add(ids.sublist(i, i + 30 > ids.length ? ids.length : i + 30));
     }
 
     final results = <EjercicioModel>[];
@@ -262,7 +301,10 @@ class CursosService {
   }
 
   static Stream<List<EjercicioModel>> streamEjerciciosDeLeccion(
-      String cursoId, String moduloId, String leccionId) {
+    String cursoId,
+    String moduloId,
+    String leccionId,
+  ) {
     return _db
         .collection('cursos')
         .doc(cursoId)
@@ -272,22 +314,22 @@ class CursosService {
         .doc(leccionId)
         .snapshots()
         .asyncMap((snap) async {
-      if (!snap.exists) return <EjercicioModel>[];
-      final data =
-          snap.data() as Map<String, dynamic>? ?? {};
-      final ids =
-          List<String>.from(data['ejercicios_ids'] ?? []);
-      return fetchEjerciciosByIds(ids);
-    });
+          if (!snap.exists) return <EjercicioModel>[];
+          final data = snap.data() as Map<String, dynamic>? ?? {};
+          final ids = List<String>.from(data['ejercicios_ids'] ?? []);
+          final ejercicios = await fetchEjerciciosByIds(ids);
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+          return ejercicios.where((e) => e.creadoPor == currentUserId).toList();
+        });
   }
 
   static Future<void> crearEjercicioEnLeccion(
-      String cursoId,
-      String moduloId,
-      String leccionId,
-      EjercicioModel ejercicio) async {
-    final ref =
-        await _db.collection('ejercicios').add(ejercicio.toMap());
+    String cursoId,
+    String moduloId,
+    String leccionId,
+    EjercicioModel ejercicio,
+  ) async {
+    final ref = await _db.collection('ejercicios').add(ejercicio.toMap());
     await _db
         .collection('cursos')
         .doc(cursoId)
@@ -296,15 +338,16 @@ class CursosService {
         .collection('lecciones')
         .doc(leccionId)
         .update({
-      'ejercicios_ids': FieldValue.arrayUnion([ref.id]),
-    });
+          'ejercicios_ids': FieldValue.arrayUnion([ref.id]),
+        });
   }
 
   static Future<void> quitarEjercicioDeLeccion(
-      String cursoId,
-      String moduloId,
-      String leccionId,
-      String ejercicioId) async {
+    String cursoId,
+    String moduloId,
+    String leccionId,
+    String ejercicioId,
+  ) async {
     await _db
         .collection('cursos')
         .doc(cursoId)
@@ -313,29 +356,34 @@ class CursosService {
         .collection('lecciones')
         .doc(leccionId)
         .update({
-      'ejercicios_ids': FieldValue.arrayRemove([ejercicioId]),
-    });
+          'ejercicios_ids': FieldValue.arrayRemove([ejercicioId]),
+        });
   }
 
   static Future<void> eliminarEjercicioCompleto(
-      String cursoId,
-      String moduloId,
-      String leccionId,
-      String ejercicioId) async {
-    await quitarEjercicioDeLeccion(
-        cursoId, moduloId, leccionId, ejercicioId);
+    String cursoId,
+    String moduloId,
+    String leccionId,
+    String ejercicioId,
+  ) async {
+    await quitarEjercicioDeLeccion(cursoId, moduloId, leccionId, ejercicioId);
     await _db.collection('ejercicios').doc(ejercicioId).delete();
   }
 
   // Conveniences
-  static Future<void> crearEjercicio(String cursoId, String moduloId,
-          String leccionId, EjercicioModel ejercicio) =>
-      crearEjercicioEnLeccion(cursoId, moduloId, leccionId, ejercicio);
+  static Future<void> crearEjercicio(
+    String cursoId,
+    String moduloId,
+    String leccionId,
+    EjercicioModel ejercicio,
+  ) => crearEjercicioEnLeccion(cursoId, moduloId, leccionId, ejercicio);
 
-  static Future<void> eliminarEjercicio(String cursoId, String moduloId,
-          String leccionId, String ejercicioId) =>
-      eliminarEjercicioCompleto(
-          cursoId, moduloId, leccionId, ejercicioId);
+  static Future<void> eliminarEjercicio(
+    String cursoId,
+    String moduloId,
+    String leccionId,
+    String ejercicioId,
+  ) => eliminarEjercicioCompleto(cursoId, moduloId, leccionId, ejercicioId);
 
   // ─── Stats ────────────────────────────────────────────────────────────────
 
@@ -347,5 +395,50 @@ class CursosService {
         .count()
         .get();
     return snap.count ?? 0;
+  }
+
+  static Future<int> contarLecciones(String cursoId) async {
+    final modulos = await _db
+        .collection('cursos')
+        .doc(cursoId)
+        .collection('modulos')
+        .get();
+    var total = 0;
+    for (final modulo in modulos.docs) {
+      final lecciones = await modulo.reference.collection('lecciones').get();
+      total += lecciones.size;
+    }
+    return total;
+  }
+
+  static Future<int> contarEjercicios(String cursoId) async {
+    final modulos = await _db
+        .collection('cursos')
+        .doc(cursoId)
+        .collection('modulos')
+        .get();
+    var total = 0;
+    for (final modulo in modulos.docs) {
+      final lecciones = await modulo.reference.collection('lecciones').get();
+      for (final leccion in lecciones.docs) {
+        final data = leccion.data();
+        final ids = List<String>.from(data['ejercicios_ids'] ?? []);
+        total += ids.length;
+      }
+    }
+    return total;
+  }
+
+  static Future<int> contarUsuariosSuscritos(String cursoId) async {
+    final usuarios = await _db.collection('users').get();
+    var total = 0;
+    for (final usuario in usuarios.docs) {
+      final progreso = await usuario.reference
+          .collection('progreso_cursos')
+          .doc(cursoId)
+          .get();
+      if (progreso.exists) total++;
+    }
+    return total;
   }
 }

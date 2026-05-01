@@ -7,6 +7,11 @@ class CursoModel {
   final String nivel;
   final String imagenUrl;
   final bool publicado;
+  final int modulosCount;
+  final int leccionesCount;
+  final int ejerciciosCount;
+  final int suscritosCount;
+  final String creadoPor;
 
   CursoModel({
     required this.id,
@@ -15,6 +20,11 @@ class CursoModel {
     required this.nivel,
     required this.imagenUrl,
     required this.publicado,
+    this.modulosCount = 0,
+    this.leccionesCount = 0,
+    this.ejerciciosCount = 0,
+    this.suscritosCount = 0,
+    this.creadoPor = '',
   });
 
   factory CursoModel.fromDoc(DocumentSnapshot doc) {
@@ -26,6 +36,11 @@ class CursoModel {
       nivel: data['nivel'] ?? '',
       imagenUrl: data['imagen_url'] ?? '',
       publicado: data['publicado'] ?? false,
+      modulosCount: data['modulos_count'] ?? 0,
+      leccionesCount: data['lecciones_count'] ?? 0,
+      ejerciciosCount: data['ejercicios_count'] ?? 0,
+      suscritosCount: data['suscritos_count'] ?? 0,
+      creadoPor: data['creado_por'] ?? '',
     );
   }
 
@@ -35,6 +50,11 @@ class CursoModel {
         'nivel': nivel,
         'imagen_url': imagenUrl,
         'publicado': publicado,
+        'modulos_count': modulosCount,
+        'lecciones_count': leccionesCount,
+        'ejercicios_count': ejerciciosCount,
+        'suscritos_count': suscritosCount,
+        'creado_por': creadoPor,
       };
 }
 
@@ -113,6 +133,7 @@ class EjercicioModel {
   final String vocabId;
   final String imagenUrl;
   final List<dynamic> opciones;
+  final String creadoPor;
 
   EjercicioModel({
     required this.id,
@@ -125,6 +146,7 @@ class EjercicioModel {
     this.vocabId = '',
     this.imagenUrl = '',
     this.opciones = const [],
+    this.creadoPor = '',
   });
 
   factory EjercicioModel.fromDoc(DocumentSnapshot doc) {
@@ -140,6 +162,7 @@ class EjercicioModel {
       vocabId: data['vocab_id'] ?? '',
       imagenUrl: data['imagen_url'] ?? '',
       opciones: data['opciones'] ?? [],
+      creadoPor: data['creado_por'] ?? '',
     );
   }
 
@@ -153,6 +176,7 @@ class EjercicioModel {
         'vocab_id': vocabId,
         'imagen_url': imagenUrl,
         'opciones': opciones,
+        'creado_por': creadoPor,
       };
 }
 

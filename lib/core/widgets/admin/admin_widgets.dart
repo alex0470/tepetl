@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
@@ -755,6 +756,7 @@ class SuggestionCard extends StatelessWidget {
                         dificultad: level,
                         respuesta: response,
                         pista: culturalContext,
+                        creadoPor: FirebaseAuth.instance.currentUser!.uid,
                       ),
                     );
                     if (context.mounted) {
