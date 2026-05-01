@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,11 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/admin_widgets.dart';
+import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
-// ─────────────────────────────────────────────
-//  Helper: pick image cross-platform (web safe)
-// ─────────────────────────────────────────────
 Future<XFile?> _pickImageSafe({bool fromCamera = false}) async {
   final picker = ImagePicker();
   // Camera not supported on Web → fall back to gallery
@@ -21,9 +16,6 @@ Future<XFile?> _pickImageSafe({bool fromCamera = false}) async {
   return picker.pickImage(source: source);
 }
 
-// ─────────────────────────────────────────────
-//  Leer y Escribir
-// ─────────────────────────────────────────────
 class CrearLeerYEscribirScreen extends StatefulWidget {
   final String cursoId;
   final String moduloId;
@@ -47,8 +39,6 @@ class _CrearLeerYEscribirScreenState extends State<CrearLeerYEscribirScreen> {
   final respuestaCtrl = TextEditingController();
   bool isSaving = false;
   PalabraModel? selectedPalabra;
-
-  // Web-safe image state
   XFile? _xfile;
   Uint8List? _imageBytes;
 
@@ -204,9 +194,6 @@ class _CrearLeerYEscribirScreenState extends State<CrearLeerYEscribirScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Imagen y Palabra
-// ─────────────────────────────────────────────
 class CrearImagenYPalabraScreen extends StatefulWidget {
   final String cursoId;
   final String moduloId;
@@ -231,11 +218,9 @@ class _CrearImagenYPalabraScreenState extends State<CrearImagenYPalabraScreen> {
   bool isSaving = false;
   PalabraModel? selectedPalabra;
 
-  // Main image (web-safe)
   XFile? _xfile;
   Uint8List? _imageBytes;
 
-  // 4 option images (web-safe)
   final List<XFile?> _optionXFiles = List.filled(4, null);
   final List<Uint8List?> _optionBytes = List.filled(4, null);
   final List<TextEditingController> _altControllers = List.generate(
@@ -308,7 +293,6 @@ class _CrearImagenYPalabraScreenState extends State<CrearImagenYPalabraScreen> {
     try {
       final ts = DateTime.now().millisecondsSinceEpoch;
 
-      // Upload main image
       String imagenUrl = selectedPalabra?.imagenUrl ?? '';
       if (_xfile != null) {
         imagenUrl = await CursosService.subirImagenEjercicioWeb(
@@ -317,7 +301,6 @@ class _CrearImagenYPalabraScreenState extends State<CrearImagenYPalabraScreen> {
         );
       }
 
-      // Upload option images and build opciones list
       final List<Map<String, String>> opciones = [];
       for (int i = 0; i < 4; i++) {
         String optUrl = '';
@@ -452,9 +435,6 @@ class _CrearImagenYPalabraScreenState extends State<CrearImagenYPalabraScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Completar Frase
-// ─────────────────────────────────────────────
 class CrearCompletarFraseScreen extends StatefulWidget {
   final String cursoId;
   final String moduloId;
@@ -592,9 +572,6 @@ class _CrearCompletarFraseScreenState extends State<CrearCompletarFraseScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Shell / Structure widgets
-// ─────────────────────────────────────────────
 class ManualExerciseScreenShell extends StatelessWidget {
   final String title;
   final String description;
@@ -740,9 +717,6 @@ class ToggleButtonGroup extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Palabras selector
-// ─────────────────────────────────────────────
 class PalabrasSelector extends StatefulWidget {
   final Function(PalabraModel) onSelect;
   const PalabrasSelector({required this.onSelect, super.key});
@@ -812,7 +786,7 @@ class _PalabrasSelectorState extends State<PalabrasSelector> {
                                 width: 50,
                                 height: 50,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorBuilder: (_, _, _) =>
                                     const Icon(Icons.image_not_supported),
                               ),
                             )
@@ -837,11 +811,6 @@ class _PalabrasSelectorState extends State<PalabrasSelector> {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Small helper widgets
-// ─────────────────────────────────────────────
-
-/// Shows a preview of the picked image with a clear button.
 class _ImagePreview extends StatelessWidget {
   final Uint8List imageBytes;
   final String label;
@@ -908,7 +877,6 @@ class _ImagePreview extends StatelessWidget {
   }
 }
 
-/// Shows a chip for a selected PalabraModel
 class _PalabraChip extends StatelessWidget {
   final PalabraModel palabra;
   final VoidCallback onClear;
@@ -965,7 +933,6 @@ class _PalabraChip extends StatelessWidget {
   }
 }
 
-/// Three-button row for picking images
 class _ImagePickerButtons extends StatelessWidget {
   final VoidCallback onGallery;
   final VoidCallback onCamera;
@@ -1013,7 +980,6 @@ class _ImagePickerButtons extends StatelessWidget {
   }
 }
 
-/// Stateful image option card (for the 4-option grid)
 class _ImageOptionCardStateful extends StatelessWidget {
   final int index;
   final bool isCorrect;
@@ -1063,7 +1029,7 @@ class _ImageOptionCardStateful extends StatelessWidget {
                         )
                       : Container(
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceVariant,
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(

@@ -3,7 +3,7 @@ import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/screens/principalesadmin/cursos/crear_ejercicios_screen.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/admin_widgets.dart';
+import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
 class LeccionesAdminScreen extends StatelessWidget {
   final String cursoId;

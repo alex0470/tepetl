@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/admin_widgets.dart';
+import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
 class AddCursoScreen extends StatefulWidget {
   const AddCursoScreen({super.key});
@@ -224,7 +222,7 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _modulosTitulos.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(height: 12),
                   itemBuilder: (context, index) => ModuleCardAdmin(
                     index: index + 1,
@@ -274,10 +272,10 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.secundario.withOpacity(0.05),
+        color: AppColors.secundario.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: AppColors.secundario.withOpacity(0.1)),
+            Border.all(color: AppColors.secundario.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -305,7 +303,7 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
           ),
           Switch(
             value: _isPublicado,
-            activeColor: AppColors.secundario,
+            activeThumbColor: AppColors.secundario,
             onChanged: (val) => setState(() => _isPublicado = val),
           ),
         ],
@@ -320,13 +318,13 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
         width: double.infinity,
         height: 160,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: Theme.of(context)
                   .colorScheme
                   .outline
-                  .withOpacity(0.2)),
+                  .withValues(alpha: 0.2)),
         ),
         child: _imageBytes != null
             ? ClipRRect(

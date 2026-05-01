@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/admin_widgets.dart' as admin_widgets;
+import 'package:tepetl/core/widgets/admin/admin_widgets.dart' as admin_widgets;
 
 class GenerarConIAScreen extends StatelessWidget {
   final String cursoId;

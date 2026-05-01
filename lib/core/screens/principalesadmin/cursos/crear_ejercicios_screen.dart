@@ -4,7 +4,7 @@ import 'package:tepetl/core/screens/principalesadmin/cursos/crear_ejercicios_man
 import 'package:tepetl/core/screens/principalesadmin/cursos/generar_ia_screen.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/admin_widgets.dart';
+import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
 class CrearEjerciciosScreen extends StatefulWidget {
   final String cursoId;

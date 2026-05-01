@@ -11,8 +11,6 @@ class CursosService {
   static final _db = FirebaseFirestore.instance;
   static final _storage = FirebaseStorage.instance;
 
-  // ─── Cursos ───────────────────────────────────────────────────────────────
-
   static Stream<List<CursoModel>> streamCursos() {
     return _db
         .collection('cursos')
@@ -49,8 +47,6 @@ class CursosService {
     }
     await _db.collection('cursos').doc(cursoId).delete();
   }
-
-  // ─── Storage helpers ─────────────────────────────────────────────────────
 
   static String _fileExtension(String path) {
     final name = path.split(RegExp(r'[\\/]+')).last;
@@ -385,7 +381,6 @@ class CursosService {
     String ejercicioId,
   ) => eliminarEjercicioCompleto(cursoId, moduloId, leccionId, ejercicioId);
 
-  // ─── Stats ────────────────────────────────────────────────────────────────
 
   static Future<int> contarModulos(String cursoId) async {
     final snap = await _db
