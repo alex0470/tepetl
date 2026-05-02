@@ -3,8 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-// ── Modelo interno ─────────────────────────────────────────────────────────────
-
 enum _Estado { esperando, verificando, activo, error }
 
 class _Verificacion {
@@ -32,8 +30,6 @@ class _EntradaLog {
     required this.timestamp,
   });
 }
-
-// ── Pantalla principal ─────────────────────────────────────────────────────────
 
 class AnalisisGeneralContent extends StatefulWidget {
   const AnalisisGeneralContent({super.key});
@@ -151,7 +147,6 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
               style: TextStyle(fontSize: 14, color: Colors.grey)),
           const SizedBox(height: 24),
 
-          // ── KPIs ────────────────────────────────────────────────────────────
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -188,7 +183,6 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
           ),
           const SizedBox(height: 24),
 
-          // ── Firestore ────────────────────────────────────────────────────────
           _ContenedorGrafica(
             titulo: 'Base de Datos',
             subtitulo: 'Cloud Firestore',
@@ -200,7 +194,6 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
           ),
           const SizedBox(height: 16),
 
-          // ── Servicio IA ──────────────────────────────────────────────────────
           _ContenedorGrafica(
             titulo: 'Servicio de IA',
             subtitulo: _iaUrl,
@@ -212,7 +205,6 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
           ),
           const SizedBox(height: 24),
 
-          // ── Log de errores ───────────────────────────────────────────────────
           _ContenedorGrafica(
             titulo: 'Log de Errores',
             icon: Icons.warning_amber_rounded,
@@ -244,8 +236,7 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
           ),
           const SizedBox(height: 24),
 
-          // ── Botón verificar todo ─────────────────────────────────────────────
-          SizedBox(
+           SizedBox(
             width: double.infinity,
             child: TextButton(
               onPressed: _verificando ? null : _verificarTodo,
@@ -271,8 +262,6 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
     );
   }
 }
-
-// ── Tarjeta de estado de servicio ──────────────────────────────────────────────
 
 class _TarjetaServicio extends StatelessWidget {
   final _Verificacion verificacion;
@@ -438,8 +427,6 @@ class _TarjetaServicio extends StatelessWidget {
   }
 }
 
-// ── Fila del log de errores ────────────────────────────────────────────────────
-
 class _FilaError extends StatelessWidget {
   final _EntradaLog entrada;
   const _FilaError({required this.entrada});
@@ -496,8 +483,6 @@ class _FilaError extends StatelessWidget {
   }
 }
 
-// ── Sin errores ────────────────────────────────────────────────────────────────
-
 class _SinErrores extends StatelessWidget {
   const _SinErrores();
 
@@ -517,8 +502,6 @@ class _SinErrores extends StatelessWidget {
     );
   }
 }
-
-// ── Componentes reutilizados (sin cambios) ────────────────────────────────────
 
 class _TarjetaKPI extends StatelessWidget {
   final String titulo, valor, cambio;
