@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ Nuevo
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tepetl/core/screens/usuario/perfil_ajustes.dart';
 import 'package:tepetl/core/widgets/usuario/wrapper_onboarding.dart';
 import 'core/theme/app_theme.dart';
 
 class MyApp extends StatefulWidget {
-  final ThemeMode initialTheme; // ✅ Recibe el tema de main.dart
+  final ThemeMode initialTheme;
 
   const MyApp({super.key, required this.initialTheme});
 

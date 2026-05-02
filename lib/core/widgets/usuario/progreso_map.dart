@@ -1,65 +1,138 @@
 import 'package:flutter/material.dart';
-import 'package:tepetl/core/screens/plantillas_ejercicios/examen_nivel_screen.dart';
+import 'package:tepetl/core/screens/plantillas_ejercicios/leccion_ejercicios_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 
 class ProgresoMapWidget extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   final bool isDark;
+  final String? cursoId;
+  final String? cursoTitulo;
+  final String cursoImagenUrl;
 
   const ProgresoMapWidget({
     super.key,
     required this.items,
     required this.isDark,
+    this.cursoId,
+    this.cursoTitulo,
+    this.cursoImagenUrl = '',
   });
 
   @override
   Widget build(BuildContext context) {
+    // Agrupar por moduloId manteniendo orden de aparición
+    final groups = <String, List<Map<String, dynamic>>>{};
+    final groupOrder = <String>[];
+
+    for (final item in items) {
+      final moduloId = item['moduloId'] as String? ?? '';
+      if (!groups.containsKey(moduloId)) {
+        groups[moduloId] = [];
+        groupOrder.add(moduloId);
+      }
+      groups[moduloId]!.add(item);
+    }
+
+    final nodes = <Widget>[];
+
+    for (var gi = 0; gi < groupOrder.length; gi++) {
+      final moduloId = groupOrder[gi];
+      final moduloItems = groups[moduloId]!;
+      final moduloName = moduloItems.first['modulo'] as String? ?? '';
+      final isLastGroup = gi == groupOrder.length - 1;
+
+      // Línea punteada de separación entre módulos (excepto antes del primero)
+      if (gi > 0) {
+        nodes.add(Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: _dottedLine(color: AppColors.textoSecundario20),
+        ));
+      }
+
+      // Encabezado del módulo
+      nodes.add(_moduloHeader(moduloName, gi));
+      nodes.add(const SizedBox(height: 10));
+
+      for (var i = 0; i < moduloItems.length; i++) {
+        final item = moduloItems[i];
+        final isLastInGroup = i == moduloItems.length - 1;
+
+        nodes.add(GestureDetector(
+          onTap: item["active"] == true ? () => _showPopup(context, item) : null,
+          child: _node(item),
+        ));
+        nodes.add(const SizedBox(height: 5));
+        nodes.add(Text(
+          item["leccion"] ?? item["label"],
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: item["active"] == true
+                ? (isDark ? AppColors.textoClaro : AppColors.textoSecundario)
+                : AppColors.textoSecundario40,
+          ),
+        ));
+
+        // Línea punteada entre lecciones del mismo módulo
+        if (!isLastInGroup) {
+          nodes.add(Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: _dottedLine(
+              color: item["active"] == true
+                  ? AppColors.secundario
+                  : AppColors.textoSecundario20,
+            ),
+          ));
+        } else if (!isLastGroup) {
+          nodes.add(const SizedBox(height: 10));
+        }
+      }
+    }
+
     return Center(
       child: SizedBox(
         width: 180,
-        child: Column(
-          children: List.generate(items.length, (i) {
-            final item = items[i];
-            final isLast = i == items.length - 1;
+        child: Column(children: nodes),
+      ),
+    );
+  }
 
-            return Column(
-              children: [
-                GestureDetector(
-                  onTap: item["active"]
-                      ? () => _showPopup(context, item)
-                      : null,
-                  child: _node(item),
-                ),
+  Widget _moduloHeader(String titulo, int index) {
+    final colors = [
+      AppColors.secundario,
+      AppColors.azul1,
+      AppColors.naranja1,
+      AppColors.amarillo1,
+    ];
+    final color = colors[index % colors.length];
 
-                const SizedBox(height: 5),
-
-                Text(
-                  item["label"],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: item["active"]
-                        ? (isDark
-                            ? AppColors.textoClaro
-                            : AppColors.textoSecundario)
-                        : AppColors.textoSecundario40,
-                  ),
-                ),
-
-                if (!isLast)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: _dottedLine(
-                      color: item["active"]
-                          ? AppColors.secundario
-                          : AppColors.textoSecundario20,
-                    ),
-                  ),
-              ],
-            );
-          }),
-        ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.layers_outlined, size: 12, color: color),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              titulo,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: color,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -99,8 +172,10 @@ class ProgresoMapWidget extends StatelessWidget {
   Color _getColor(Map<String, dynamic> item) {
     final isActive = item["active"] as bool;
     final isCurrent = item["current"] as bool;
+    final isCompleted = item["completada"] == true;
 
     if (!isActive) return AppColors.textoSecundario40;
+    if (isCompleted && !isCurrent) return Colors.green.shade600;
     if (isCurrent) return AppColors.amarillo1;
     return item["color"];
   }
@@ -110,10 +185,9 @@ class ProgresoMapWidget extends StatelessWidget {
     final isWide = screenWidth > 700;
 
     String actionText = "Iniciar";
-
-    if (item["current"]) {
+    if (item["current"] == true) {
       actionText = "Continuar";
-    } else if (item["active"]) {
+    } else if (item["active"] == true) {
       actionText = "Repetir";
     }
 
@@ -170,22 +244,37 @@ class ProgresoMapWidget extends StatelessWidget {
   }
 
   Widget _popupImage({double width = double.infinity, double height = 160}) {
+    final radius = width == double.infinity
+        ? const BorderRadius.vertical(top: Radius.circular(20))
+        : const BorderRadius.horizontal(left: Radius.circular(20));
+
+    Widget placeholder() => Container(
+          width: width,
+          height: height,
+          color: isDark ? AppColors.fondoOscuro : AppColors.extra120,
+          child: Icon(
+            Icons.auto_awesome,
+            size: 50,
+            color: isDark
+                ? AppColors.textoSecundario40
+                : AppColors.textoSecundario20,
+          ),
+        );
+
     return ClipRRect(
-      borderRadius: width == double.infinity
-          ? const BorderRadius.vertical(top: Radius.circular(20))
-          : const BorderRadius.horizontal(left: Radius.circular(20)),
-      child: Container(
-        width: width,
-        height: height,
-        color: isDark ? AppColors.fondoOscuro : AppColors.extra120,
-        child: Icon(
-          Icons.auto_awesome,
-          size: 50,
-          color: isDark
-              ? AppColors.textoSecundario40
-              : AppColors.textoSecundario20,
-        ),
-      ),
+      borderRadius: radius,
+      child: cursoImagenUrl.isEmpty
+          ? placeholder()
+          : Image.network(
+              cursoImagenUrl,
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+              loadingBuilder: (_, child, progress) =>
+                  progress == null ? child : placeholder(),
+              errorBuilder: (_, _, _) => placeholder(),
+            ),
     );
   }
 
@@ -196,41 +285,58 @@ class ProgresoMapWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          item["label"],
+          item["leccion"] ?? item["label"],
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w900,
             color: isDark ? Colors.white : Colors.black,
           ),
         ),
+        if (item["modulo"] != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              item["modulo"],
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark
+                    ? AppColors.textoClaro
+                    : AppColors.textoSecundario,
+              ),
+            ),
+          ),
 
         const SizedBox(height: 10),
 
-        Text(
-          "Domina esta lección a través de ejercicios interactivos, práctica guiada "
-          "y ejemplos dinámicos diseñados para mejorar tu comprensión progresivamente.",
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: isDark
-                ? AppColors.textoClaro
-                : AppColors.textoSecundario,
-          ),
-        ),
+        Builder(builder: (_) {
+          final desc = item["descripcion"] as String? ?? '';
+          return Text(
+            desc.isNotEmpty
+                ? desc
+                : "Domina esta lección a través de ejercicios interactivos, práctica guiada "
+                    "y ejemplos dinámicos diseñados para mejorar tu comprensión progresivamente.",
+            style: const TextStyle(fontSize: 13, height: 1.4),
+          );
+        }),
 
         const SizedBox(height: 15),
 
-        Row(
-          children: const [
-            Icon(Icons.star_outline, size: 16),
-            SizedBox(width: 4),
-            Text("120 pts"),
-            SizedBox(width: 12),
-            Icon(Icons.access_time, size: 16),
-            SizedBox(width: 4),
-            Text("5 min"),
-          ],
-        ),
+        Builder(builder: (_) {
+          final count = (item["ejerciciosIds"] as List?)?.length ?? 0;
+          final minutos = count > 0 ? count * 2 : 5;
+          final xpMax = count > 0 ? count * 10 : 50;
+          return Row(
+            children: [
+              const Icon(Icons.star_outline, size: 16),
+              const SizedBox(width: 4),
+              Text("hasta $xpMax XP"),
+              const SizedBox(width: 12),
+              const Icon(Icons.access_time, size: 16),
+              const SizedBox(width: 4),
+              Text("~$minutos min"),
+            ],
+          );
+        }),
 
         const SizedBox(height: 20),
 
@@ -249,15 +355,7 @@ class ProgresoMapWidget extends StatelessWidget {
                   backgroundColor: AppColors.secundario,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    PageRouteBuilder(
-                      pageBuilder: (_, _, _) => const ExamenNivelScreen(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                },
+                onPressed: () => _navegarALeccion(context, item),
                 child: Text(
                   actionText,
                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -265,8 +363,30 @@ class ProgresoMapWidget extends StatelessWidget {
               ),
             ),
           ],
-        )
+        ),
       ],
+    );
+  }
+
+  void _navegarALeccion(BuildContext context, Map<String, dynamic> item) {
+    Navigator.of(context).pop();
+
+    if (cursoId == null || item['id'] == null) {
+      debugPrint('ProgresoMap: faltan cursoId o item["id"] para navegar.');
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LeccionEjerciciosScreen(
+          cursoId: cursoId!,
+          leccionId: item['id'] as String,
+          moduloId: item['moduloId'] as String?,
+          leccionTitulo: (item['leccion'] ?? item['label']) as String,
+          ejerciciosIds: List<String>.from(item['ejerciciosIds'] ?? []),
+          totalLeccionesCurso: item['totalLeccionesCurso'] as int? ?? 1,
+        ),
+      ),
     );
   }
 
@@ -306,6 +426,5 @@ class _DottedLinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DottedLinePainter old) =>
-      old.color != color;
+  bool shouldRepaint(covariant _DottedLinePainter old) => old.color != color;
 }

@@ -36,6 +36,55 @@ class CursosService {
     return _db.collection('cursos').doc(cursoId).update(data);
   }
 
+  static Stream<List<CursoModel>> streamCursosSuscritos(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('progreso_cursos')
+        .snapshots()
+        .asyncMap((snapshot) async {
+          final cursoIds = snapshot.docs.map((doc) => doc.id).toList();
+          if (cursoIds.isEmpty) return [];
+          return fetchCursosByIds(cursoIds);
+        });
+  }
+
+  static Future<List<CursoModel>> fetchCursosByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final chunks = <List<String>>[];
+    for (var i = 0; i < ids.length; i += 30) {
+      chunks.add(ids.sublist(i, i + 30 > ids.length ? ids.length : i + 30));
+    }
+    final results = <CursoModel>[];
+    for (final chunk in chunks) {
+      final snap = await _db
+          .collection('cursos')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      results.addAll(snap.docs.map(CursoModel.fromDoc));
+    }
+    final map = {for (final c in results) c.id: c};
+    return ids.map((id) => map[id]).whereType<CursoModel>().toList();
+  }
+
+  static Stream<List<CursoModel>> streamCursosOficiales() {
+    return _db
+        .collection('cursos')
+        .where('creado_por', isEqualTo: 'sistema')
+        .snapshots()
+        .map((snap) => snap.docs.map(CursoModel.fromDoc).toList());
+  }
+
+  static Future<void> inscribirUsuarioEnCurso(String userId, String cursoId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('progreso_cursos')
+        .doc(cursoId)
+        .set({'fecha_inscripcion': FieldValue.serverTimestamp()});
+  }
+
+  // FIX: eliminado duplicado — se conserva sólo esta versión (con borrado en cascada)
   static Future<void> eliminarCurso(String cursoId) async {
     final modulos = await _db
         .collection('cursos')
@@ -47,6 +96,17 @@ class CursosService {
     }
     await _db.collection('cursos').doc(cursoId).delete();
   }
+
+  /// Cursos creados por usuarios administradores (creado_por != 'sistema').
+  static Stream<List<CursoModel>> streamCursosDeUsuarios() {
+    return _db
+        .collection('cursos')
+        .where('creado_por', isNotEqualTo: 'sistema')
+        .snapshots()
+        .map((snap) => snap.docs.map(CursoModel.fromDoc).toList());
+  }
+
+  // ─── Upload helpers ───────────────────────────────────────────────────────
 
   static String _fileExtension(String path) {
     final name = path.split(RegExp(r'[\\/]+')).last;
@@ -73,7 +133,8 @@ class CursosService {
     }
   }
 
-  /// Cross-platform upload using [XFile] (works on Web + Mobile).
+  /// Cross-platform upload usando [XFile] (funciona en Web + Mobile).
+  // FIX: eliminado duplicado — se conserva esta versión con tipo de contenido dinámico
   static Future<String> _uploadXFile(XFile xfile, String storagePath) async {
     final extension = _fileExtension(xfile.name);
     final metadata = SettableMetadata(
@@ -91,7 +152,8 @@ class CursosService {
     return ref.getDownloadURL();
   }
 
-  /// Legacy mobile-only upload (kept for backwards-compatibility).
+  /// Upload sólo para mobile (compatibilidad hacia atrás).
+  // FIX: eliminado duplicado — se conserva esta versión con tipo de contenido dinámico
   static Future<String> _uploadFile(File file, String storagePath) async {
     final extension = _fileExtension(file.path);
     final metadata = SettableMetadata(
@@ -102,19 +164,16 @@ class CursosService {
     return ref.getDownloadURL();
   }
 
-  // ─── Public upload methods ───────────────────────────────────────────────
+  // ─── Métodos públicos de upload ───────────────────────────────────────────
 
-  /// Upload course cover image (web-safe, use XFile).
   static Future<String> subirImagenWeb(XFile xfile, String cursoId) =>
       _uploadXFile(xfile, 'cursos/$cursoId/portada');
 
-  /// Upload exercise image (web-safe, use XFile).
   static Future<String> subirImagenEjercicioWeb(
     XFile xfile,
     String ejercicioId,
   ) => _uploadXFile(xfile, 'ejercicios/$ejercicioId/imagen');
 
-  /// Legacy mobile-only methods kept in case they're used elsewhere.
   static Future<String> subirImagen(File imagen, String cursoId) =>
       _uploadFile(imagen, 'cursos/$cursoId/portada');
 
@@ -313,9 +372,9 @@ class CursosService {
           if (!snap.exists) return <EjercicioModel>[];
           final data = snap.data() as Map<String, dynamic>? ?? {};
           final ids = List<String>.from(data['ejercicios_ids'] ?? []);
-          final ejercicios = await fetchEjerciciosByIds(ids);
-          final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-          return ejercicios.where((e) => e.creadoPor == currentUserId).toList();
+          // FIX: eliminado filtro por creadoPor — se retornan todos los
+          // ejercicios de la lección, no solo los del usuario actual.
+          return fetchEjerciciosByIds(ids);
         });
   }
 
@@ -366,7 +425,7 @@ class CursosService {
     await _db.collection('ejercicios').doc(ejercicioId).delete();
   }
 
-  // Conveniences
+  // FIX: eliminado duplicado — se conserva sólo un alias por método
   static Future<void> crearEjercicio(
     String cursoId,
     String moduloId,
@@ -381,7 +440,9 @@ class CursosService {
     String ejercicioId,
   ) => eliminarEjercicioCompleto(cursoId, moduloId, leccionId, ejercicioId);
 
+  // ─── Contadores ───────────────────────────────────────────────────────────
 
+  // FIX: eliminado duplicado — se conserva la versión con .count() de Firestore
   static Future<int> contarModulos(String cursoId) async {
     final snap = await _db
         .collection('cursos')

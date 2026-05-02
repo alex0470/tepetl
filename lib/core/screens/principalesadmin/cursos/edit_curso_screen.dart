@@ -6,6 +6,7 @@ import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/screens/principalesadmin/cursos/modulos_admin_screen.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/theme/curso_filters.dart';
 import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
 class EditCursoScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class EditCursoScreen extends StatefulWidget {
 class _EditCursoScreenState extends State<EditCursoScreen> {
   late bool _isPublicado;
   late String _nivelSeleccionado;
+  late String _categoriaSeleccionada;
   late final TextEditingController _tituloCtrl;
   late final TextEditingController _descripcionCtrl;
 
@@ -36,6 +38,9 @@ class _EditCursoScreenState extends State<EditCursoScreen> {
     _nivelSeleccionado = nivelesValidos.contains(widget.curso.nivel)
         ? widget.curso.nivel
         : 'Básico';
+    _categoriaSeleccionada = CursoFilters.categorias.contains(widget.curso.categoria)
+        ? widget.curso.categoria
+        : 'Saludos';
     _tituloCtrl = TextEditingController(text: widget.curso.titulo);
     _descripcionCtrl =
         TextEditingController(text: widget.curso.descripcion);
@@ -77,6 +82,7 @@ class _EditCursoScreenState extends State<EditCursoScreen> {
         'titulo': _tituloCtrl.text.trim(),
         'descripcion': _descripcionCtrl.text.trim(),
         'nivel': _nivelSeleccionado,
+        'categoria': _categoriaSeleccionada,
         'publicado': _isPublicado,
         'imagen_url': imagenUrl,
       });
@@ -184,6 +190,13 @@ class _EditCursoScreenState extends State<EditCursoScreen> {
                   value: _nivelSeleccionado,
                   onChanged: (v) =>
                       setState(() => _nivelSeleccionado = v!),
+                ),
+                const SizedBox(height: 20),
+                const Label(text: 'Categoría'),
+                CategoriaDropdown(
+                  value: _categoriaSeleccionada,
+                  onChanged: (v) =>
+                      setState(() => _categoriaSeleccionada = v!),
                 ),
                 const SizedBox(height: 20),
                 Container(

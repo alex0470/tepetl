@@ -5,6 +5,7 @@ class CursoModel {
   final String titulo;
   final String descripcion;
   final String nivel;
+  final String categoria;
   final String imagenUrl;
   final bool publicado;
   final int modulosCount;
@@ -20,6 +21,7 @@ class CursoModel {
     required this.nivel,
     required this.imagenUrl,
     required this.publicado,
+    this.categoria = 'General',
     this.modulosCount = 0,
     this.leccionesCount = 0,
     this.ejerciciosCount = 0,
@@ -36,6 +38,7 @@ class CursoModel {
       nivel: data['nivel'] ?? '',
       imagenUrl: data['imagen_url'] ?? '',
       publicado: data['publicado'] ?? false,
+      categoria: data['categoria'] ?? 'General',
       modulosCount: data['modulos_count'] ?? 0,
       leccionesCount: data['lecciones_count'] ?? 0,
       ejerciciosCount: data['ejercicios_count'] ?? 0,
@@ -50,6 +53,7 @@ class CursoModel {
         'nivel': nivel,
         'imagen_url': imagenUrl,
         'publicado': publicado,
+        'categoria': categoria,
         'modulos_count': modulosCount,
         'lecciones_count': leccionesCount,
         'ejercicios_count': ejerciciosCount,

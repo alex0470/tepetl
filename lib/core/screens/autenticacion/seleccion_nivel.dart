@@ -31,6 +31,7 @@ class NivelSeleccionScreen extends StatelessWidget {
   }
 
   Future<void> _finalizarSeleccionNivel(BuildContext context, String nivelSeleccionado) async {
+
     showDialog(
       context: context,
       barrierDismissible: false,

@@ -18,6 +18,8 @@ class CursoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pct = curso["porcentaje"] as double;
+    final titulo = curso["titulo"] as String? ?? '';
+    final imagenUrl = curso["imagenUrl"] as String? ?? '';
 
     return GestureDetector(
       onTap: onTap,
@@ -42,22 +44,11 @@ class CursoCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen
+            // Imagen de portada
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(14)),
-              child: Container(
-                height: 100,
-                width: double.infinity,
-                color: isDark
-                    ? AppColors.fondoOscuro
-                    : AppColors.extra120,
-                child: Icon(Icons.image_outlined,
-                    size: 36,
-                    color: isDark
-                        ? AppColors.textoSecundario40
-                        : AppColors.textoSecundario20),
-              ),
+              child: _CoverImage(url: imagenUrl, titulo: titulo, height: 100),
             ),
 
             // Info
@@ -66,11 +57,11 @@ class CursoCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _badge(curso["nivel"]),
+                  _badge(curso["nivel"] as String? ?? ''),
                   const SizedBox(height: 5),
 
                   Text(
-                    curso["titulo"],
+                    titulo,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -167,6 +158,74 @@ class CursoCard extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: fg,
         ),
+      ),
+    );
+  }
+}
+
+class _CoverImage extends StatelessWidget {
+  final String url;
+  final String titulo;
+  final double height;
+
+  const _CoverImage({
+    required this.url,
+    required this.titulo,
+    required this.height,
+  });
+
+  Color _colorFromTitle() {
+    const colors = [
+      Color(0xFF2D6A4F),
+      Color(0xFF1B4332),
+      Color(0xFF40916C),
+      Color(0xFF1D3557),
+      Color(0xFF457B9D),
+      Color(0xFF6D4C41),
+    ];
+    return colors[titulo.length % colors.length];
+  }
+
+  Widget _placeholder() {
+    final color = _colorFromTitle();
+    final initials = titulo.isNotEmpty
+        ? titulo.trim().split(' ').take(2).map((w) => w[0].toUpperCase()).join()
+        : '?';
+    return Container(
+      height: height,
+      width: double.infinity,
+      color: color,
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: height * 0.22,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.isEmpty) return _placeholder();
+
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: Image.network(
+        url,
+        height: height,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _placeholder();
+        },
+        errorBuilder: (_, _, _) => _placeholder(),
       ),
     );
   }

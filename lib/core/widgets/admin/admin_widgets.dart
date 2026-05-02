@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/theme/curso_filters.dart';
 
 class Label extends StatelessWidget {
   final String text;
@@ -98,6 +99,52 @@ class NivelDropdown extends StatelessWidget {
         underline: const SizedBox(),
         items: ['Básico', 'Básico+', 'Intermedio']
             .map((nivel) => DropdownMenuItem(value: nivel, child: Text(nivel, style: TextStyle(fontSize: 14, color: AppColors.textoSecundario.withValues(alpha: 0.6))),))
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class CategoriaDropdown extends StatelessWidget {
+  final String value;
+  final ValueChanged<String?> onChanged;
+
+  const CategoriaDropdown({required this.value, required this.onChanged, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
+      ),
+      child: DropdownButton<String>(
+        value: value,
+        isExpanded: true,
+        underline: const SizedBox(),
+        items: CursoFilters.categorias
+            .map((categoria) {
+              final icono = CursoFilters.getCategoryIcon(categoria);
+              return DropdownMenuItem(
+                value: categoria,
+                child: Row(
+                  children: [
+                    Icon(icono, size: 16, color: CursoFilters.getCategoryColor(categoria)),
+                    const SizedBox(width: 8),
+                    Text(
+                      categoria,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textoSecundario.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            })
             .toList(),
         onChanged: onChanged,
       ),

@@ -41,11 +41,9 @@ class IAService {
       print('Error llamando a IA: $e');
     }
 
-    // Fallback si falla la conexión
+    // Fallback si falla la conexión — sin precision/xp para que el llamador use cálculo local
     return {
       'mensaje_ai': 'Buen esfuerzo. Sigue practicando.',
-      'precision': 0,
-      'xp': 0,
     };
   }
 }

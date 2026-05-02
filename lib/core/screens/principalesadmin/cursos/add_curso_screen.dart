@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/theme/curso_filters.dart';
 import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
 class AddCursoScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
   Uint8List? _imageBytes;
 
   String _nivelSeleccionado = 'Básico';
+  String _categoriaSeleccionada = 'Saludos';
 
   final _tituloCtrl = TextEditingController();
   final _descripcionCtrl = TextEditingController();
@@ -59,6 +61,7 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
         titulo: _tituloCtrl.text.trim(),
         descripcion: _descripcionCtrl.text.trim(),
         nivel: _nivelSeleccionado,
+        categoria: _categoriaSeleccionada,
         imagenUrl: '',
         publicado: _isPublicado,
         creadoPor: FirebaseAuth.instance.currentUser!.uid,
@@ -198,6 +201,13 @@ class _AddCursoScreenState extends State<AddCursoScreen> {
                   value: _nivelSeleccionado,
                   onChanged: (v) =>
                       setState(() => _nivelSeleccionado = v!),
+                ),
+                const SizedBox(height: 20),
+                const Label(text: 'Categoría'),
+                CategoriaDropdown(
+                  value: _categoriaSeleccionada,
+                  onChanged: (v) =>
+                      setState(() => _categoriaSeleccionada = v!),
                 ),
                 const SizedBox(height: 32),
                 Row(

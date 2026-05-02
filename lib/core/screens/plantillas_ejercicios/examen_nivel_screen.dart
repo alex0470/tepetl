@@ -138,7 +138,7 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
       setState(() => _hearts = corazonesRestantes);
 
       if (_hearts <= 0) {
-        if (mounted) DialogosUtils.mostrarSinCorazones(context);
+        DialogosUtils.mostrarSinCorazones(context);
         return;
       }
     }
@@ -182,7 +182,8 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
                     : 0)
                 .round());
                 
-    final int xpGanada = (resultadoIA['xp'] as num?)?.toInt() ?? 0;
+    final int xpGanada = (resultadoIA['xp'] as num?)?.toInt() ??
+        ((totalEjercicios * 10 * precision) ~/ 100).clamp(5, totalEjercicios * 10);
 
     final String nivelDeterminado = resultadoIA['nivel_predicho'] ?? 
                                     resultadoIA['nivel'] ?? 

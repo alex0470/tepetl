@@ -1,43 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/examen_nivel_screen.dart';
+import 'package:tepetl/core/screens/principales/main_screen.dart';
+import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
+import 'package:tepetl/core/theme/curso_filters.dart';
 
-// ── Modelos ───────────────────────────────────────────────────────────────────
-
-class _MiCurso {
-  final String titulo;
-  final String modulo;
-  final String imagen;
-  final double progreso;
-  final String botonLabel;
-
-  const _MiCurso({
-    required this.titulo,
-    required this.modulo,
-    required this.imagen,
-    required this.progreso,
-    required this.botonLabel,
-  });
-}
-
-class _CursoOficial {
-  final String titulo;
-  final String descripcion;
-  final String imagen;
-  final String nivel;
-  final Color nivelColor;
-  final String alumnos;
-
-  const _CursoOficial({
-    required this.titulo,
-    required this.descripcion,
-    required this.imagen,
-    required this.nivel,
-    required this.nivelColor,
-    required this.alumnos,
-  });
-}
+// ── Sugerencias IA (datos estáticos) ─────────────────────────────────────────
 
 class _Sugerencia {
   final String etiqueta;
@@ -56,60 +28,6 @@ class _Sugerencia {
     required this.icono,
   });
 }
-
-// ── Datos Iniciales (Base) ────────────────────────────────────────────────────
-
-final List<_MiCurso> _misCursosIniciales = [
-  const _MiCurso(
-    titulo: 'Náhuatl Intermedio',
-    modulo: 'Módulo 1: Verbos de movimiento',
-    imagen:
-        'https://69cd7410079511ce6100f7d7.imgix.net/varias-monta%C3%B1as-con-muchos-arboles-y-un-atardecer-al-fondo-396971.png?w=200&h=200',
-    progreso: 0.0,
-    botonLabel: 'Comenzar',
-  ),
-  const _MiCurso(
-    titulo: 'Náhuatl Básico',
-    modulo: 'Módulo 2: Animales y naturaleza',
-    imagen:
-        'https://69cd7410079511ce6100f7d7.imgix.net/lluvia-cayendo-sobre-plantas-866138.png?w=200&h=200',
-    progreso: 0.20,
-    botonLabel: 'Continuar',
-  ),
-];
-
-List<_CursoOficial> _cursosOficiales = [
-  _CursoOficial(
-    titulo: 'Variante Guerrero Central',
-    descripcion:
-        'Aprende la variante hablada en la región montañosa de Guerrero con énfasis en el habla cotidiana.',
-    imagen:
-        'https://69cd7410079511ce6100f7d7.imgix.net/varias-monta%C3%B1as-con-muchos-arboles-y-un-atardecer-al-fondo-396971.png?w=600&h=400',
-    nivel: 'INTERMEDIO',
-    nivelColor: AppColors.amarillo1.withValues(alpha: 0.3),
-    alumnos: '1.2k alumnos',
-  ),
-  _CursoOficial(
-    titulo: 'Poesía y Canto Náhuatl',
-    descripcion:
-        'Explora la riqueza literaria de los antiguos cantares mexicanos y la métrica de la poesía clásica.',
-    imagen:
-        'https://69cd7410079511ce6100f7d7.imgix.net/lluvia-cayendo-sobre-plantas-866138.png?w=600&h=400',
-    nivel: 'BÁSICO',
-    nivelColor: AppColors.secundario.withValues(alpha: 0.3),
-    alumnos: '850 alumnos',
-  ),
-  _CursoOficial(
-    titulo: 'Cosmovisión y Mitos',
-    descripcion:
-        'Un viaje a través de los mitos de creación, los dioses y el concepto del tiempo en el pensamiento náhuatl.',
-    imagen:
-        'https://69cd7410079511ce6100f7d7.imgix.net/flower.png?w=600&h=400',
-    nivel: 'BÁSICO',
-    nivelColor: AppColors.secundario.withValues(alpha: 0.3),
-    alumnos: '2.1k alumnos',
-  ),
-];
 
 const List<_Sugerencia> _sugerencias = [
   _Sugerencia(
@@ -134,52 +52,21 @@ const List<_Sugerencia> _sugerencias = [
 
 // ── Pantalla principal ────────────────────────────────────────────────────────
 
-class CursosScreen extends StatefulWidget {
+class CursosScreen extends StatelessWidget {
   const CursosScreen({super.key});
-
-  @override
-  State<CursosScreen> createState() => _CursosScreenState();
-}
-
-class _CursosScreenState extends State<CursosScreen> {
-  // Lista de cursos de estado local para poder agregar dinámicamente
-  List<_MiCurso> misCursos = List.from(_misCursosIniciales);
-
-  void _inscribirCurso(_CursoOficial oficial) {
-    setState(() {
-      misCursos.add(
-        _MiCurso(
-          titulo: oficial.titulo,
-          modulo: 'Módulo 1: Introducción',
-          imagen: oficial.imagen,
-          progreso: 0.0,
-          botonLabel: 'Comenzar',
-        ),
-      );
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sw = MediaQuery.of(context).size.width;
-    // Ajuste de breakpoint para evitar desbordamientos en tablets grandes/pantallas medianas
     final isWide = sw > 1000;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.fondoOscuro : Colors.white,
       body: SafeArea(
         child: isWide
-            ? _WideLayout(
-                isDark: isDark,
-                misCursos: misCursos,
-                onInscribir: _inscribirCurso,
-              )
-            : _MobileLayout(
-                isDark: isDark,
-                misCursos: misCursos,
-                onInscribir: _inscribirCurso,
-              ),
+            ? _WideLayout(isDark: isDark)
+            : _MobileLayout(isDark: isDark),
       ),
     );
   }
@@ -189,14 +76,7 @@ class _CursosScreenState extends State<CursosScreen> {
 
 class _MobileLayout extends StatelessWidget {
   final bool isDark;
-  final List<_MiCurso> misCursos;
-  final Function(_CursoOficial) onInscribir;
-
-  const _MobileLayout({
-    required this.isDark,
-    required this.misCursos,
-    required this.onInscribir,
-  });
+  const _MobileLayout({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -205,11 +85,11 @@ class _MobileLayout extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SeccionMisCursos(isDark: isDark, isWide: false, misCursos: misCursos),
+          _SeccionMisCursos(isDark: isDark, isWide: false),
           const SizedBox(height: 24),
           _SeccionSugerencias(isDark: isDark, isWide: false),
           const SizedBox(height: 24),
-          _SeccionExplorar(isDark: isDark, isWide: false, onInscribir: onInscribir),
+          _SeccionExplorar(isDark: isDark, isWide: false),
           const SizedBox(height: 24),
         ],
       ),
@@ -221,14 +101,7 @@ class _MobileLayout extends StatelessWidget {
 
 class _WideLayout extends StatelessWidget {
   final bool isDark;
-  final List<_MiCurso> misCursos;
-  final Function(_CursoOficial) onInscribir;
-
-  const _WideLayout({
-    required this.isDark,
-    required this.misCursos,
-    required this.onInscribir,
-  });
+  const _WideLayout({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -237,21 +110,17 @@ class _WideLayout extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Lado Izquierdo: Mis cursos y Explorar (del mismo ancho de columna)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SeccionMisCursos(
-                    isDark: isDark, isWide: true, misCursos: misCursos),
+                _SeccionMisCursos(isDark: isDark, isWide: true),
                 const SizedBox(height: 32),
-                _SeccionExplorar(
-                    isDark: isDark, isWide: true, onInscribir: onInscribir),
+                _SeccionExplorar(isDark: isDark, isWide: true),
               ],
             ),
           ),
           const SizedBox(width: 24),
-          // Lado Derecho: Sugerencias IA (Ajustado a 340 para dar más aire al contenido principal)
           SizedBox(
             width: 340,
             child: _SeccionSugerencias(isDark: isDark, isWide: true),
@@ -267,88 +136,219 @@ class _WideLayout extends StatelessWidget {
 class _SeccionMisCursos extends StatelessWidget {
   final bool isDark;
   final bool isWide;
-  final List<_MiCurso> misCursos;
 
-  const _SeccionMisCursos({
-    required this.isDark,
-    required this.isWide,
-    required this.misCursos,
-  });
+  const _SeccionMisCursos({required this.isDark, required this.isWide});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'MIS CURSOS',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-                color: Theme.of(context).colorScheme.onSurface),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.secundario.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${misCursos.length} ACTIVOS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.secundario,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        // Implementación 100% responsiva para Mis Cursos
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final double w = constraints.maxWidth;
-            int columns = w > 650 ? 2 : 1;
-            double spacing = 16.0;
-            double itemWidth = (w - (columns - 1) * spacing) / columns;
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: misCursos
-                  .map(
-                    (c) => SizedBox(
-                      width: itemWidth,
-                      child: _TarjetaCurso(curso: c, isDark: isDark),
+    return StreamBuilder<List<CursoModel>>(
+      stream: CursosService.streamCursosSuscritos(userId),
+      builder: (context, snapshot) {
+        final cursos = snapshot.data ?? [];
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'MIS CURSOS',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.secundario.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${cursos.length} ACTIVOS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.secundario,
+                      letterSpacing: 0.5,
                     ),
-                  )
-                  .toList(),
-            );
-          },
-        ),
-      ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (cursos.isEmpty)
+              _EmptyMisCursos(isDark: isDark)
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final double w = constraints.maxWidth;
+                  int columns = w > 650 ? 2 : 1;
+                  double spacing = 16.0;
+                  double itemWidth =
+                      (w - (columns - 1) * spacing) / columns;
+
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: cursos
+                        .map(
+                          (curso) => SizedBox(
+                            width: itemWidth,
+                            child: _TarjetaCurso(
+                              curso: curso,
+                              isDark: isDark,
+                              userId: userId,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  );
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _EmptyMisCursos extends StatelessWidget {
+  final bool isDark;
+  const _EmptyMisCursos({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.school_outlined,
+              size: 48,
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.3)),
+          const SizedBox(height: 12),
+          Text(
+            'Aún no tienes cursos',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Explora los cursos disponibles abajo e inscríbete.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.4),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _TarjetaCurso extends StatelessWidget {
-  final _MiCurso curso;
+  final CursoModel curso;
   final bool isDark;
-  const _TarjetaCurso({required this.curso, required this.isDark});
+  final String userId;
+
+  const _TarjetaCurso({
+    required this.curso,
+    required this.isDark,
+    required this.userId,
+  });
+
+  Future<void> _anularInscripcion(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('¿Anular inscripción?',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content:
+            Text('Se eliminará "${curso.titulo}" de tu lista de cursos.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child:
+                const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: AppColors.rojo1),
+            child: const Text('Anular',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      // Eliminar el documento de progreso del usuario
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('progreso_cursos')
+          .doc(curso.id)
+          .delete();
+
+      // Restar 1 en suscritos_count (sin bajar de 0)
+      final cursoRef = FirebaseFirestore.instance
+          .collection('cursos')
+          .doc(curso.id);
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snap = await transaction.get(cursoRef);
+        final currentCount = (snap.data()?['suscritos_count'] ?? 1) as int;
+        transaction.update(cursoRef, {
+          'suscritos_count': currentCount > 0 ? currentCount - 1 : 0,
+        });
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Inscripción anulada')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final pct = (curso.progreso * 100).toInt();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -361,22 +361,18 @@ class _TarjetaCurso extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Imagen + info
           Row(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  curso.imagen,
+                child: SizedBox(
                   width: 60,
                   height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    width: 60,
+                  child: _CourseImage(
+                    url: curso.imagenUrl,
+                    titulo: curso.titulo,
                     height: 60,
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.image_not_supported,
-                        color: Colors.grey, size: 20),
+                    width: 60,
                   ),
                 ),
               ),
@@ -395,9 +391,12 @@ class _TarjetaCurso extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      curso.modulo,
+                      curso.nivel,
                       style: TextStyle(
-                          fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75)),
+                        fontSize: 12,
+                        color: AppColors.secundario,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -405,7 +404,6 @@ class _TarjetaCurso extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          // Barra de progreso
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -415,15 +413,21 @@ class _TarjetaCurso extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.60),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.60),
                 ),
               ),
               Text(
-                '$pct%',
+                '0%',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.60),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.60),
                 ),
               ),
             ],
@@ -432,43 +436,47 @@ class _TarjetaCurso extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: curso.progreso,
+              value: 0.0,
               minHeight: 6,
-              backgroundColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.20),
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.20),
               valueColor:
                   AlwaysStoppedAnimation<Color>(AppColors.secundario),
             ),
           ),
           const SizedBox(height: 14),
-          // Acciones
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.cancel_outlined,
-                      color: AppColors.rojo1, size: 14),
-                  const SizedBox(width: 5),
-                  Text(
-                    'ANULAR INSCRIPCIÓN',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.rojo1,
-                      letterSpacing: 0.3,
+              GestureDetector(
+                onTap: () => _anularInscripcion(context),
+                child: const Row(
+                  children: [
+                    Icon(Icons.cancel_outlined,
+                        color: AppColors.rojo1, size: 14),
+                    SizedBox(width: 5),
+                    Text(
+                      'ANULAR INSCRIPCIÓN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.rojo1,
+                        letterSpacing: 0.3,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               SizedBox(
                 height: 36,
                 child: ElevatedButton(
-                  // NAVEGACIÓN A PlantillaCompletar
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ExamenNivelScreen(),
+                        builder: (context) => const MainScreen(),
                       ),
                     );
                   },
@@ -476,14 +484,15 @@ class _TarjetaCurso extends StatelessWidget {
                     backgroundColor: AppColors.secundario,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 22),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 22),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: Text(
-                    curso.botonLabel,
-                    style: const TextStyle(
+                  child: const Text(
+                    'Continuar',
+                    style: TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -492,6 +501,642 @@ class _TarjetaCurso extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Sección: Explorar (Oficiales + De usuarios admin) ─────────────────────────
+
+class _SeccionExplorar extends StatefulWidget {
+  final bool isDark;
+  final bool isWide;
+
+  const _SeccionExplorar({required this.isDark, required this.isWide});
+
+  @override
+  State<_SeccionExplorar> createState() => _SeccionExplorarState();
+}
+
+class _SeccionExplorarState extends State<_SeccionExplorar> {
+  String? _filtroNivel;
+  String? _filtroCategoria;
+  String? _nivelUsuario;
+
+  // Niveles de curso accesibles por nivel del usuario (acumulativo)
+  static const Map<String, List<String>> _nivelesPermitidos = {
+    'basico':     ['basico'],
+    'basico+':    ['basico', 'basico+'],
+    'intermedio': ['basico', 'basico+', 'intermedio'],
+    'avanzado':   ['basico', 'basico+', 'intermedio', 'avanzado'],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarNivelUsuario();
+  }
+
+  Future<void> _cargarNivelUsuario() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final nivel = (doc.data() ?? {})['nivel_educativo'] as String?;
+    if (mounted) setState(() => _nivelUsuario = nivel);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'EXPLORAR CURSOS',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            _BotonFiltros(
+              isDark: widget.isDark,
+              filtroNivel: _filtroNivel,
+              filtroCategoria: _filtroCategoria,
+              onNivelChanged: (nivel) {
+                setState(() => _filtroNivel = nivel);
+              },
+              onCategoriaChanged: (categoria) {
+                setState(() => _filtroCategoria = categoria);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // ── Cursos Oficiales ────────────────────────────────────────────────
+        _SubtituloSeccion(
+          icono: Icons.verified_rounded,
+          color: AppColors.secundario,
+          label: 'Oficiales',
+          descripcion: 'Creados y validados por el equipo de Tepetl',
+        ),
+        const SizedBox(height: 14),
+        StreamBuilder<List<CursoModel>>(
+          stream: CursosService.streamCursosOficiales(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            var cursos = snapshot.data ?? [];
+            cursos = _aplicarFiltros(cursos);
+            if (cursos.isEmpty) {
+              return _EmptyExplorar(
+                mensaje: 'No hay cursos que coincidan con los filtros.',
+                isDark: widget.isDark,
+              );
+            }
+            return _GridCursos(
+              cursos: cursos,
+              isDark: widget.isDark,
+            );
+          },
+        ),
+
+        const SizedBox(height: 28),
+
+        // ── Cursos de administradores / comunidad ───────────────────────────
+        _SubtituloSeccion(
+          icono: Icons.people_alt_rounded,
+          color: AppColors.amarillo1,
+          label: 'De la comunidad',
+          descripcion: 'Creados por instructores y administradores',
+        ),
+        const SizedBox(height: 14),
+        StreamBuilder<List<CursoModel>>(
+          stream: CursosService.streamCursosDeUsuarios(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            var cursos = snapshot.data ?? [];
+            cursos = _aplicarFiltros(cursos);
+            if (cursos.isEmpty) {
+              return _EmptyExplorar(
+                mensaje: 'No hay cursos que coincidan con los filtros.',
+                isDark: widget.isDark,
+              );
+            }
+            return _GridCursos(
+              cursos: cursos,
+              isDark: widget.isDark,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  List<CursoModel> _aplicarFiltros(List<CursoModel> cursos) {
+    final nivelesAccesibles = _nivelUsuario != null
+        ? (_nivelesPermitidos[_nivelUsuario] ?? _nivelesPermitidos.values.expand((v) => v).toSet().toList())
+        : null;
+
+    return cursos.where((curso) {
+      final nivelUsuarioMatch = nivelesAccesibles == null || nivelesAccesibles.contains(curso.nivel);
+      final nivelFiltroMatch = _filtroNivel == null || curso.nivel == _filtroNivel;
+      final categoriaMatch = _filtroCategoria == null || curso.categoria == _filtroCategoria;
+      return nivelUsuarioMatch && nivelFiltroMatch && categoriaMatch;
+    }).toList();
+  }
+}
+
+class _SubtituloSeccion extends StatelessWidget {
+  final IconData icono;
+  final Color color;
+  final String label;
+  final String descripcion;
+
+  const _SubtituloSeccion({
+    required this.icono,
+    required this.color,
+    required this.label,
+    required this.descripcion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icono, size: 16, color: color),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            Text(
+              descripcion,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyExplorar extends StatelessWidget {
+  final String mensaje;
+  final bool isDark;
+  const _EmptyExplorar({required this.mensaje, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        mensaje,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 13,
+          color: Theme.of(context)
+              .colorScheme
+              .onSurface
+              .withValues(alpha: 0.4),
+        ),
+      ),
+    );
+  }
+}
+
+class _GridCursos extends StatelessWidget {
+  final List<CursoModel> cursos;
+  final bool isDark;
+
+  const _GridCursos({required this.cursos, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double w = constraints.maxWidth;
+        int columns = w > 850 ? 3 : (w > 550 ? 2 : 1);
+        double spacing = 16.0;
+        double itemWidth = (w - (columns - 1) * spacing) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cursos
+              .map(
+                (curso) => SizedBox(
+                  width: itemWidth,
+                  child: _TarjetaCursoExplorar(curso: curso, isDark: isDark),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+// ── Widget de imagen de portada ───────────────────────────────────────────────
+
+/// Muestra la imagen de portada del curso.
+/// Si la URL está vacía o falla, muestra un placeholder con iniciales.
+class _CourseImage extends StatelessWidget {
+  final String url;
+  final String titulo;
+  final double height;
+  final double? width;
+  final BoxFit fit;
+
+  const _CourseImage({
+    required this.url,
+    required this.titulo,
+    this.height = 140,
+    this.width,
+    this.fit = BoxFit.cover,
+  });
+
+  Color _colorFromTitle() {
+    const colors = [
+      Color(0xFF2D6A4F),
+      Color(0xFF1B4332),
+      Color(0xFF40916C),
+      Color(0xFF52B788),
+      Color(0xFF1D3557),
+      Color(0xFF457B9D),
+      Color(0xFF6D4C41),
+    ];
+    return colors[titulo.length % colors.length];
+  }
+
+  Widget _placeholder() {
+    final color = _colorFromTitle();
+    final initials = titulo.isNotEmpty
+        ? titulo.trim().split(' ').take(2).map((w) => w[0].toUpperCase()).join()
+        : '?';
+    return Container(
+      height: height,
+      width: width ?? double.infinity,
+      color: color,
+      child: Center(
+        child: Container(
+          width: height * 0.37,
+          height: height * 0.37,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.18),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              initials,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: height * 0.16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.isEmpty) return _placeholder();
+
+    return SizedBox(
+      height: height,
+      width: width ?? double.infinity,
+      child: Image.network(
+        url,
+        height: height,
+        width: width ?? double.infinity,
+        fit: fit,
+        gaplessPlayback: true,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _placeholder();
+        },
+        errorBuilder: (context, error, stackTrace) {
+          // ignore: avoid_print
+          print('[_CourseImage] ERROR cargando "$url": $error');
+          return _placeholder();
+        },
+      ),
+    );
+  }
+}
+
+// ── Tarjeta de curso en Explorar (con estado de inscripción) ──────────────────
+
+class _TarjetaCursoExplorar extends StatefulWidget {
+  final CursoModel curso;
+  final bool isDark;
+
+  const _TarjetaCursoExplorar({required this.curso, required this.isDark});
+
+  @override
+  State<_TarjetaCursoExplorar> createState() => _TarjetaCursoExplorarState();
+}
+
+class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
+  bool _inscribiendo = false;
+
+  Future<void> _inscribir(BuildContext context, String userId) async {
+    setState(() => _inscribiendo = true);
+    try {
+      await CursosService.inscribirUsuarioEnCurso(userId, widget.curso.id);
+
+      // Sumar 1 en suscritos_count
+      final cursoRef = FirebaseFirestore.instance
+          .collection('cursos')
+          .doc(widget.curso.id);
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snap = await transaction.get(cursoRef);
+        final currentCount = (snap.data()?['suscritos_count'] ?? 0) as int;
+        transaction.update(cursoRef, {'suscritos_count': currentCount + 1});
+      });
+
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20)),
+            title: const Text('¡Inscripción exitosa!',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            content: Text(
+                'Te has inscrito a "${widget.curso.titulo}". Ya aparece en Mis Cursos.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Aceptar'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _inscribiendo = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    return StreamBuilder<DocumentSnapshot>(
+      // Escucha en tiempo real si el usuario ya está suscrito
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('progreso_cursos')
+          .doc(widget.curso.id)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final yaSuscrito = snapshot.data?.exists ?? false;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.isDark
+                ? AppColors.fondoOscuroSecundario
+                : AppColors.fondoSecundario,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 2,
+                offset: const Offset(3, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Imagen con badge de nivel
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Stack(
+                  children: [
+                    _CourseImage(
+                      url: widget.curso.imagenUrl,
+                      titulo: widget.curso.titulo,
+                      height: 140,
+                    ),
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: widget.curso.nivel == 'Básico'
+                              ? AppColors.secundario.withValues(alpha: 0.8)
+                              : AppColors.amarillo1.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          widget.curso.nivel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Badge "Ya inscrito"
+                    if (yaSuscrito)
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.check_circle,
+                                  size: 11, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'INSCRITO',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.curso.titulo,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.85),
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.curso.descripcion,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.people_outline,
+                                size: 15,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.5)),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${widget.curso.suscritosCount} alumnos',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 34,
+                          child: yaSuscrito
+                              ? OutlinedButton(
+                                  onPressed: null,
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: Colors.green),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(9),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Inscrito ✓',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                )
+                              : ElevatedButton(
+                                  onPressed: _inscribiendo
+                                      ? null
+                                      : () => _inscribir(context, userId),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.secundario,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 18),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(9),
+                                    ),
+                                  ),
+                                  child: _inscribiendo
+                                      ? const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Inscribirme',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -580,18 +1225,18 @@ class _TarjetaSugerencia extends StatelessWidget {
   final bool isDark;
   final bool isWide;
   const _TarjetaSugerencia(
-      {required this.sugerencia,
-      required this.isDark,
-      required this.isWide});
+      {required this.sugerencia, required this.isDark, required this.isWide});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: isWide ? double.infinity : null,
-      height: 215, // Altura fija para que todas midan exactamente lo mismo
+      height: 215,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -621,7 +1266,10 @@ class _TarjetaSugerencia extends StatelessWidget {
               Icon(
                 sugerencia.icono,
                 size: 18,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.40),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.40),
               ),
             ],
           ),
@@ -642,62 +1290,37 @@ class _TarjetaSugerencia extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11,
-              color: Theme.of(  context).colorScheme.onSurface.withValues(alpha: 0.85),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.85),
               height: 1.4,
             ),
           ),
-          const Spacer(), // Empuja el botón obligatoriamente hacia el fondo de la tarjeta
+          const Spacer(),
           SizedBox(
             width: double.infinity,
             height: 43,
-            child: sugerencia.botonOscuro
-                ? ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ExamenNivelScreen(),
-                        ),
-                      );
-                    },
-                    icon: Icon(sugerencia.icono, size: 14),
-                    label: Text(
-                      sugerencia.botonLabel,
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primario,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  )
-                : ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ExamenNivelScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primario,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Text(
-                      sugerencia.botonLabel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ExamenNivelScreen()),
+              ),
+              icon: Icon(sugerencia.icono, size: 14),
+              label: Text(
+                sugerencia.botonLabel,
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primario,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
           ),
         ],
       ),
@@ -724,15 +1347,16 @@ class _ForoDelDia extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.forum_outlined,
-                  size: 14, color: AppColors.secundario),
+              Icon(Icons.forum_outlined, size: 14, color: AppColors.secundario),
               const SizedBox(width: 6),
               Text(
                 'Foro del día',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.textoClaro : AppColors.textoSecundario,
+                  color: isDark
+                      ? AppColors.textoClaro
+                      : AppColors.textoSecundario,
                 ),
               ),
             ],
@@ -742,7 +1366,8 @@ class _ForoDelDia extends StatelessWidget {
             '"¿Cómo se dice \'pueblo\' en tu variante local?"',
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? AppColors.textoClaro : AppColors.textoSecundario,
+              color:
+                  isDark ? AppColors.textoClaro : AppColors.textoSecundario,
               height: 1.4,
             ),
           ),
@@ -814,218 +1439,427 @@ class _ForoDelDia extends StatelessWidget {
   }
 }
 
-// ── Sección: Explorar cursos oficiales ───────────────────────────────────────
+// ── Botón de Filtros ───────────────────────────────────────────────────────────
 
-class _SeccionExplorar extends StatelessWidget {
+class _BotonFiltros extends StatefulWidget {
   final bool isDark;
-  final bool isWide;
-  final Function(_CursoOficial) onInscribir;
-  const _SeccionExplorar(
-      {required this.isDark, required this.isWide, required this.onInscribir});
+  final String? filtroNivel;
+  final String? filtroCategoria;
+  final ValueChanged<String?> onNivelChanged;
+  final ValueChanged<String?> onCategoriaChanged;
+
+  const _BotonFiltros({
+    required this.isDark,
+    this.filtroNivel,
+    this.filtroCategoria,
+    required this.onNivelChanged,
+    required this.onCategoriaChanged,
+  });
+
+  @override
+  State<_BotonFiltros> createState() => _BotonFiltrosState();
+}
+
+class _BotonFiltrosState extends State<_BotonFiltros> {
+  late OverlayEntry _overlayEntry;
+  bool _isOpen = false;
+
+  void _mostrarFiltros() {
+    if (_isOpen) {
+      _overlayEntry.remove();
+      setState(() => _isOpen = false);
+      return;
+    }
+
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    _overlayEntry = OverlayEntry(
+      builder: (ctx) {
+        const panelMaxHeight = 500.0;
+        const gap = 8.0;
+        final screenSize = MediaQuery.of(ctx).size;
+        final right = screenSize.width - offset.dx - size.width;
+        final spaceBelow = screenSize.height - (offset.dy + size.height + gap);
+        final openUpward = spaceBelow < panelMaxHeight;
+
+        return Positioned(
+          right: right,
+          top: openUpward ? null : offset.dy + size.height + gap,
+          bottom: openUpward ? screenSize.height - offset.dy + gap : null,
+          child: Material(
+            color: Colors.transparent,
+            child: _PanelFiltros(
+              isDark: widget.isDark,
+              filtroNivel: widget.filtroNivel,
+              filtroCategoria: widget.filtroCategoria,
+              onNivelChanged: (nivel) {
+                widget.onNivelChanged(nivel);
+                setState(() {});
+              },
+              onCategoriaChanged: (categoria) {
+                widget.onCategoriaChanged(categoria);
+                setState(() {});
+              },
+              onClose: () {
+                _overlayEntry.remove();
+                setState(() => _isOpen = false);
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry);
+    setState(() => _isOpen = true);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'EXPLORAR CURSOS OFICIALES',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
-            color: Theme.of(context).colorScheme.onSurface,
+    final tieneActivos = widget.filtroNivel != null ||
+        widget.filtroCategoria != null;
+
+    return GestureDetector(
+      onTap: _mostrarFiltros,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: tieneActivos
+              ? AppColors.secundario.withValues(alpha: 0.15)
+              : Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: tieneActivos
+                ? AppColors.secundario
+                : Colors.transparent,
+            width: 1.5,
           ),
         ),
-        const SizedBox(height: 14),
-        // Implementación 100% responsiva para Cursos Oficiales
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final double w = constraints.maxWidth;
-            // 3 columnas en pantallas muy grandes, 2 en pantallas medias, 1 en móvil
-            int columns = w > 850 ? 3 : (w > 550 ? 2 : 1);
-            double spacing = 16.0;
-            double itemWidth = (w - (columns - 1) * spacing) / columns;
-
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: _cursosOficiales
-                  .map(
-                    (c) => SizedBox(
-                      width: itemWidth,
-                      child: _TarjetaCursoOficial(
-                          curso: c, isDark: isDark, onInscribir: onInscribir),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
+        child: Stack(
+          children: [
+            Icon(
+              Icons.tune_rounded,
+              size: 20,
+              color: tieneActivos
+                  ? AppColors.secundario
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+            if (tieneActivos)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppColors.secundario,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
-class _TarjetaCursoOficial extends StatelessWidget {
-  final _CursoOficial curso;
-  final bool isDark;
-  final Function(_CursoOficial) onInscribir;
+// ── Panel de Filtros ───────────────────────────────────────────────────────────
 
-  const _TarjetaCursoOficial({
-    required this.curso,
+class _PanelFiltros extends StatelessWidget {
+  final bool isDark;
+  final String? filtroNivel;
+  final String? filtroCategoria;
+  final ValueChanged<String?> onNivelChanged;
+  final ValueChanged<String?> onCategoriaChanged;
+  final VoidCallback onClose;
+
+  const _PanelFiltros({
     required this.isDark,
-    required this.onInscribir,
+    this.filtroNivel,
+    this.filtroCategoria,
+    required this.onNivelChanged,
+    required this.onCategoriaChanged,
+    required this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 350, // Altura estricta para que todas las cards midan lo mismo
+      width: 280,
+      constraints: const BoxConstraints(maxHeight: 500),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
-        borderRadius: BorderRadius.circular(18),
+        color: isDark
+            ? AppColors.fondoOscuroSecundario
+            : AppColors.fondoSecundario,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 2,
-            offset: const Offset(3, 3),
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Imagen con badge de nivel
-          ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Stack(
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Image.network(
-                  curso.imagen,
-                  height: 140,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    height: 140,
-                    color: Colors.grey.shade800,
+                Text(
+                  'FILTROS',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: curso.nivelColor,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      curso.nivel,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                GestureDetector(
+                  onTap: onClose,
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
                   ),
                 ),
               ],
             ),
           ),
-          // Contenido Expandido para obligar a que los elementos del fondo bajen igual
+          Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+          ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    curso.titulo,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    curso.descripcion,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                      height: 1.4,
-                    ),
-                  ),
-                  const Spacer(), // Asegura que el footer se ancle en la parte de abajo
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.people_outline,
-                              size: 15, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
-                          const SizedBox(width: 4),
-                          Text(
-                            curso.alumnos,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'NIVEL',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
                       ),
-                      SizedBox(
-                        height: 34,
-                        child: ElevatedButton(
-                          // POPUP Y AÑADIR A LISTA
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('¡Inscripción Exitosa!'),
-                                content: Text(
-                                    'Te has inscrito al curso "${curso.titulo}". Se ha agregado a tu lista de cursos.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      onInscribir(curso);
-                                    },
-                                    child: const Text('Aceptar'),
-                                  )
-                                ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...CursoFilters.niveles.map((nivel) {
+                    final isSelected = filtroNivel == nivel;
+                    return GestureDetector(
+                      onTap: () {
+                        onNivelChanged(isSelected ? null : nivel);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.secundario.withValues(alpha: 0.2)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.secundario
+                                : Colors.transparent,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.secundario
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.3),
+                                  width: 2,
+                                ),
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.secundario,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(9),
+                              child: isSelected
+                                  ? Center(
+                                      child: Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.secundario,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              nivel,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? AppColors.secundario
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'CATEGORÍA',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...CursoFilters.categorias.map((categoria) {
+                    final isSelected = filtroCategoria == categoria;
+                    final icono = CursoFilters.getCategoryIcon(categoria);
+                    final color = CursoFilters.getCategoryColor(categoria);
+                    return GestureDetector(
+                      onTap: () {
+                        onCategoriaChanged(isSelected ? null : categoria);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? color.withValues(alpha: 0.2)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? color
+                                : Colors.transparent,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? color
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.3),
+                                  width: 2,
+                                ),
+                              ),
+                              child: isSelected
+                                  ? Center(
+                                      child: Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: color,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 10),
+                            Icon(icono, size: 16, color: color),
+                            const SizedBox(width: 8),
+                            Text(
+                              categoria,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? color
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 12),
+                  if (filtroNivel != null || filtroCategoria != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: GestureDetector(
+                        onTap: () {
+                          onNivelChanged(null);
+                          onCategoriaChanged(null);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.rojo1.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.rojo1,
+                              width: 1,
                             ),
                           ),
-                          child: const Text(
-                            'Inscribirme',
-                            style: TextStyle(
+                          child: Center(
+                            child: Text(
+                              'Limpiar filtros',
+                              style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w700),
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.rojo1,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
