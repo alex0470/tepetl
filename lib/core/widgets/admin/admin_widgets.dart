@@ -371,6 +371,13 @@ class CursoAdminCard extends StatelessWidget {
                       Text('Nivel: ${curso.nivel}',
                           style:
                               const TextStyle(color: AppColors.textoSecundario40, fontSize: 12)),
+                      if (curso.descripcion.isNotEmpty)
+                        Text(
+                          curso.descripcion,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: AppColors.textoSecundario40),
+                        ),
                     ],
                   ),
                 ),
@@ -393,26 +400,15 @@ class CursoAdminCard extends StatelessWidget {
             ),
             const Divider(height: 24),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.view_module_outlined,
-                        size: 16, color: AppColors.textoSecundario40),
-                    const SizedBox(width: 6),
-                    FutureBuilder<int>(
-                      future: CursosService.contarModulos(curso.id),
-                      builder: (context, snap) => Text(
-                        '${snap.data ?? '...'} módulos',
-                        style:
-                            const TextStyle(color: AppColors.textoSecundario40, fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
+                _MiniStat(icon: Icons.view_module_outlined, value: '${curso.modulosCount}', label: 'mód.'),
+                const SizedBox(width: 16),
+                _MiniStat(icon: Icons.menu_book_outlined, value: '${curso.leccionesCount}', label: 'lecc.'),
+                const SizedBox(width: 16),
+                _MiniStat(icon: Icons.people_outline, value: '${curso.suscritosCount}', label: 'suscritos'),
+                const Spacer(),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: curso.publicado
                         ? AppColors.verde1.withValues(alpha: 0.1)
@@ -445,6 +441,26 @@ class CursoAdminCard extends StatelessWidget {
         ),
         child: Icon(Icons.import_contacts, color: nivelColor),
       );
+}
+
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  const _MiniStat({required this.icon, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: AppColors.textoSecundario40),
+        const SizedBox(width: 4),
+        Text('$value $label',
+            style: const TextStyle(fontSize: 11, color: AppColors.textoSecundario40)),
+      ],
+    );
+  }
 }
 
 class EjercicioCardAdmin extends StatelessWidget {

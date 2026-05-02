@@ -98,105 +98,150 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Gestiona Cursos',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Buscar cursos...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gestiona Cursos',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: ['Todos', 'Básico', 'Básico+', 'Intermedio']
-                    .map(
-                      (nivel) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(nivel),
-                          selected: selectedNivel == nivel,
-                          selectedColor: AppColors.secundario,
-                          labelStyle: TextStyle(
-                            color: selectedNivel == nivel
-                                ? Colors.white
-                                : AppColors.textoSecundario40,
-                            fontWeight: FontWeight.bold,
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar cursos...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: ['Todos', 'Básico', 'Básico+', 'Intermedio']
+                        .map(
+                          (nivel) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(nivel),
+                              selected: selectedNivel == nivel,
+                              selectedColor: AppColors.secundario,
+                              labelStyle: TextStyle(
+                                color: selectedNivel == nivel
+                                    ? Colors.white
+                                    : AppColors.textoSecundario40,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              onSelected: (_) =>
+                                  setState(() => selectedNivel = nivel),
+                            ),
                           ),
-                          onSelected: (_) =>
-                              setState(() => selectedNivel = nivel),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-            const SizedBox(height: 25),
-            StreamBuilder<List<CursoModel>>(
-              stream: CursosService.streamCursos(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                final cursos = _filtrar(snapshot.data ?? []);
-                if (cursos.isEmpty) {
-                  return const Center(child: Text('No se encontraron cursos'));
-                }
-                return ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: cursos.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final curso = cursos[index];
-                    return CursoAdminCard(
-                      curso: curso,
-                      onEditar: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditCursoScreen(curso: curso),
-                        ),
-                      ),
-                      onEliminar: () => _confirmarEliminar(context, curso),
-                      onVerModulos: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CursoDetalleAdminScreen(
-                            cursoId: curso.id,
-                            cursoTitulo: curso.titulo,
-                          ),
-                        ),
-                      ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                const SizedBox(height: 25),
+                StreamBuilder<List<CursoModel>>(
+                  stream: CursosService.streamCursos(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    final cursos = _filtrar(snapshot.data ?? []);
+                    if (cursos.isEmpty) {
+                      return const Center(child: Text('No se encontraron cursos'));
+                    }
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth < 700) {
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: cursos.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final curso = cursos[index];
+                              return CursoAdminCard(
+                                curso: curso,
+                                onEditar: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => EditCursoScreen(curso: curso),
+                                  ),
+                                ),
+                                onEliminar: () => _confirmarEliminar(context, curso),
+                                onVerModulos: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => CursoDetalleAdminScreen(
+                                      cursoId: curso.id,
+                                      cursoTitulo: curso.titulo,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        } else {
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: cursos.length,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.9,
+                            ),
+                            itemBuilder: (context, index) {
+                              final curso = cursos[index];
+                              return CursoAdminCard(
+                                curso: curso,
+                                onEditar: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => EditCursoScreen(curso: curso),
+                                  ),
+                                ),
+                                onEliminar: () => _confirmarEliminar(context, curso),
+                                onVerModulos: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => CursoDetalleAdminScreen(
+                                      cursoId: curso.id,
+                                      cursoTitulo: curso.titulo,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }
+                      },
                     );
                   },
-                );
-              },
+                ),
+                const SizedBox(height: 80),
+              ],
             ),
-            const SizedBox(height: 80),
-          ],
+          ),
         ),
       ),
     );

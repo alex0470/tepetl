@@ -136,129 +136,204 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Estado del Sistema',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const Text('Supervisión en tiempo real del backend',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
-          const SizedBox(height: 24),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 700;
 
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.4,
-            children: [
-              _TarjetaKPI(
-                titulo: 'Servicios Activos',
-                valor: '$_serviciosActivos/2',
-                cambio: _serviciosActivos == 2 ? 'Todo OK' : 'Revisar',
-                esPositivo: _serviciosActivos == 2,
-              ),
-              _TarjetaKPI(
-                titulo: 'Errores Registrados',
-                valor: '${_log.length}',
-                cambio: _log.isEmpty ? 'Sin errores' : 'Ver log',
-                esPositivo: _log.isEmpty,
-              ),
-              _TarjetaKPI(
-                titulo: 'Latencia BD',
-                valor: _latenciaTexto(_bd),
-                cambio: _bd.estado == _Estado.activo ? 'Conectado' : _bd.estado == _Estado.verificando ? 'Verificando' : _bd.estado == _Estado.esperando ? 'Pendiente' : 'Sin conexión',
-                esPositivo: _bd.estado == _Estado.activo,
-              ),
-              _TarjetaKPI(
-                titulo: 'Latencia IA',
-                valor: _latenciaTexto(_ia),
-                cambio: _ia.estado == _Estado.activo ? 'Conectado' : _ia.estado == _Estado.verificando ? 'Verificando' : _ia.estado == _Estado.esperando ? 'Pendiente' : 'Sin conexión',
-                esPositivo: _ia.estado == _Estado.activo,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          _ContenedorGrafica(
-            titulo: 'Base de Datos',
-            subtitulo: 'Cloud Firestore',
-            icon: Icons.storage_outlined,
-            child: _TarjetaServicio(
-              verificacion: _bd,
-              onVerificar: _bd.estado == _Estado.verificando ? null : _verificarBD,
+        final kpiGrid = GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: isWide ? 4 : 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: isWide ? 1.6 : 1.4,
+          children: [
+            _TarjetaKPI(
+              titulo: 'Servicios Activos',
+              valor: '$_serviciosActivos/2',
+              cambio: _serviciosActivos == 2 ? 'Todo OK' : 'Revisar',
+              esPositivo: _serviciosActivos == 2,
             ),
-          ),
-          const SizedBox(height: 16),
-
-          _ContenedorGrafica(
-            titulo: 'Servicio de IA',
-            subtitulo: _iaUrl,
-            icon: Icons.psychology_outlined,
-            child: _TarjetaServicio(
-              verificacion: _ia,
-              onVerificar: _ia.estado == _Estado.verificando ? null : _verificarIA,
+            _TarjetaKPI(
+              titulo: 'Errores Registrados',
+              valor: '${_log.length}',
+              cambio: _log.isEmpty ? 'Sin errores' : 'Ver log',
+              esPositivo: _log.isEmpty,
             ),
-          ),
-          const SizedBox(height: 24),
+            _TarjetaKPI(
+              titulo: 'Latencia BD',
+              valor: _latenciaTexto(_bd),
+              cambio: _bd.estado == _Estado.activo ? 'Conectado' : _bd.estado == _Estado.verificando ? 'Verificando' : _bd.estado == _Estado.esperando ? 'Pendiente' : 'Sin conexión',
+              esPositivo: _bd.estado == _Estado.activo,
+            ),
+            _TarjetaKPI(
+              titulo: 'Latencia IA',
+              valor: _latenciaTexto(_ia),
+              cambio: _ia.estado == _Estado.activo ? 'Conectado' : _ia.estado == _Estado.verificando ? 'Verificando' : _ia.estado == _Estado.esperando ? 'Pendiente' : 'Sin conexión',
+              esPositivo: _ia.estado == _Estado.activo,
+            ),
+          ],
+        );
 
-          _ContenedorGrafica(
-            titulo: 'Log de Errores',
-            icon: Icons.warning_amber_rounded,
-            badge: _log.isEmpty ? null : '${_log.length}',
-            child: _log.isEmpty
-                ? const _SinErrores()
-                : Column(
-                    children: [
-                      ..._log.take(5).map((e) => _FilaError(entrada: e)),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: () => setState(() => _log.clear()),
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.red.withValues(alpha: 0.1),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: const Text('LIMPIAR LOG',
-                              style: TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold)),
-                        ),
+        final serviceCards = isWide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _ContenedorGrafica(
+                      titulo: 'Base de Datos',
+                      subtitulo: 'Cloud Firestore',
+                      icon: Icons.storage_outlined,
+                      child: _TarjetaServicio(
+                        verificacion: _bd,
+                        onVerificar: _bd.estado == _Estado.verificando ? null : _verificarBD,
                       ),
-                    ],
+                    ),
                   ),
-          ),
-          const SizedBox(height: 24),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _ContenedorGrafica(
+                      titulo: 'Servicio de IA',
+                      subtitulo: _iaUrl,
+                      icon: Icons.psychology_outlined,
+                      child: _TarjetaServicio(
+                        verificacion: _ia,
+                        onVerificar: _ia.estado == _Estado.verificando ? null : _verificarIA,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  _ContenedorGrafica(
+                    titulo: 'Base de Datos',
+                    subtitulo: 'Cloud Firestore',
+                    icon: Icons.storage_outlined,
+                    child: _TarjetaServicio(
+                      verificacion: _bd,
+                      onVerificar: _bd.estado == _Estado.verificando ? null : _verificarBD,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _ContenedorGrafica(
+                    titulo: 'Servicio de IA',
+                    subtitulo: _iaUrl,
+                    icon: Icons.psychology_outlined,
+                    child: _TarjetaServicio(
+                      verificacion: _ia,
+                      onVerificar: _ia.estado == _Estado.verificando ? null : _verificarIA,
+                    ),
+                  ),
+                ],
+              );
 
-           SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: _verificando ? null : _verificarTodo,
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.green.withValues(alpha: 0.1),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+        final verificarButton = isWide
+            ? Center(
+                child: SizedBox(
+                  width: 300,
+                  child: TextButton(
+                    onPressed: _verificando ? null : _verificarTodo,
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.green.withValues(alpha: 0.1),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: _verificando
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.green))
+                        : const Text('VERIFICAR TODO',
+                            style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              )
+            : SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: _verificando ? null : _verificarTodo,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.green.withValues(alpha: 0.1),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _verificando
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.green))
+                      : const Text('VERIFICAR TODO',
+                          style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold)),
+                ),
+              );
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Estado del Sistema',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const Text('Supervisión en tiempo real del backend',
+                      style: TextStyle(fontSize: 14, color: Colors.grey)),
+                  const SizedBox(height: 24),
+
+                  kpiGrid,
+                  const SizedBox(height: 24),
+
+                  serviceCards,
+                  const SizedBox(height: 24),
+
+                  _ContenedorGrafica(
+                    titulo: 'Log de Errores',
+                    icon: Icons.warning_amber_rounded,
+                    badge: _log.isEmpty ? null : '${_log.length}',
+                    child: _log.isEmpty
+                        ? const _SinErrores()
+                        : Column(
+                            children: [
+                              ..._log.take(5).map((e) => _FilaError(entrada: e)),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: TextButton(
+                                  onPressed: () => setState(() => _log.clear()),
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: Colors.red.withValues(alpha: 0.1),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  child: const Text('LIMPIAR LOG',
+                                      style: TextStyle(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  verificarButton,
+                ],
               ),
-              child: _verificando
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.green))
-                  : const Text('VERIFICAR TODO',
-                      style: TextStyle(
-                          color: Colors.green, fontWeight: FontWeight.bold)),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
