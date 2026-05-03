@@ -25,7 +25,7 @@ class NivelSeleccionScreen extends StatelessWidget {
       BoxShadow(
         color: Colors.black.withValues(alpha: 0.3),
         blurRadius: 2,
-        offset: const Offset(4, 4),
+        offset: const Offset(3, 3),
       ),
     ];
   }
@@ -59,7 +59,7 @@ class NivelSeleccionScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al guardar el nivel. Intenta de nuevo.'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.rojo1,
           ),
         );
       }

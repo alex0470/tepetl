@@ -469,31 +469,43 @@ class _TarjetaCurso extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(
-                height: 36,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MainScreen(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secundario,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 22),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 2,
+                      offset: const Offset(3, 3),
                     ),
-                  ),
-                  child: const Text(
-                    'Continuar',
-                    style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700),
+                  ],
+                ),
+                child: SizedBox(
+                  height: 36,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MainScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secundario,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 22),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continuar',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
               ),
@@ -990,7 +1002,7 @@ class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.85),
+                            color: AppColors.secundario.withValues(alpha: 0.85),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Row(
@@ -1078,7 +1090,7 @@ class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
                                   onPressed: null,
                                   style: OutlinedButton.styleFrom(
                                     side: const BorderSide(
-                                        color: Colors.green),
+                                        color: AppColors.secundario),
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 14),
                                     shape: RoundedRectangleBorder(
@@ -1091,11 +1103,22 @@ class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.green,
+                                      color: AppColors.secundario,
                                     ),
                                   ),
                                 )
-                              : ElevatedButton(
+                              : DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(9),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.3),
+                                        blurRadius: 2,
+                                        offset: const Offset(3, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
                                   onPressed: _inscribiendo
                                       ? null
                                       : () => _inscribir(context, userId),
@@ -1126,6 +1149,7 @@ class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
                                             fontWeight: FontWeight.w700,
                                           ),
                                         ),
+                                  ),
                                 ),
                         ),
                       ],
@@ -1298,27 +1322,39 @@ class _TarjetaSugerencia extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            height: 43,
-            child: ElevatedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const ExamenNivelScreen()),
-              ),
-              icon: Icon(sugerencia.icono, size: 14),
-              label: Text(
-                sugerencia.botonLabel,
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primario,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 2,
+                  offset: const Offset(3, 3),
+                ),
+              ],
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 43,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ExamenNivelScreen()),
+                ),
+                icon: Icon(sugerencia.icono, size: 14),
+                label: Text(
+                  sugerencia.botonLabel,
+                  style:
+                      const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primario,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
               ),
             ),
           ),
@@ -1396,7 +1432,7 @@ class _ForoDelDia extends StatelessWidget {
                           border: Border.all(
                             color: isDark
                                 ? AppColors.fondoOscuroSecundario
-                                : Colors.white,
+                                : AppColors.textoClaro,
                             width: 1.5,
                           ),
                         ),
@@ -1600,9 +1636,9 @@ class _PanelFiltros extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 2,
+            offset: const Offset(3, 3),
           ),
         ],
       ),

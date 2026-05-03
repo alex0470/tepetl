@@ -572,20 +572,32 @@ class _DetallePalabraView extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Botón Audio
-          ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.play_circle_fill, size: 22),
-            label: const Text(
-              'Escuchar pronunciación',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 2,
+                  offset: const Offset(3, 3),
+                ),
+              ],
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secundario,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.play_circle_fill, size: 22),
+              label: const Text(
+                'Escuchar pronunciación',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secundario,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
               ),
             ),
           ),

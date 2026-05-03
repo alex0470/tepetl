@@ -380,22 +380,35 @@ class CursoDetalleAdminScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ModulosAdminScreen(
-                    cursoId: cursoId,
-                    cursoTitulo: cursoTitulo,
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 2,
+                    offset: const Offset(3, 3),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ModulosAdminScreen(
+                      cursoId: cursoId,
+                      cursoTitulo: cursoTitulo,
+                    ),
                   ),
                 ),
-              ),
-              icon: const Icon(Icons.manage_search),
-              label: const Text('Administrar módulos'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secundario,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                icon: const Icon(Icons.manage_search),
+                label: const Text('Administrar módulos'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secundario,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),

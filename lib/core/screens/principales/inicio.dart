@@ -173,7 +173,7 @@ class _InicioScreenState extends State<InicioScreen> {
           'ejerciciosIds': leccion['ejerciciosIds'] ?? [],
           'totalLeccionesCurso': _contarLeccionesCurso(cursoId),
           'icon': estaCompletada ? Icons.check_circle : Icons.menu_book_outlined,
-          'color': estaCompletada ? Colors.green : AppColors.secundario,
+          'color': AppColors.secundario,
           'completada': estaCompletada,
           'active': true,
           'current': false,
@@ -219,7 +219,7 @@ class _InicioScreenState extends State<InicioScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.menu_book_outlined, size: 64, color: Colors.grey),
+              Icon(Icons.menu_book_outlined, size: 64, color: AppColors.textoSecundario40),
               const SizedBox(height: 16),
               const Text(
                 'No tienes cursos inscritos',
@@ -228,7 +228,7 @@ class _InicioScreenState extends State<InicioScreen> {
               const SizedBox(height: 8),
               const Text(
                 'Inscríbete en cursos para comenzar tu aprendizaje',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.textoSecundario40),
               ),
             ],
           ),
@@ -391,8 +391,8 @@ class _InicioScreenState extends State<InicioScreen> {
                     backgroundColor: isDark
                         ? AppColors.fondoOscuroSecundario
                         : AppColors.fondoSecundario,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      progreso >= 1.0 ? Colors.green : AppColors.secundario,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.secundario,
                     ),
                   ),
                 ),
@@ -435,7 +435,7 @@ class _InicioScreenState extends State<InicioScreen> {
             if (_puedeCambiarMeta)
               Text(
                 "Toca para cambiar",
-                style: const TextStyle(fontSize: 9, color: Colors.green),
+                style: const TextStyle(fontSize: 9, color: AppColors.secundario),
               )
             else
               Text(
@@ -480,7 +480,7 @@ class _InicioScreenState extends State<InicioScreen> {
               ),
               Text(
                 "Solo podrás cambiarla una vez por semana.",
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: const TextStyle(fontSize: 12, color: AppColors.textoSecundario40),
               ),
             ],
           ),
@@ -526,7 +526,7 @@ class _InicioScreenState extends State<InicioScreen> {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 2,
-            offset: const Offset(4, 4),
+            offset: const Offset(3, 3),
           )
         ],
       ),
@@ -651,7 +651,7 @@ class _InicioScreenState extends State<InicioScreen> {
         BoxShadow(
           blurRadius: 2,
           color: Colors.black.withValues(alpha: 0.3),
-          offset: const Offset(4, 4),
+          offset: const Offset(3, 3),
         )
       ],
     );

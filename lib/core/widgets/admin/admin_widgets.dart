@@ -732,7 +732,7 @@ class SuggestionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.textoSecundario40.withValues(alpha: 0.1)),
             ),
@@ -919,7 +919,7 @@ class MediaButton extends StatelessWidget {
       onPressed: onPressed ?? () {},
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 24),
-        side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+        side: BorderSide(color: AppColors.textoSecundario40.withValues(alpha: 0.3)),
         backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),

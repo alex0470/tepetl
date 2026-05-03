@@ -272,7 +272,7 @@ class RecomendacionCard extends StatelessWidget {
         BoxShadow(
           blurRadius: 2,
           color: Colors.black.withValues(alpha: 0.3),
-          offset: const Offset(4, 4),
+          offset: const Offset(3, 3),
         )
       ],
     );

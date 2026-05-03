@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:tepetl/core/theme/app_colors.dart';
 
 enum _Estado { esperando, verificando, activo, error }
 
@@ -230,12 +231,59 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
 
         final verificarButton = isWide
             ? Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 2,
+                        offset: const Offset(3, 3),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: 300,
+                    child: ElevatedButton(
+                      onPressed: _verificando ? null : _verificarTodo,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secundario,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: _verificando
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Text('VERIFICAR TODO',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+              )
+            : DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 2,
+                      offset: const Offset(3, 3),
+                    ),
+                  ],
+                ),
                 child: SizedBox(
-                  width: 300,
-                  child: TextButton(
+                  width: double.infinity,
+                  child: ElevatedButton(
                     onPressed: _verificando ? null : _verificarTodo,
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.green.withValues(alpha: 0.1),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secundario,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -245,34 +293,11 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.green))
+                                strokeWidth: 2, color: Colors.white))
                         : const Text('VERIFICAR TODO',
                             style: TextStyle(
-                                color: Colors.green,
                                 fontWeight: FontWeight.bold)),
                   ),
-                ),
-              )
-            : SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: _verificando ? null : _verificarTodo,
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.green.withValues(alpha: 0.1),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _verificando
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.green))
-                      : const Text('VERIFICAR TODO',
-                          style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold)),
                 ),
               );
 
@@ -287,7 +312,7 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
                   const Text('Estado del Sistema',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const Text('Supervisión en tiempo real del backend',
-                      style: TextStyle(fontSize: 14, color: Colors.grey)),
+                      style: TextStyle(fontSize: 14, color: AppColors.textoSecundario40)),
                   const SizedBox(height: 24),
 
                   kpiGrid,
@@ -306,20 +331,32 @@ class _AnalisisGeneralContentState extends State<AnalisisGeneralContent> {
                             children: [
                               ..._log.take(5).map((e) => _FilaError(entrada: e)),
                               const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: TextButton(
-                                  onPressed: () => setState(() => _log.clear()),
-                                  style: TextButton.styleFrom(
-                                    backgroundColor: Colors.red.withValues(alpha: 0.1),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12)),
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      blurRadius: 2,
+                                      offset: const Offset(3, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () => setState(() => _log.clear()),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.rojo1,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: const Text('LIMPIAR LOG',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
                                   ),
-                                  child: const Text('LIMPIAR LOG',
-                                      style: TextStyle(
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.bold)),
                                 ),
                               ),
                             ],
@@ -347,13 +384,13 @@ class _TarjetaServicio extends StatelessWidget {
   Color get _color {
     switch (verificacion.estado) {
       case _Estado.activo:
-        return Colors.green;
+        return AppColors.secundario;
       case _Estado.error:
-        return Colors.red;
+        return AppColors.rojo1;
       case _Estado.verificando:
-        return Colors.orange;
+        return AppColors.naranja1;
       case _Estado.esperando:
-        return Colors.grey;
+        return AppColors.textoSecundario40;
     }
   }
 
@@ -423,7 +460,7 @@ class _TarjetaServicio extends StatelessWidget {
                           color: _color)),
                   Text('Último chequeo: $hora',
                       style:
-                          const TextStyle(fontSize: 11, color: Colors.grey)),
+                          const TextStyle(fontSize: 11, color: AppColors.textoSecundario40)),
                 ],
               ),
             ),
@@ -455,13 +492,13 @@ class _TarjetaServicio extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.06),
+              color: AppColors.rojo1.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+              border: Border.all(color: AppColors.rojo1.withValues(alpha: 0.2)),
             ),
             child: Text(
               verificacion.mensajeError!,
-              style: const TextStyle(fontSize: 12, color: Colors.red),
+              style: const TextStyle(fontSize: 12, color: AppColors.rojo1),
             ),
           ),
         ],
@@ -517,7 +554,7 @@ class _FilaError extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.circle, size: 8, color: Colors.red),
+          const Icon(Icons.circle, size: 8, color: AppColors.rojo1),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -529,24 +566,24 @@ class _FilaError extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
+                        color: AppColors.rojo1.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(entrada.servicio,
                           style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Colors.red)),
+                              color: AppColors.rojo1)),
                     ),
                     const SizedBox(width: 6),
                     Text(hora,
                         style: const TextStyle(
-                            fontSize: 11, color: Colors.grey)),
+                            fontSize: 11, color: AppColors.textoSecundario40)),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(entrada.mensaje,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textoSecundario40),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis),
               ],
@@ -568,10 +605,10 @@ class _SinErrores extends StatelessWidget {
       child: Row(
         children: [
           Icon(Icons.check_circle_outline,
-              color: Colors.green.withValues(alpha: 0.7), size: 20),
+              color: AppColors.secundario.withValues(alpha: 0.7), size: 20),
           const SizedBox(width: 10),
           const Text('No se han registrado errores.',
-              style: TextStyle(color: Colors.grey, fontSize: 13)),
+              style: TextStyle(color: AppColors.textoSecundario40, fontSize: 13)),
         ],
       ),
     );
@@ -597,9 +634,9 @@ class _TarjetaKPI extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 2,
+              offset: const Offset(3, 3))
         ],
       ),
       child: Column(
@@ -608,7 +645,7 @@ class _TarjetaKPI extends StatelessWidget {
           Text(titulo,
               style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: AppColors.textoSecundario40,
                   fontWeight: FontWeight.w500)),
           const Spacer(),
           Text(valor,
@@ -619,12 +656,12 @@ class _TarjetaKPI extends StatelessWidget {
               Icon(
                   esPositivo ? Icons.trending_up : Icons.trending_down,
                   size: 14,
-                  color: esPositivo ? Colors.green : Colors.red),
+                  color: esPositivo ? AppColors.secundario : AppColors.rojo1),
               const SizedBox(width: 4),
               Text(cambio,
                   style: TextStyle(
                       fontSize: 12,
-                      color: esPositivo ? Colors.green : Colors.red,
+                      color: esPositivo ? AppColors.secundario : AppColors.rojo1,
                       fontWeight: FontWeight.bold)),
             ],
           ),
@@ -654,7 +691,7 @@ class _ContenedorGrafica extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        border: Border.all(color: AppColors.textoSecundario40.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -662,7 +699,7 @@ class _ContenedorGrafica extends StatelessWidget {
           Row(
             children: [
               if (icon != null) ...[
-                Icon(icon, color: Colors.green, size: 20),
+                Icon(icon, color: AppColors.secundario, size: 20),
                 const SizedBox(width: 8)
               ],
               Expanded(
@@ -675,7 +712,7 @@ class _ContenedorGrafica extends StatelessWidget {
                     if (subtitulo != null)
                       Text(subtitulo!,
                           style: const TextStyle(
-                              fontSize: 12, color: Colors.grey)),
+                              fontSize: 12, color: AppColors.textoSecundario40)),
                   ],
                 ),
               ),
@@ -684,11 +721,11 @@ class _ContenedorGrafica extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: AppColors.rojo1.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8)),
                   child: Text(badge!,
                       style: const TextStyle(
-                          color: Colors.red,
+                          color: AppColors.rojo1,
                           fontSize: 12,
                           fontWeight: FontWeight.bold)),
                 ),
@@ -724,7 +761,7 @@ class _BarraProgresoDificultad extends StatelessWidget {
             children: [
               Text(label,
                   style:
-                      const TextStyle(fontSize: 13, color: Colors.grey)),
+                      const TextStyle(fontSize: 13, color: AppColors.textoSecundario40)),
               Text(porcentaje,
                   style: TextStyle(
                       fontSize: 13,
@@ -735,7 +772,7 @@ class _BarraProgresoDificultad extends StatelessWidget {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: valor,
-            backgroundColor: Colors.grey.withValues(alpha: 0.1),
+            backgroundColor: AppColors.textoSecundario40.withValues(alpha: 0.1),
             color: color,
             minHeight: 8,
             borderRadius: BorderRadius.circular(4),

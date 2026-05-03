@@ -41,7 +41,7 @@ class BotonesSombra extends StatelessWidget {
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 2,
-                  offset: const Offset(2, 2),
+                  offset: const Offset(3, 3),
                 ),
         ] : [],
       ),

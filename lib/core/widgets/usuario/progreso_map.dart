@@ -175,7 +175,7 @@ class ProgresoMapWidget extends StatelessWidget {
     final isCompleted = item["completada"] == true;
 
     if (!isActive) return AppColors.textoSecundario40;
-    if (isCompleted && !isCurrent) return Colors.green.shade600;
+    if (isCompleted && !isCurrent) return AppColors.secundario;
     if (isCurrent) return AppColors.amarillo1;
     return item["color"];
   }
@@ -350,15 +350,28 @@ class ProgresoMapWidget extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secundario,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 2,
+                      offset: const Offset(3, 3),
+                    ),
+                  ],
                 ),
-                onPressed: () => _navegarALeccion(context, item),
-                child: Text(
-                  actionText,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secundario,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => _navegarALeccion(context, item),
+                  child: Text(
+                    actionText,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),

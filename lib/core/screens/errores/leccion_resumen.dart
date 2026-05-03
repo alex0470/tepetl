@@ -136,9 +136,9 @@ class _IAMessageCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.secundario.withOpacity(0.1),
+        color: AppColors.secundario.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.secundario.withOpacity(0.3), width: 2),
+        border: Border.all(color: AppColors.secundario.withValues(alpha: 0.3), width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +153,7 @@ class _IAMessageCard extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
-                  color: AppColors.secundario.withOpacity(0.8),
+                  color: AppColors.secundario.withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -195,19 +195,19 @@ class _StatsGrid extends StatelessWidget {
           label: 'PRECISIÓN',
           value: '$precision%',
           icon: Icons.track_changes,
-          color: Colors.orange,
+          color: AppColors.naranja1,
         ),
         _StatItem(
           label: 'XP GANADA',
           value: '+$xp',
           icon: Icons.bolt,
-          color: Colors.yellow.shade700,
+          color: AppColors.amarillo1,
         ),
         _StatItem(
           label: 'TIEMPO',
           value: tiempo,
           icon: Icons.timer_outlined,
-          color: Colors.blue,
+          color: AppColors.azul1,
         ),
       ],
     );
@@ -246,7 +246,7 @@ class _StatItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -268,19 +268,19 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final button = SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary 
-              ? AppColors.secundario 
-              : Theme.of(context).brightness == Brightness.dark 
-                  ? AppColors.fondoOscuroSecundario 
-                  : Colors.grey.shade200,
-          foregroundColor: isPrimary 
-              ? Colors.white 
+          backgroundColor: isPrimary
+              ? AppColors.secundario
+              : Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.fondoOscuroSecundario
+                  : AppColors.fondoSecundario,
+          foregroundColor: isPrimary
+              ? Colors.white
               : Theme.of(context).colorScheme.onSurface,
           elevation: isPrimary ? 4 : 0,
           shape: RoundedRectangleBorder(
@@ -296,6 +296,22 @@ class _ActionButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (!isPrimary) return button;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 2,
+            offset: const Offset(3, 3),
+          ),
+        ],
+      ),
+      child: button,
     );
   }
 }

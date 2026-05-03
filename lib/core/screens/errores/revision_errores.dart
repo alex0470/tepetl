@@ -188,7 +188,7 @@ class _ErrorCard extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 2,
-            offset: const Offset(4, 4),
+            offset: const Offset(3, 3),
           ),
         ],
       ),

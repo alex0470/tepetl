@@ -283,9 +283,9 @@ class ActivityActionCard extends StatelessWidget {
         border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha(26)),
         boxShadow: [
           BoxShadow(
-              color: Colors.red.withAlpha(3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 2,
-              offset: const Offset(0, 4))
+              offset: const Offset(3, 3))
         ],
       ),
       child: Column(
