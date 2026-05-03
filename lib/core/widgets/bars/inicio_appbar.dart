@@ -1,16 +1,66 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/timers/vidas_timer.dart';
 
-class InicioAppBar extends StatelessWidget implements PreferredSizeWidget {
+class InicioAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool isDark;
 
   const InicioAppBar({super.key, required this.isDark});
 
   @override
+  State<InicioAppBar> createState() => _InicioAppBarState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class _InicioAppBarState extends State<InicioAppBar> {
+  String _iniciales = '';
+  bool _esAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarUsuario();
+  }
+
+  Future<void> _cargarUsuario() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final data = doc.data() ?? {};
+      final nombre = data['nombre'] as String? ?? '';
+      final rol = (data['rol'] as String? ?? '').toLowerCase();
+      if (mounted) {
+        setState(() {
+          _iniciales = _calcularIniciales(nombre);
+          _esAdmin = rol == 'admin';
+        });
+      }
+    } catch (e) {
+      debugPrint('InicioAppBar: error cargando usuario: $e');
+    }
+  }
+
+  String _calcularIniciales(String nombre) {
+    final partes = nombre.trim().split(' ');
+    if (partes.length >= 2) {
+      return '${partes[0][0]}${partes[1][0]}'.toUpperCase();
+    }
+    return nombre.isNotEmpty ? nombre[0].toUpperCase() : 'U';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bgColor = isDark ? AppColors.fondoOscuroSecundario : Colors.white;
+    final bgColor =
+        widget.isDark ? AppColors.fondoOscuroSecundario : Colors.white;
 
     return AppBar(
       automaticallyImplyLeading: false,
@@ -41,31 +91,31 @@ class InicioAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        const Center(
-          child: WidgetCorazonesTimer(),
-        ),
-        
-        const SizedBox(width: 8),
+        if (!_esAdmin) ...[
+          const Center(child: WidgetCorazonesTimer()),
+          const SizedBox(width: 8),
+        ],
         Padding(
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, "/ajustes");
-            },
+            onTap: () => Navigator.pushNamed(context, "/ajustes"),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: isDark
+                  backgroundColor: widget.isDark
                       ? AppColors.fondoOscuro
                       : AppColors.fondoSecundario,
-                  child: const Text(
-                    "G",
-                    style: TextStyle(
-                      color: AppColors.primario,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _iniciales.isEmpty ? 'U' : _iniciales,
+                      style: const TextStyle(
+                        color: AppColors.primario,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -92,7 +142,4 @@ class InicioAppBar extends StatelessWidget implements PreferredSizeWidget {
       ],
     );
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
