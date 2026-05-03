@@ -11,7 +11,7 @@ class CursosService {
   static final _db = FirebaseFirestore.instance;
   static final _storage = FirebaseStorage.instance;
 
-  static Stream<List<CursoModel>> streamCursos() {
+  static Stream<List<CursoModel>> streamCursos({bool incluirSistema = false}) {
     return _db
         .collection('cursos')
         .snapshots()
@@ -19,7 +19,9 @@ class CursosService {
           final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
           return snap.docs
               .map(CursoModel.fromDoc)
-              .where((curso) => curso.creadoPor == currentUserId)
+              .where((curso) =>
+                  curso.creadoPor == currentUserId ||
+                  (incluirSistema && curso.creadoPor == 'sistema'))
               .toList();
         });
   }

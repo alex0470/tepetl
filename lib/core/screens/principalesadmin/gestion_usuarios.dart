@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/screens/principalesadmin/intentos_screen.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 
@@ -321,11 +323,46 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
   List<Map<String, dynamic>> _cursos = [];
   bool _isLoading = true;
   int _totalLecciones = 0;
+  bool _adminTieneAccesoSistema = false;
 
   @override
   void initState() {
     super.initState();
     _cargarProgreso();
+    _cargarAccesoAdmin();
+  }
+
+  Future<void> _cargarAccesoAdmin() async {
+    try {
+      final adminUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(adminUid)
+          .get();
+      final userData = userDoc.data() ?? {};
+      setState(() {
+        _adminTieneAccesoSistema = (userData['sistema'] as bool?) ?? false;
+      });
+    } catch (e) {
+      debugPrint('Error cargando acceso admin: $e');
+    }
+  }
+
+  Map<String, Map<String, dynamic>> _parseLecciones(Map<String, dynamic> data) {
+    final leccionesMap = (data['lecciones'] as Map<String, dynamic>?) ?? {};
+    final leccionesDetalle = <String, Map<String, dynamic>>{};
+    leccionesMap.forEach((leccionId, leccionData) {
+      if (leccionData is Map<String, dynamic>) {
+        leccionesDetalle[leccionId] = {
+          'aciertos': (leccionData['aciertos'] as num?)?.toInt() ?? 0,
+          'completada': leccionData['completada'] as bool? ?? false,
+          'fecha': leccionData['fecha'],
+          'precision': (leccionData['precision'] as num?)?.toInt() ?? 0,
+          'total': (leccionData['total'] as num?)?.toInt() ?? 0,
+        };
+      }
+    });
+    return leccionesDetalle;
   }
 
   Future<void> _cargarProgreso() async {
@@ -356,10 +393,15 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
         final pct =
             (data['porcentajeTotal'] as num?)?.toDouble() ?? 0.0;
         return {
+          'cursoId': doc.id,
           'titulo': curso?.titulo ?? 'Curso desconocido',
+          'creadoPor': curso?.creadoPor ?? '',
           'porcentaje': pct,
           'leccionesCompletadas': lecciones.length,
           'xpGanado': (data['xpHoy'] as num?)?.toInt() ?? 0,
+          'fechaUltimaXP': data['fechaUltimaXP'] as String? ?? '',
+          'fechaInscripcion': data['fecha_inscripcion'],
+          'leccionesDetalles': _parseLecciones(data),
           'completado': pct >= 1.0,
         };
       }).toList();
@@ -541,25 +583,44 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
                               itemCount: _cursos.length,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: 12),
-                              itemBuilder: (_, i) {
+                              itemBuilder: (ctx, i) {
                                 final c = _cursos[i];
-                                final pct =
-                                    c['porcentaje'] as double;
-                                final completado =
-                                    c['completado'] as bool;
+                                final pct = c['porcentaje'] as double;
+                                final completado = c['completado'] as bool;
                                 final color = completado
                                     ? AppColors.secundario
                                     : AppColors.naranja1;
+                                final adminUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+                                final creadoPor = c['creadoPor'] as String;
+                                final esAdminDelCurso = creadoPor == adminUid || 
+                                    (_adminTieneAccesoSistema && creadoPor == 'sistema');
                                 return _CourseProgressCard(
                                   title: c['titulo'] as String,
                                   progressText: completado
                                       ? 'Completado · ${c['leccionesCompletadas']} lecciones'
                                       : '${c['leccionesCompletadas']} lecciones completadas · ${(pct * 100).toInt()}%',
                                   progressValue: pct,
-                                  statusText:
-                                      completado ? 'Finalizado' : 'En curso',
+                                  statusText: completado ? 'Finalizado' : 'En curso',
                                   statusColor: color,
                                   iconColor: color,
+                                  esAdminDelCurso: esAdminDelCurso,
+                                  xpGanado: c['xpGanado'] as int? ?? 0,
+                                  fechaUltimaXP: c['fechaUltimaXP'] as String? ?? '',
+                                  fechaInscripcion: c['fechaInscripcion'],
+                                  leccionesDetalles: c['leccionesDetalles'] as Map<String, Map<String, dynamic>>? ?? {},
+                                  onTap: esAdminDelCurso
+                                      ? () => Navigator.push(
+                                            ctx,
+                                            MaterialPageRoute(
+                                              builder: (_) => IntentosScreen(
+                                                uid: widget.usuario['uid'] as String,
+                                                nombreUsuario: widget.usuario['nombre'] as String,
+                                                cursoId: c['cursoId'] as String,
+                                                cursoTitulo: c['titulo'] as String,
+                                              ),
+                                            ),
+                                          )
+                                      : null,
                                 );
                               },
                             ),
@@ -832,13 +893,19 @@ class _Divisor extends StatelessWidget {
       Container(width: 1, height: 36, color: AppColors.extra120);
 }
 
-class _CourseProgressCard extends StatelessWidget {
+class _CourseProgressCard extends StatefulWidget {
   final String title;
   final String progressText;
   final double progressValue;
   final String statusText;
   final Color statusColor;
   final Color iconColor;
+  final bool esAdminDelCurso;
+  final VoidCallback? onTap;
+  final int xpGanado;
+  final String fechaUltimaXP;
+  final dynamic fechaInscripcion;
+  final Map<String, Map<String, dynamic>> leccionesDetalles;
 
   const _CourseProgressCard({
     required this.title,
@@ -847,82 +914,302 @@ class _CourseProgressCard extends StatelessWidget {
     required this.statusText,
     required this.statusColor,
     required this.iconColor,
+    this.esAdminDelCurso = false,
+    this.onTap,
+    this.xpGanado = 0,
+    this.fechaUltimaXP = '',
+    this.fechaInscripcion,
+    this.leccionesDetalles = const {},
   });
+
+  @override
+  State<_CourseProgressCard> createState() => _CourseProgressCardState();
+}
+
+class _CourseProgressCardState extends State<_CourseProgressCard> {
+  bool _expandida = false;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: isDark
-                ? AppColors.extraOscuro120
-                : AppColors.extra120),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: widget.esAdminDelCurso
+                  ? AppColors.secundario.withValues(alpha: 0.4)
+                  : isDark
+                      ? AppColors.extraOscuro120
+                      : AppColors.extra120),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: widget.iconColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.book_outlined, color: widget.iconColor, size: 20),
                 ),
-                child:
-                    Icon(Icons.book_outlined, color: iconColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(title,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: isDark ? Colors.white : Colors.black)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(widget.title,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: isDark ? Colors.white : Colors.black)),
                 ),
-                child: Text(statusText,
-                    style: TextStyle(
-                        color: statusColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold)),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: widget.statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(widget.statusText,
+                      style: TextStyle(
+                          color: widget.statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold)),
+                ),
+                if (widget.esAdminDelCurso) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => setState(() => _expandida = !_expandida),
+                    child: Icon(
+                      _expandida ? Icons.expand_less : Icons.expand_more,
+                      size: 18,
+                      color: AppColors.secundario,
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.lock_outline,
+                      size: 16, color: AppColors.textoSecundario40),
+                ],
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(widget.progressText,
+                style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: widget.progressValue,
+                backgroundColor:
+                    isDark ? AppColors.extraOscuro120 : AppColors.extra120,
+                color: widget.statusColor,
+                minHeight: 8,
+              ),
+            ),
+            if (widget.esAdminDelCurso && _expandida) ...[
+              const SizedBox(height: 16),
+              // Información resumida
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[900] : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.fechaInscripcion != null) ...[
+                      _InfoRow(
+                        label: 'Inscripción',
+                        value: _formatDate(widget.fechaInscripcion),
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    if (widget.xpGanado > 0) ...[
+                      _InfoRow(
+                        label: 'XP Hoy',
+                        value: '${widget.xpGanado} XP',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    if (widget.fechaUltimaXP.isNotEmpty) ...[
+                      _InfoRow(
+                        label: 'Última XP',
+                        value: widget.fechaUltimaXP,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ],
+                ),
+              ),
+              // Detalles de lecciones
+              if (widget.leccionesDetalles.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Detalles de Lecciones',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...widget.leccionesDetalles.entries.map((entry) {
+                  final leccionId = entry.key;
+                  final datos = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: datos['completada'] as bool
+                            ? AppColors.secundario.withValues(alpha: 0.1)
+                            : AppColors.naranja1.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                datos['completada'] as bool
+                                    ? Icons.check_circle
+                                    : Icons.pending,
+                                size: 16,
+                                color: datos['completada'] as bool
+                                    ? AppColors.secundario
+                                    : AppColors.naranja1,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                leccionId,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color:
+                                      isDark ? Colors.white : Colors.black,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${datos['precision']}%',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.secundario,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Aciertos: ${datos['aciertos']}/${datos['total']}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                'Fecha: ${_formatDate(datos['fecha'])}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ],
+            if (widget.esAdminDelCurso) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.bar_chart_outlined,
+                      size: 13, color: AppColors.secundario),
+                  const SizedBox(width: 4),
+                  Text('Ver intentos de ejercicios',
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.secundario,
+                          fontWeight: FontWeight.w600)),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 14),
-          Text(progressText,
-              style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progressValue,
-              backgroundColor: isDark
-                  ? AppColors.extraOscuro120
-                  : AppColors.extra120,
-              color: statusColor,
-              minHeight: 8,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  String _formatDate(dynamic dateValue) {
+    if (dateValue == null) return '';
+    if (dateValue is String) return dateValue;
+    if (dateValue is Timestamp) {
+      final date = dateValue.toDate();
+      return '${date.day}/${date.month}/${date.year}';
+    }
+    return '';
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDark;
+
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+      ],
     );
   }
 }

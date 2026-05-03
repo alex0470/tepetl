@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/screens/principalesadmin/cursos/add_curso_screen.dart';
@@ -19,6 +21,7 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
   String selectedNivel = 'Todos';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _esSistema = false;
 
   @override
   void initState() {
@@ -26,6 +29,15 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
     _searchController.addListener(() {
       setState(() => _searchQuery = _searchController.text.toLowerCase());
     });
+    _cargarFlagSistema();
+  }
+
+  Future<void> _cargarFlagSistema() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final esSistema = (doc.data() ?? {})['sistema'] as bool? ?? false;
+    if (mounted) setState(() => _esSistema = esSistema);
   }
 
   @override
@@ -156,7 +168,7 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
                 ),
                 const SizedBox(height: 25),
                 StreamBuilder<List<CursoModel>>(
-                  stream: CursosService.streamCursos(),
+                  stream: CursosService.streamCursos(incluirSistema: _esSistema),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());

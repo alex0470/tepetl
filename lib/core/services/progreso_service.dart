@@ -114,6 +114,16 @@ class ProgresoService {
       },
     }, SetOptions(merge: true));
 
+    // Historial de intentos — subcollección para consulta admin
+    await ref.collection('historial').add({
+      'leccionId': leccionId,
+      'aciertos': aciertos,
+      'total': total,
+      'precision': precision,
+      'completada': precision >= 70,
+      'fecha': FieldValue.serverTimestamp(),
+    });
+
     // XP total → users/{uid}.xp (campo que ya existe)
     await _db.collection('users').doc(_uid).update({
       'xp': FieldValue.increment(xpGanada),
