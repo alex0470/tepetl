@@ -13,11 +13,15 @@ import 'contexto_cultural.dart';
 import 'inicio.dart';
 
 class MainScreen extends StatefulWidget {
-  final bool isAdmin; 
+  final bool isAdmin;
+  final int initialIndex;
+  final String? selectedCursoId;
 
   const MainScreen({
-    super.key, 
-    this.isAdmin = false, 
+    super.key,
+    this.isAdmin = false,
+    this.initialIndex = 2,
+    this.selectedCursoId,
   });
 
   @override
@@ -25,13 +29,14 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int currentIndex = 2; 
+  late int currentIndex;
 
   late final List<Widget> screens;
 
   @override
   void initState() {
     super.initState();
+    currentIndex = widget.initialIndex;
 
     screens = [
       const DescubrirScreen(),
@@ -44,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
       // 2.Pestaña de Inicio (Gestión de Lecciones / Mapa de Progreso)
       widget.isAdmin 
           ? const InicioAdminScreen() 
-          : const InicioScreen(),
+          : InicioScreen(selectedCursoId: widget.selectedCursoId),
           
       // 3.Pestaña de Cursos (NUEVO AJUSTE)
       widget.isAdmin 

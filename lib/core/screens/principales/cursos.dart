@@ -2,8 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:tepetl/core/models/curso_models.dart';
-import 'package:tepetl/core/screens/plantillas_ejercicios/examen_nivel_screen.dart';
+import 'package:tepetl/core/models/curso_models.dart' hide EjercicioModel;
+import 'package:tepetl/core/models/modelo_ejercicio.dart';
+import 'package:tepetl/core/screens/plantillas_ejercicios/leccion_ejercicios_screen.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
@@ -18,6 +19,7 @@ class _Sugerencia {
   final String botonLabel;
   final bool botonOscuro;
   final IconData icono;
+  final List<EjercicioModel>? ejercicios;
 
   const _Sugerencia({
     required this.etiqueta,
@@ -26,29 +28,9 @@ class _Sugerencia {
     required this.botonLabel,
     required this.botonOscuro,
     required this.icono,
+    this.ejercicios,
   });
 }
-
-const List<_Sugerencia> _sugerencias = [
-  _Sugerencia(
-    etiqueta: 'BASADO EN TU DESEMPEÑO',
-    titulo: 'Fortalece tus bases',
-    descripcion:
-        'Repasa los pronombres posesivos para mejorar tu fluidez en el módulo actual.',
-    botonLabel: 'Comenzar Repaso',
-    botonOscuro: true,
-    icono: Icons.refresh_rounded,
-  ),
-  _Sugerencia(
-    etiqueta: 'SIGUIENTE NIVEL',
-    titulo: 'Expande tu vocabulario',
-    descripcion:
-        'Has dominado los verbos básicos. Es momento de aprender adjetivos de color y textura.',
-    botonLabel: 'Ver Nuevos Temas',
-    botonOscuro: false,
-    icono: Icons.trending_up_rounded,
-  ),
-];
 
 // ── Pantalla principal ────────────────────────────────────────────────────────
 
@@ -343,176 +325,196 @@ class _TarjetaCurso extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.fondoOscuroSecundario
-            : AppColors.fondoSecundario,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 2,
-            offset: const Offset(3, 3),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('progreso_cursos')
+          .doc(curso.id)
+          .snapshots(),
+      builder: (context, progressSnapshot) {
+        final progresoData =
+            progressSnapshot.data?.data() as Map<String, dynamic>?;
+        final progressValue =
+            (progresoData?['porcentajeTotal'] as num?)?.toDouble() ?? 0.0;
+        final progressLabel =
+            progressValue >= 1.0 ? '100%' : '${(progressValue * 100).toInt()}%';
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.fondoOscuroSecundario
+                : AppColors.fondoSecundario,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 2,
+                offset: const Offset(3, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: _CourseImage(
-                    url: curso.imagenUrl,
-                    titulo: curso.titulo,
-                    height: 60,
-                    width: 60,
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: _CourseImage(
+                        url: curso.imagenUrl,
+                        titulo: curso.titulo,
+                        height: 60,
+                        width: 60,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      curso.titulo,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      curso.nivel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.secundario,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'PROGRESO',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.60),
-                ),
-              ),
-              Text(
-                '0%',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.60),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: 0.0,
-              minHeight: 6,
-              backgroundColor: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.20),
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(AppColors.secundario),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GestureDetector(
-                onTap: () => _anularInscripcion(context),
-                child: const Row(
-                  children: [
-                    Icon(Icons.cancel_outlined,
-                        color: AppColors.rojo1, size: 14),
-                    SizedBox(width: 5),
-                    Text(
-                      'ANULAR INSCRIPCIÓN',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.rojo1,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 2,
-                      offset: const Offset(3, 3),
-                    ),
-                  ],
-                ),
-                child: SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MainScreen(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          curso.titulo,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secundario,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 22),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continuar',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w700),
+                        const SizedBox(height: 3),
+                        Text(
+                          curso.nivel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.secundario,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'PROGRESO',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.60),
+                    ),
+                  ),
+                  Text(
+                    progressLabel,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.60),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progressValue,
+                  minHeight: 6,
+                  backgroundColor: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.20),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.secundario),
                 ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => _anularInscripcion(context),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.cancel_outlined,
+                            color: AppColors.rojo1, size: 14),
+                        SizedBox(width: 5),
+                        Text(
+                          'ANULAR INSCRIPCIÓN',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.rojo1,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 2,
+                          offset: const Offset(3, 3),
+                        ),
+                      ],
+                    ),
+                    child: SizedBox(
+                      height: 36,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MainScreen(
+                                initialIndex: 2,
+                                selectedCursoId: curso.id,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secundario,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 22),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Continuar',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1167,13 +1169,160 @@ class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
 
 // ── Sección: Sugerencias IA ───────────────────────────────────────────────────
 
-class _SeccionSugerencias extends StatelessWidget {
+class _SeccionSugerencias extends StatefulWidget {
   final bool isDark;
   final bool isWide;
+
   const _SeccionSugerencias({required this.isDark, required this.isWide});
 
   @override
+  State<_SeccionSugerencias> createState() => _SeccionSugerenciasState();
+}
+
+class _SeccionSugerenciasState extends State<_SeccionSugerencias> {
+  List<_Sugerencia> _sugerenciasDinamicas = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarSugerencias();
+  }
+
+  Future<void> _cargarSugerencias() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      // Obtener todos los cursos suscritos
+      final cursosSuscritos = await CursosService.streamCursosSuscritos(userId).first;
+
+      Set<String> leccionesFallidas = {};
+      Map<String, int> precisionPorLeccion = {};
+
+      // Para cada curso, obtener el historial
+      for (var curso in cursosSuscritos) {
+        final historialSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('progreso_cursos')
+            .doc(curso.id)
+            .collection('historial')
+            .get();
+
+        for (var doc in historialSnapshot.docs) {
+          final data = doc.data();
+          final precision = (data['precision'] as num?)?.toInt() ?? 0;
+          final leccionId = data['leccionId'] as String?;
+          if (leccionId != null && precision < 70) {
+            leccionesFallidas.add(leccionId);
+            precisionPorLeccion[leccionId] = precision;
+          }
+        }
+      }
+
+      // Obtener ejercicios de lecciones fallidas
+      Set<String> ejerciciosIdsSet = {};
+      for (var curso in cursosSuscritos) {
+        final modulosSnapshot = await FirebaseFirestore.instance
+            .collection('cursos')
+            .doc(curso.id)
+            .collection('modulos')
+            .get();
+
+        for (var moduloDoc in modulosSnapshot.docs) {
+          for (var leccionId in leccionesFallidas) {
+            final leccionDoc = await moduloDoc.reference.collection('lecciones').doc(leccionId).get();
+            if (leccionDoc.exists) {
+              final leccionData = leccionDoc.data()!;
+              final ids = List<String>.from(leccionData['ejercicios_ids'] ?? []);
+              ejerciciosIdsSet.addAll(ids);
+            }
+          }
+        }
+      }
+
+      List<String> ejerciciosIdsRepaso = ejerciciosIdsSet.toList();
+
+      // Cargar ejercicios repaso
+      List<EjercicioModel> ejerciciosRepaso = [];
+      if (ejerciciosIdsRepaso.isNotEmpty) {
+        final chunks = _chunkList(ejerciciosIdsRepaso, 30);
+        for (final chunk in chunks) {
+          final snapshot = await FirebaseFirestore.instance
+              .collection('ejercicios')
+              .where(FieldPath.documentId, whereIn: chunk)
+              .get();
+          ejerciciosRepaso.addAll(
+            snapshot.docs.map((doc) => EjercicioModel.fromMap(doc.id, doc.data())),
+          );
+        }
+      }
+
+      // Cargar ejercicios aleatorios
+      final snapshotAleatorios = await FirebaseFirestore.instance
+          .collection('ejercicios')
+          .limit(10)
+          .get();
+      List<EjercicioModel> ejerciciosAleatorios = snapshotAleatorios.docs
+          .map((doc) => EjercicioModel.fromMap(doc.id, doc.data()))
+          .toList();
+
+      // Generar sugerencias
+      List<_Sugerencia> sugerencias = [];
+
+      if (leccionesFallidas.isNotEmpty && ejerciciosRepaso.isNotEmpty) {
+        sugerencias.add(_Sugerencia(
+          etiqueta: 'REPASO NECESARIO',
+          titulo: 'Fortalece tus bases',
+          descripcion: 'Repasa ${leccionesFallidas.length} lecciones con precisión baja para mejorar.',
+          botonLabel: 'Comenzar Repaso',
+          botonOscuro: true,
+          icono: Icons.refresh_rounded,
+          ejercicios: ejerciciosRepaso,
+        ));
+      }
+
+      // Sugerencia adicional para práctica aleatoria
+      if (ejerciciosAleatorios.isNotEmpty) {
+        sugerencias.add(_Sugerencia(
+          etiqueta: 'PRÁCTICA ALEATORIA',
+          titulo: 'Practica frases al azar',
+          descripcion: 'Ejercicios seleccionados aleatoriamente para reforzar tu aprendizaje.',
+          botonLabel: 'Empezar Práctica',
+          botonOscuro: false,
+          icono: Icons.shuffle_rounded,
+          ejercicios: ejerciciosAleatorios,
+        ));
+      }
+
+      setState(() {
+        _sugerenciasDinamicas = sugerencias;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error cargando sugerencias: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  List<List<T>> _chunkList<T>(List<T> list, int size) {
+    List<List<T>> chunks = [];
+    for (var i = 0; i < list.length; i += size) {
+      chunks.add(list.sublist(i, i + size > list.length ? list.length : i + size));
+    }
+    return chunks;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1193,15 +1342,15 @@ class _SeccionSugerencias extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        if (isWide)
+        if (widget.isWide)
           Column(
-            children: _sugerencias
+            children: _sugerenciasDinamicas
                 .map(
                   (s) => Padding(
                     padding: EdgeInsets.only(
-                        bottom: s == _sugerencias.last ? 0 : 14),
+                        bottom: s == _sugerenciasDinamicas.last ? 0 : 14),
                     child: _TarjetaSugerencia(
-                        sugerencia: s, isDark: isDark, isWide: true),
+                        sugerencia: s, isDark: widget.isDark, isWide: true),
                   ),
                 )
                 .toList(),
@@ -1219,25 +1368,25 @@ class _SeccionSugerencias extends StatelessWidget {
               ),
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _sugerencias.length,
+                itemCount: _sugerenciasDinamicas.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) => SizedBox(
                   width: 220,
                   child: _TarjetaSugerencia(
-                      sugerencia: _sugerencias[i],
-                      isDark: isDark,
+                      sugerencia: _sugerenciasDinamicas[i],
+                      isDark: widget.isDark,
                       isWide: false),
                 ),
               ),
             ),
           ),
-        if (!isWide) ...[
+        if (!widget.isWide) ...[
           const SizedBox(height: 16),
-          _ForoDelDia(isDark: isDark),
+          _ForoDelDia(isDark: widget.isDark),
         ],
-        if (isWide) ...[
+        if (widget.isWide) ...[
           const SizedBox(height: 14),
-          _ForoDelDia(isDark: isDark),
+          _ForoDelDia(isDark: widget.isDark),
         ],
       ],
     );
@@ -1340,7 +1489,14 @@ class _TarjetaSugerencia extends StatelessWidget {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const ExamenNivelScreen()),
+                      builder: (context) => LeccionEjerciciosScreen(
+                        cursoId: 'sugerencias',
+                        leccionId: sugerencia.etiqueta == 'REPASO NECESARIO' ? 'repaso' : 'aleatoria',
+                        leccionTitulo: sugerencia.titulo,
+                        ejerciciosIds: [],
+                        ejerciciosDirectos: sugerencia.ejercicios,
+                        totalLeccionesCurso: 1,
+                      )),
                 ),
                 icon: Icon(sugerencia.icono, size: 14),
                 label: Text(

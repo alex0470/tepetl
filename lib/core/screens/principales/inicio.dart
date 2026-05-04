@@ -10,7 +10,10 @@ import 'package:tepetl/core/widgets/cards/curso_card.dart';
 import 'package:tepetl/core/widgets/usuario/progreso_map.dart';
 
 class InicioScreen extends StatefulWidget {
-  const InicioScreen({super.key});
+  final String? selectedCursoId;
+
+  const InicioScreen({super.key, this.selectedCursoId});
+
   @override
   State<InicioScreen> createState() => _InicioScreenState();
 }
@@ -117,7 +120,14 @@ class _InicioScreenState extends State<InicioScreen> {
         };
       }
 
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() {
+        _isLoading = false;
+        if (widget.selectedCursoId != null && _misCursos.isNotEmpty) {
+          final index = _misCursos.indexWhere(
+              (curso) => curso.id == widget.selectedCursoId);
+          if (index >= 0) selectedCurso = index;
+        }
+      });
     } catch (e) {
       debugPrint('Error cargando datos Firebase: $e');
       if (mounted) setState(() => _isLoading = false);

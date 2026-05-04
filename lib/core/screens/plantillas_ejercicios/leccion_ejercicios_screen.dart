@@ -21,6 +21,7 @@ class LeccionEjerciciosScreen extends StatefulWidget {
   final String? moduloId;
   final String leccionTitulo;
   final List<String> ejerciciosIds;
+  final List<EjercicioModel>? ejerciciosDirectos;
   final int totalLeccionesCurso;
 
   const LeccionEjerciciosScreen({
@@ -30,6 +31,7 @@ class LeccionEjerciciosScreen extends StatefulWidget {
     this.moduloId,
     required this.leccionTitulo,
     required this.ejerciciosIds,
+    this.ejerciciosDirectos,
     this.totalLeccionesCurso = 1,
   });
 
@@ -95,17 +97,19 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   }
 
   Future<void> _cargarEstadoParcial() async {
-  final parcial = await ProgresoService.obtenerEstadoParcial(
-      widget.cursoId, widget.leccionId);
-  if (parcial != null && mounted) {
-    setState(() {
-      _indiceActual = parcial['indiceActual'] ?? 0;
-      _aciertosTotales = parcial['aciertosTotales'] ?? 0;
-      _vidasPerdidas = parcial['vidasPerdidas'] ?? 0;
-      _pistasUsadas = parcial['pistasUsadas'] ?? 0;
-      _maxRacha = parcial['maxRacha'] ?? 0;
-      _rachaActual = parcial['rachaActual'] ?? 0;
-      _erroresTraducir = parcial['erroresTraducir'] ?? 0;
+    if (widget.cursoId == 'sugerencias') return;
+
+    final parcial = await ProgresoService.obtenerEstadoParcial(
+        widget.cursoId, widget.leccionId);
+    if (parcial != null && mounted) {
+      setState(() {
+        _indiceActual = parcial['indiceActual'] ?? 0;
+        _aciertosTotales = parcial['aciertosTotales'] ?? 0;
+        _vidasPerdidas = parcial['vidasPerdidas'] ?? 0;
+        _pistasUsadas = parcial['pistasUsadas'] ?? 0;
+        _maxRacha = parcial['maxRacha'] ?? 0;
+        _rachaActual = parcial['rachaActual'] ?? 0;
+        _erroresTraducir = parcial['erroresTraducir'] ?? 0;
       _erroresCompletar = parcial['erroresCompletar'] ?? 0;
       _erroresImagenes = parcial['erroresImagenes'] ?? 0;
       _tiempoInicialSegundos = parcial['tiempoSegundos'] ?? 0;
@@ -122,6 +126,14 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
 }
 
   Future<void> _cargarEjercicios() async {
+    if (widget.ejerciciosDirectos != null) {
+      setState(() {
+        _ejercicios = widget.ejerciciosDirectos!;
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
       List<EjercicioModel> listaTemporal = [];
 
@@ -326,6 +338,8 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   }
 
   Future<void> _guardarProgresoLeccion(int precision, int xpGanada) async {
+    if (widget.cursoId == 'sugerencias') return;
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
