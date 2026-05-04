@@ -38,6 +38,25 @@ class LeccionEjerciciosScreen extends StatefulWidget {
       _LeccionEjerciciosScreenState();
 }
 
+// Registro interno de cada intento de ejercicio
+class _EjercicioIntento {
+  final String tipo;
+  final String contenido;
+  final String respuestaUsuario;
+  final String respuestaCorrecta;
+  final bool esCorrecta;
+  String retroalimentacion;
+
+  _EjercicioIntento({
+    required this.tipo,
+    required this.contenido,
+    required this.respuestaUsuario,
+    required this.respuestaCorrecta,
+    required this.esCorrecta,
+    this.retroalimentacion = '',
+  });
+}
+
 class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   List<EjercicioModel> _ejercicios = [];
   int _indiceActual = 0;
@@ -53,6 +72,7 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   int _erroresCompletar = 0;
   int _erroresImagenes = 0;
   int _tiempoInicialSegundos = 0;
+  final List<_EjercicioIntento> _intentos = [];
 
   final Stopwatch _cronometro = Stopwatch();
 
@@ -160,8 +180,24 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   }
 
   void _avanzarSiguiente(
-      bool esCorrecto, bool pistaUsada, String tipo) async {
+      bool esCorrecto, bool pistaUsada, String tipo,
+      String respuestaUsuario, String respuestaCorrecta) async {
     if (pistaUsada) _pistasUsadas++;
+
+    final ejercicioActual = _ejercicios[_indiceActual];
+
+    // Registrar intento
+    final intento = _EjercicioIntento(
+      tipo: tipo,
+      contenido: ejercicioActual.contenido,
+      respuestaUsuario: respuestaUsuario,
+      respuestaCorrecta: respuestaCorrecta,
+      esCorrecta: esCorrecto,
+    );
+    _intentos.add(intento);
+
+    // La retroalimentación por ejercicio se muestra en el RespuestaSheet
+    // (manejada directamente en cada widget de ejercicio)
 
     if (esCorrecto) {
       _aciertosTotales++;
@@ -205,34 +241,62 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
     _cronometro.stop();
 
     final int totalEjercicios = _ejercicios.length;
-    final int tiempoSegundos = _cronometro.elapsed.inSeconds;
-    final int tiempoInicialSegundos = _cronometro.elapsed.inSeconds + _tiempoInicialSegundos;
+    final int tiempoSegundos =
+        _cronometro.elapsed.inSeconds + _tiempoInicialSegundos;
 
-    // Evaluación con IA (misma lógica que ExamenNivelScreen)
-    final Map<String, dynamic> resultadoIA = await IAService.evaluarExamen(
-      aciertosTotales: _aciertosTotales,
-      totalEjercicios: totalEjercicios,
-      vidasPerdidas: _vidasPerdidas,
-      pistasUsadas: _pistasUsadas,
-      maxRacha: _maxRacha,
-      erroresTraducir: _erroresTraducir,
-      erroresCompletar: _erroresCompletar,
-      erroresImagenes: _erroresImagenes,
+    // 1. Calcular precisión y XP localmente (sin llamar a /predecir)
+    final int precision = totalEjercicios > 0
+        ? (_aciertosTotales / totalEjercicios * 100).round()
+        : 0;
+
+    final int xpGanada =
+        ((_ejercicios.length * 10 * precision) ~/ 100)
+            .clamp(5, _ejercicios.length * 10);
+
+    // 2. Retroalimentación detallada por sesión
+    // Se envían TODOS los intentos para que Gemini tenga contexto completo
+    final List<_EjercicioIntento> errores =
+        _intentos.where((i) => !i.esCorrecta).toList();
+
+    final Map<String, dynamic> retro = await IAService.obtenerRetroalimentacion(
+      precision: precision,
+      aciertos: _aciertosTotales,
+      total: totalEjercicios,
       tiempoSegundos: tiempoSegundos,
+      errores: _intentos                    // todos, no solo los incorrectos
+          .map((i) => {
+                'tipo': i.tipo,
+                'respuesta_usuario': i.respuestaUsuario,
+                'respuesta_correcta': i.respuestaCorrecta,
+              })
+          .toList(),
     );
 
-    final String mensajeAI =
-        resultadoIA['mensaje_ai'] as String? ?? 'Buen esfuerzo.';
+    final String mensajeAI = (retro['resumen'] as String?)?.isNotEmpty == true
+        ? retro['resumen'] as String
+        : precision == 100
+            ? '¡Perfecto! Completaste la lección sin errores. ¡Excelente trabajo!'
+            : 'Completaste la lección con $precision% de precisión. ¡Sigue practicando!';
 
-    final int precision = (resultadoIA['precision'] as num?)?.toInt() ??
-        (totalEjercicios > 0
-            ? (_aciertosTotales / totalEjercicios * 100).round()
-            : 0);
+    // 3. Construir lista de errores usando la nota de /evaluar-ejercicio
+    //    (ya almacenada en intento.retroalimentacion) como fuente principal
+    final List<LeccionErrores> leccionErrores = errores
+        .map((intento) {
+          final nota = intento.retroalimentacion.isNotEmpty
+              ? intento.retroalimentacion
+              : 'Revisa la respuesta correcta: "${intento.respuestaCorrecta}".';
+          final tipo = _tipoErrorDesde(intento.tipo);
+          return LeccionErrores(
+            tipo: tipo,
+            contenido: intento.contenido,
+            respuestaUsuario: intento.respuestaUsuario,
+            respuestaCorrecta: intento.respuestaCorrecta,
+            notaAI: nota,
+          );
+        })
+        .toList();
 
-    final int xpGanada = (resultadoIA['xp'] as num?)?.toInt() ??
-        ((_ejercicios.length * 10 * precision) ~/ 100).clamp(5, _ejercicios.length * 10);
-
-    // Guardar progreso de lección en Firestore
+    // 4. Guardar progreso
     await _guardarProgresoLeccion(precision, xpGanada);
 
     final int minutos = tiempoSegundos ~/ 60;
@@ -241,7 +305,7 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
         '${minutos.toString().padLeft(2, '0')}:${segundos.toString().padLeft(2, '0')}';
 
     if (!mounted) return;
-    
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -252,7 +316,7 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
             xpGanada: xpGanada,
             tiempo: tiempoFormateado,
             mensajeAI: mensajeAI,
-            errores: [],
+            errores: leccionErrores,
           ),
         ),
       ),
@@ -317,6 +381,19 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  TipoError _tipoErrorDesde(String tipo) {
+    switch (tipo) {
+      case 'gramatica':
+        return TipoError.gramatica;
+      case 'sintaxis':
+        return TipoError.sintaxis;
+      case 'completar_frase':
+        return TipoError.gramatica;
+      default:
+        return TipoError.vocabulario;
+    }
+  }
 
   List<List<T>> _chunkList<T>(List<T> list, int size) {
     final chunks = <List<T>>[];
@@ -436,24 +513,24 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
         return PlantillaEscribir(
           key: ValueKey(ejercicio.id),
           ejercicio: ejercicio,
-          onCompletado: (esCorrecto, pistaUsada) =>
-              _avanzarSiguiente(esCorrecto, pistaUsada, 'leer_escribir'),
+          onCompletado: (esCorrecto, pistaUsada, respUsuario, respCorrecta) =>
+              _avanzarSiguiente(esCorrecto, pistaUsada, 'leer_escribir', respUsuario, respCorrecta),
         );
 
       case 'completar_frase':
         return PlantillaCompletar(
           key: ValueKey(ejercicio.id),
           ejercicio: ejercicio,
-          onCompletado: (esCorrecto, pistaUsada) =>
-              _avanzarSiguiente(esCorrecto, pistaUsada, 'completar_frase'),
+          onCompletado: (esCorrecto, pistaUsada, respUsuario, respCorrecta) =>
+              _avanzarSiguiente(esCorrecto, pistaUsada, 'completar_frase', respUsuario, respCorrecta),
         );
 
       case 'seleccionar_imagen':
         return PlantillaIdentificarImagen(
           key: ValueKey(ejercicio.id),
           ejercicio: ejercicio,
-          onCompletado: (esCorrecto, pistaUsada) =>
-              _avanzarSiguiente(esCorrecto, pistaUsada, 'seleccionar_imagen'),
+          onCompletado: (esCorrecto, pistaUsada, respUsuario, respCorrecta) =>
+              _avanzarSiguiente(esCorrecto, pistaUsada, 'seleccionar_imagen', respUsuario, respCorrecta),
         );
 
       default:

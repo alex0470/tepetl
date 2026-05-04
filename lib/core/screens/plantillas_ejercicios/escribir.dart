@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/services/ia_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
@@ -7,8 +8,8 @@ import 'package:tepetl/core/models/modelo_ejercicio.dart';
 class PlantillaEscribir extends StatefulWidget {
   final EjercicioModel ejercicio;
 
-  /// Callback al terminar: (esCorrecto)
-  final Function(bool isCorrect, bool pistaUsada) onCompletado;
+  /// Callback al terminar: (esCorrecto, pistaUsada, respuestaUsuario, respuestaCorrecta)
+  final Function(bool isCorrect, bool pistaUsada, String respuestaUsuario, String respuestaCorrecta) onCompletado;
 
   /// Callback que se dispara la primera vez que el usuario abre la pista
   final VoidCallback? onPistaUsada;
@@ -83,13 +84,25 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
 
     _focusNode.unfocus();
 
-    final String userInput = _normalize(_controller.text);
+    final String respuestaUsuario = _controller.text.trim();
+    final String userInput = _normalize(respuestaUsuario);
     final String correct = _normalize(_correctAnswer);
     final bool isCorrect = userInput == correct;
 
     setState(() {
       _verified = true;
     });
+
+    // Llamar a la IA en paralelo con la apertura del sheet (solo errores)
+    final Future<String>? feedbackFuture = isCorrect
+        ? null
+        : IAService.evaluarEjercicio(
+            tipo: 'leer_escribir',
+            contenido: _contenido,
+            respuestaUsuario: respuestaUsuario,
+            respuestaCorrecta: _correctAnswer,
+            esCorrecta: false,
+          ).then((r) => r['retroalimentacion'] as String? ?? '');
 
     showModalBottomSheet(
       context: context,
@@ -102,6 +115,7 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
             ? '¡Muy bien! "$_palabraNahuatl" se traduce a "$_correctAnswer".'
             : 'La respuesta era: $_correctAnswer',
         correctAnswer: _correctAnswer,
+        feedbackFuture: feedbackFuture,
         onContinue: () => Navigator.of(ctx).pop(),
       ),
     ).then((_) {
@@ -110,7 +124,7 @@ class _PlantillaEscribirState extends State<PlantillaEscribir> {
         _verified = false;
         _controller.clear();
       });
-      widget.onCompletado(isCorrect, _hintReported);
+      widget.onCompletado(isCorrect, _hintReported, respuestaUsuario, _correctAnswer);
     });
   }
 

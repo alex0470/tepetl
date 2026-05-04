@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tepetl/core/services/ia_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/popups/respuesta_sheet.dart';
@@ -16,8 +17,8 @@ class ImageOption {
 class PlantillaIdentificarImagen extends StatefulWidget {
   final EjercicioModel ejercicio;
 
-  /// Callback al terminar que envía si es correcto y si se usó la pista
-  final Function(bool isCorrect, bool onPistaUsada) onCompletado;
+  /// Callback al terminar que envía si es correcto, si se usó la pista, respuesta usuario y correcta
+  final Function(bool isCorrect, bool onPistaUsada, String respuestaUsuario, String respuestaCorrecta) onCompletado;
 
   const PlantillaIdentificarImagen({
     super.key,
@@ -118,6 +119,21 @@ class _PlantillaIdentificarImagenState
         ? 'Excelente! Has seleccionado la imagen correcta de "$_correctAnswer".'
         : 'La imagen correcta era la de "$_correctAnswer".\n${widget.ejercicio.pista}';
 
+    final String respuestaUsuario =
+        _selectedIndex != null && _selectedIndex! < _options.length
+            ? _options[_selectedIndex!].label
+            : '';
+
+    final Future<String>? feedbackFuture = isCorrect
+        ? null
+        : IAService.evaluarEjercicio(
+            tipo: 'seleccionar_imagen',
+            contenido: widget.ejercicio.contenido,
+            respuestaUsuario: respuestaUsuario,
+            respuestaCorrecta: _correctAnswer,
+            esCorrecta: false,
+          ).then((r) => r['retroalimentacion'] as String? ?? '');
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       showModalBottomSheet(
@@ -129,6 +145,7 @@ class _PlantillaIdentificarImagenState
           isCorrect: isCorrect,
           explanation: explanation,
           correctAnswer: _correctAnswer,
+          feedbackFuture: feedbackFuture,
           onContinue: () => Navigator.of(context).pop(),
         ),
       ).then((_) {
@@ -137,8 +154,7 @@ class _PlantillaIdentificarImagenState
           _verified = false;
           _selectedIndex = null;
         });
-        // Se envían AMBAS variables a la pantalla principal
-        widget.onCompletado(isCorrect, _hintReported);
+        widget.onCompletado(isCorrect, _hintReported, respuestaUsuario, _correctAnswer);
       });
     });
   }

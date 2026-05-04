@@ -7,6 +7,9 @@ class RespuestaSheet extends StatelessWidget {
   final String correctAnswer;
   final VoidCallback onContinue;
   final String continueLabel;
+  /// Future que devuelve el texto de retroalimentación de la IA.
+  /// Solo se muestra cuando la respuesta es incorrecta.
+  final Future<String>? feedbackFuture;
 
   const RespuestaSheet({
     super.key,
@@ -15,6 +18,7 @@ class RespuestaSheet extends StatelessWidget {
     required this.correctAnswer,
     required this.onContinue,
     this.continueLabel = 'Continuar',
+    this.feedbackFuture,
   });
 
   @override
@@ -43,6 +47,7 @@ class RespuestaSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Encabezado ───────────────────────────────────────────────────
           Row(
             children: [
               Container(
@@ -74,8 +79,9 @@ class RespuestaSheet extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 5),
+          const SizedBox(height: 10),
 
+          // ── Cuerpo: explicación + respuesta correcta ──────────────────
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -120,8 +126,84 @@ class RespuestaSheet extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 10),
+          // ── Retroalimentación de IA (solo en errores) ─────────────────
+          if (!isCorrect && feedbackFuture != null) ...[
+            const SizedBox(height: 10),
+            FutureBuilder<String>(
+              future: feedbackFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.morado1.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.morado1,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Analizando tu respuesta...',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurface
+                                .withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
+                final texto = snapshot.data?.trim() ?? '';
+                if (texto.isEmpty) return const SizedBox.shrink();
+
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.morado1.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: AppColors.morado1.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.auto_awesome,
+                          size: 15, color: AppColors.morado1),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          texto,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: colorScheme.onSurface
+                                .withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+
+          const SizedBox(height: 14),
+
+          // ── Botón continuar ──────────────────────────────────────────
           SizedBox(
             width: double.infinity,
             height: 50,

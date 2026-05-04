@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tepetl/core/services/ia_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_verificar_ejercicio.dart';
 import 'package:tepetl/core/widgets/inputs/respuestas_chips.dart';
@@ -8,8 +9,8 @@ import 'package:tepetl/core/models/modelo_ejercicio.dart';
 class PlantillaCompletar extends StatefulWidget {
   final EjercicioModel ejercicio;
 
-  /// Callback al terminar: (esCorrecto, usedHint)
-  final Function(bool isCorrect, bool usedHint) onCompletado;
+  /// Callback al terminar: (esCorrecto, usedHint, respuestaUsuario, respuestaCorrecta)
+  final Function(bool isCorrect, bool usedHint, String respuestaUsuario, String respuestaCorrecta) onCompletado;
 
   /// Callback que se dispara la primera vez que el usuario abre la pista
   final VoidCallback? onPistaUsada;
@@ -85,6 +86,21 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
         ? '¡Correcto! "$_correctAnswer" completa la frase adecuadamente.'
         : 'La respuesta correcta era "$_correctAnswer".\n$_hintText';
 
+    final String respuestaUsuario =
+        _selectedIndex >= 0 && _selectedIndex < _options.length
+            ? _options[_selectedIndex]
+            : '';
+
+    final Future<String>? feedbackFuture = isCorrect
+        ? null
+        : IAService.evaluarEjercicio(
+            tipo: 'completar_frase',
+            contenido: widget.ejercicio.contenido,
+            respuestaUsuario: respuestaUsuario,
+            respuestaCorrecta: _correctAnswer,
+            esCorrecta: false,
+          ).then((r) => r['retroalimentacion'] as String? ?? '');
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (!mounted) return;
       showModalBottomSheet(
@@ -96,15 +112,20 @@ class _PlantillaCompletarState extends State<PlantillaCompletar> {
           isCorrect: isCorrect,
           explanation: explanationText,
           correctAnswer: _correctAnswer,
+          feedbackFuture: feedbackFuture,
           onContinue: () => Navigator.of(ctx).pop(),
         ),
       ).then((_) {
         if (!mounted) return;
+        final String respuestaUsuario =
+            _selectedIndex >= 0 && _selectedIndex < _options.length
+                ? _options[_selectedIndex]
+                : '';
         setState(() {
           _verified = false;
           _selectedIndex = -1;
         });
-        widget.onCompletado(isCorrect, _hintVisible);
+        widget.onCompletado(isCorrect, _hintVisible, respuestaUsuario, _correctAnswer);
       });
     });
   }

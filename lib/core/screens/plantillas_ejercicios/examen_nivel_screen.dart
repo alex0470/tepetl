@@ -319,15 +319,15 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
           key: ValueKey(ejercicio.id),
           ejercicio: ejercicio,
           // Ya no pasamos onPistaUsada independiente
-          onCompletado: (esCorrecto, onPistaUsada) =>
-              _avanzarSiguiente(esCorrecto, onPistaUsada, 'leer_escribir'),
+          onCompletado: (esCorrecto, pistaUsada, _, _) =>
+              _avanzarSiguiente(esCorrecto, pistaUsada, 'leer_escribir'),
         );
 
       case 'completar_frase':
         return PlantillaCompletar(
           key: ValueKey(ejercicio.id),
           ejercicio: ejercicio,
-          onCompletado: (esCorrecto, pistaUsada) =>
+          onCompletado: (esCorrecto, pistaUsada, _, _) =>
               _avanzarSiguiente(esCorrecto, pistaUsada, 'completar_frase'),
         );
 
@@ -335,7 +335,7 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
         return PlantillaIdentificarImagen(
           key: ValueKey(ejercicio.id),
           ejercicio: ejercicio,
-          onCompletado: (esCorrecto, pistaUsada) =>
+          onCompletado: (esCorrecto, pistaUsada, _, _) =>
               _avanzarSiguiente(esCorrecto, pistaUsada, 'seleccionar_imagen'),
         );
 
