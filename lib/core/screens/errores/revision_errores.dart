@@ -204,7 +204,24 @@ class _ErrorCard extends StatelessWidget {
               isWide ? 20 : 14,
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (error.contenido.isNotEmpty) ...[
+                  Text(
+                    error.contenido,
+                    style: TextStyle(
+                      fontSize: isWide ? 14 : 12,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: isWide ? 12 : 8),
+                ],
                 _AnswerRow(
                   label: 'Tu respuesta',
                   text: error.respuestaUsuario,

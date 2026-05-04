@@ -5,12 +5,14 @@ enum TipoError { gramatica, vocabulario, sintaxis }
 
 class LeccionErrores {
   final TipoError tipo;
+  final String contenido;
   final String respuestaUsuario;
   final String respuestaCorrecta;
   final String notaAI;
 
   const LeccionErrores({
     required this.tipo,
+    this.contenido = '',
     required this.respuestaUsuario,
     required this.respuestaCorrecta,
     required this.notaAI,
