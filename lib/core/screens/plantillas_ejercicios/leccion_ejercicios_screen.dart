@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tepetl/core/models/modelo_ejercicio.dart';
 import 'package:tepetl/core/models/modelo_revision.dart';
 import 'package:tepetl/core/screens/errores/leccion_resumen.dart';
@@ -8,8 +7,10 @@ import 'package:tepetl/core/screens/plantillas_ejercicios/completar.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/escribir.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/imagenes_ejercicio.dart';
 import 'package:tepetl/core/services/ia_service.dart';
+import 'package:tepetl/core/services/insignias_service.dart';
 import 'package:tepetl/core/services/meta_diaria_service.dart';
 import 'package:tepetl/core/services/progreso_service.dart';
+import 'package:tepetl/core/services/racha_service.dart';
 import 'package:tepetl/core/services/vidas_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/bars/appbar_ejercicios.dart';
@@ -309,7 +310,7 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
         .toList();
 
     // 4. Guardar progreso
-    await _guardarProgresoLeccion(precision, xpGanada);
+    await _guardarProgresoLeccion(precision, xpGanada, tiempoSegundos);
 
     final int minutos = tiempoSegundos ~/ 60;
     final int segundos = tiempoSegundos % 60;
@@ -335,57 +336,29 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
     );
 
     await MetaDiariaService.registrarSesion(_cronometro.elapsed.inSeconds);
+    RachaService.registrarActividad().ignore();
+    final tipos = _ejercicios.map((e) => e.tipoEjercicio).toSet();
+    InsigniasService.verificarYOtorgarInsignias(tiposEjerciciosEnLeccion: tipos).ignore();
   }
 
-  Future<void> _guardarProgresoLeccion(int precision, int xpGanada) async {
+  Future<void> _guardarProgresoLeccion(int precision, int xpGanada, int tiempoSegundos) async {
     if (widget.cursoId == 'sugerencias') return;
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
-      final progresoRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('progreso')
-          .doc(widget.cursoId);
-      
-      final totalLecciones = widget.ejerciciosIds.isNotEmpty
-      ? widget.ejerciciosIds.length  // No es exacto, ver nota abajo
-      : _ejercicios.length;
-
-      // Lección completada si precisión >= 70%
-      final bool leccionCompletada = precision >= 70;
-
       await ProgresoService.guardarLeccionCompletada(
         cursoId: widget.cursoId,
         leccionId: widget.leccionId,
-        totalLeccionesCurso: widget.totalLeccionesCurso, // nuevo parámetro
+        moduloId: widget.moduloId,
+        totalLeccionesCurso: widget.totalLeccionesCurso,
         precision: precision,
         xpGanada: xpGanada,
         aciertos: _aciertosTotales,
         total: _ejercicios.length,
+        tiempoSegundos: tiempoSegundos,
+        erroresTraducir: _erroresTraducir,
+        erroresCompletar: _erroresCompletar,
+        erroresImagenes: _erroresImagenes,
       );
-
-      await progresoRef.set({
-        'cursoId': widget.cursoId,
-        if (widget.moduloId != null) 'moduloId': widget.moduloId,
-        'leccionesCompletadas': FieldValue.arrayUnion(
-          leccionCompletada ? [widget.leccionId] : [],
-        ),
-        'ultimaLeccion': widget.leccionId,
-        'ultimaActualizacion': FieldValue.serverTimestamp(),
-        // Métricas acumuladas por lección
-        'lecciones': {
-          widget.leccionId: {
-            'completada': leccionCompletada,
-            'precision': precision,
-            'aciertos': _aciertosTotales,
-            'total': _ejercicios.length,
-            'fecha': FieldValue.serverTimestamp(),
-          }
-        },
-      }, SetOptions(merge: true));
 
       debugPrint(
           'Progreso guardado — lección ${widget.leccionId}, precisión: $precision%');
