@@ -27,7 +27,10 @@ class CursosService {
   }
 
   static Future<String> crearCurso(CursoModel curso) async {
-    final ref = await _db.collection('cursos').add(curso.toMap());
+    final ref = await _db.collection('cursos').add({
+      ...curso.toMap(),
+      'creado_en': FieldValue.serverTimestamp(),
+    });
     return ref.id;
   }
 
