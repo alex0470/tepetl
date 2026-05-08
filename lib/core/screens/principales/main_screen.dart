@@ -39,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
     currentIndex = widget.initialIndex;
 
     screens = [
-      const DescubrirScreen(),
+      DescubrirScreen(esAdmin: widget.isAdmin),
       
       // 1.Pestaña de Estadísticas IA
       widget.isAdmin 
