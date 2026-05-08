@@ -24,6 +24,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _passCtrl         = TextEditingController();
   final _confirmPassCtrl  = TextEditingController();
 
+  final _passFocusNode = FocusNode();
+  bool _passFocused    = false;
+
   bool _obscurePass    = true;
   bool _obscureConfirm = true;
 
@@ -94,11 +97,20 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _passFocusNode.addListener(() {
+      setState(() => _passFocused = _passFocusNode.hasFocus);
+    });
+  }
+
+  @override
   void dispose() {
     _nombreCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _confirmPassCtrl.dispose();
+    _passFocusNode.dispose();
     super.dispose();
   }
 
@@ -275,6 +287,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _fieldLabel('Contraseña'),
         TextfieldPers(
           controller: _passCtrl,
+          focusNode: _passFocusNode,
           hint: '••••••••',
           prefixIcon: Icons.lock_outline,
           obscure: _obscurePass,
@@ -443,7 +456,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }
 
   Widget _passRequirements() {
-    if (_passCtrl.text.isEmpty) return const SizedBox.shrink();
+    if (!_passFocused && _passCtrl.text.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
