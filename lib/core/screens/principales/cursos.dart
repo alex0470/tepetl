@@ -7,6 +7,7 @@ import 'package:tepetl/core/models/modelo_ejercicio.dart';
 import 'package:tepetl/core/screens/plantillas_ejercicios/leccion_ejercicios_screen.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
+import 'package:tepetl/core/services/perfil_aprendizaje_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/theme/curso_filters.dart';
 
@@ -1182,6 +1183,7 @@ class _SeccionSugerencias extends StatefulWidget {
 class _SeccionSugerenciasState extends State<_SeccionSugerencias> {
   List<_Sugerencia> _sugerenciasDinamicas = [];
   bool _isLoading = true;
+  Map<String, dynamic>? _perfil;
 
   @override
   void initState() {
@@ -1197,120 +1199,124 @@ class _SeccionSugerenciasState extends State<_SeccionSugerencias> {
     }
 
     try {
-      // Obtener todos los cursos suscritos
-      final cursosSuscritos = await CursosService.streamCursosSuscritos(userId).first;
-
-      Set<String> leccionesFallidas = {};
-      Map<String, int> precisionPorLeccion = {};
-
-      // Para cada curso, obtener el historial
-      for (var curso in cursosSuscritos) {
-        final historialSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection('progreso_cursos')
-            .doc(curso.id)
-            .collection('historial')
-            .get();
-
-        for (var doc in historialSnapshot.docs) {
-          final data = doc.data();
-          final precision = (data['precision'] as num?)?.toInt() ?? 0;
-          final leccionId = data['leccionId'] as String?;
-          if (leccionId != null && precision < 70) {
-            leccionesFallidas.add(leccionId);
-            precisionPorLeccion[leccionId] = precision;
-          }
-        }
-      }
-
-      // Obtener ejercicios de lecciones fallidas
-      Set<String> ejerciciosIdsSet = {};
-      for (var curso in cursosSuscritos) {
-        final modulosSnapshot = await FirebaseFirestore.instance
-            .collection('cursos')
-            .doc(curso.id)
-            .collection('modulos')
-            .get();
-
-        for (var moduloDoc in modulosSnapshot.docs) {
-          for (var leccionId in leccionesFallidas) {
-            final leccionDoc = await moduloDoc.reference.collection('lecciones').doc(leccionId).get();
-            if (leccionDoc.exists) {
-              final leccionData = leccionDoc.data()!;
-              final ids = List<String>.from(leccionData['ejercicios_ids'] ?? []);
-              ejerciciosIdsSet.addAll(ids);
-            }
-          }
-        }
-      }
-
-      List<String> ejerciciosIdsRepaso = ejerciciosIdsSet.toList();
-
-      // Cargar ejercicios repaso
-      List<EjercicioModel> ejerciciosRepaso = [];
-      if (ejerciciosIdsRepaso.isNotEmpty) {
-        final chunks = _chunkList(ejerciciosIdsRepaso, 30);
-        for (final chunk in chunks) {
-          final snapshot = await FirebaseFirestore.instance
-              .collection('ejercicios')
-              .where(FieldPath.documentId, whereIn: chunk)
-              .get();
-          ejerciciosRepaso.addAll(
-            snapshot.docs.map((doc) => EjercicioModel.fromMap(doc.id, doc.data())),
-          );
-        }
-      }
-
-      // Cargar ejercicios aleatorios
-      final snapshotAleatorios = await FirebaseFirestore.instance
-          .collection('ejercicios')
-          .limit(10)
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
           .get();
-      List<EjercicioModel> ejerciciosAleatorios = snapshotAleatorios.docs
-          .map((doc) => EjercicioModel.fromMap(doc.id, doc.data()))
-          .toList();
+      final nivelUsuario =
+          (userDoc.data() ?? {})['nivel_educativo'] as String?;
 
-      // Generar sugerencias
-      List<_Sugerencia> sugerencias = [];
+      final perfil = await PerfilAprendizajeService.obtenerPerfil(userId);
+      final sugerencias = <_Sugerencia>[];
 
-      if (leccionesFallidas.isNotEmpty && ejerciciosRepaso.isNotEmpty) {
-        sugerencias.add(_Sugerencia(
-          etiqueta: 'REPASO NECESARIO',
-          titulo: 'Fortalece tus bases',
-          descripcion: 'Repasa ${leccionesFallidas.length} lecciones con precisión baja para mejorar.',
-          botonLabel: 'Comenzar Repaso',
-          botonOscuro: true,
-          icono: Icons.refresh_rounded,
-          ejercicios: ejerciciosRepaso,
-        ));
+      if (perfil != null) {
+        // ── 1. Repaso: exercises from weak lessons (pre-computed in profile) ──
+        final repasoIds =
+            List<String>.from(perfil['ejerciciosRepasoIds'] ?? []);
+        final leccionesDebiles =
+            (perfil['leccionesDebiles'] as List? ?? [])
+                .cast<Map<String, dynamic>>();
+
+        if (repasoIds.isNotEmpty && leccionesDebiles.isNotEmpty) {
+          final ejerciciosRepaso = <EjercicioModel>[];
+          final chunks = _chunkList(repasoIds.take(30).toList(), 30);
+          for (final chunk in chunks) {
+            final snap = await FirebaseFirestore.instance
+                .collection('ejercicios')
+                .where(FieldPath.documentId, whereIn: chunk)
+                .get();
+            ejerciciosRepaso.addAll(snap.docs
+                .map((d) => EjercicioModel.fromMap(d.id, d.data())));
+          }
+          if (ejerciciosRepaso.isNotEmpty) {
+            sugerencias.add(_Sugerencia(
+              etiqueta: 'REPASO NECESARIO',
+              titulo: 'Fortalece tus bases',
+              descripcion:
+                  'Tienes ${leccionesDebiles.length} lecci${leccionesDebiles.length == 1 ? 'ón' : 'ones'} con precisión baja.',
+              botonLabel: 'Comenzar Repaso',
+              botonOscuro: true,
+              icono: Icons.refresh_rounded,
+              ejercicios: ejerciciosRepaso,
+            ));
+          }
+        }
+
+        // ── 2. Personalized: rotated exercises targeting the weakest type ──
+        final tipoDebil =
+            perfil['tipoMasDebil'] as String? ?? 'leer_escribir';
+        final ejerciciosPersonalizados =
+            await PerfilAprendizajeService.ejerciciosPersonalizados(
+                userId,
+                limite: 15,
+                nivelUsuario: nivelUsuario);
+
+        if (ejerciciosPersonalizados.isNotEmpty) {
+          sugerencias.add(_Sugerencia(
+            etiqueta: 'EJERCICIOS PARA TI',
+            titulo: 'Practica tu área débil',
+            descripcion:
+                'Ejercicios de ${_labelTipo(tipoDebil)} según tu historial. Cada sesión son diferentes.',
+            botonLabel: 'Practicar Ahora',
+            botonOscuro: false,
+            icono: Icons.auto_fix_high_rounded,
+            ejercicios: ejerciciosPersonalizados,
+          ));
+        }
+      } else {
+        // New user — fall back to random exercises filtered by level
+        final niveles =
+            PerfilAprendizajeService.nivelesPermitidos(nivelUsuario);
+        final snap = await FirebaseFirestore.instance
+            .collection('ejercicios')
+            .where('dificultad', whereIn: niveles)
+            .limit(10)
+            .get();
+        final aleatorios = snap.docs
+            .map((d) => EjercicioModel.fromMap(d.id, d.data()))
+            .toList();
+        if (aleatorios.isNotEmpty) {
+          sugerencias.add(_Sugerencia(
+            etiqueta: 'PRACTICA ALEATORIA',
+            titulo: 'Practica frases al azar',
+            descripcion:
+                'Ejercicios seleccionados aleatoriamente para comenzar tu aprendizaje.',
+            botonLabel: 'Empezar Practica',
+            botonOscuro: false,
+            icono: Icons.shuffle_rounded,
+            ejercicios: aleatorios,
+          ));
+        }
       }
 
-      // Sugerencia adicional para práctica aleatoria
-      if (ejerciciosAleatorios.isNotEmpty) {
-        sugerencias.add(_Sugerencia(
-          etiqueta: 'PRÁCTICA ALEATORIA',
-          titulo: 'Practica frases al azar',
-          descripcion: 'Ejercicios seleccionados aleatoriamente para reforzar tu aprendizaje.',
-          botonLabel: 'Empezar Práctica',
-          botonOscuro: false,
-          icono: Icons.shuffle_rounded,
-          ejercicios: ejerciciosAleatorios,
-        ));
+      if (mounted) {
+        setState(() {
+          _perfil = perfil;
+          _sugerenciasDinamicas = sugerencias;
+          _isLoading = false;
+        });
       }
-
-      setState(() {
-        _sugerenciasDinamicas = sugerencias;
-        _isLoading = false;
-      });
     } catch (e) {
       debugPrint('Error cargando sugerencias: $e');
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _labelTipo(String tipo) {
+    switch (tipo) {
+      case 'leer_escribir':
+        return 'lectura y escritura';
+      case 'completar_frase':
+        return 'completar frases';
+      case 'seleccionar_imagen':
+        return 'identificar imágenes';
+      default:
+        return 'práctica variada';
     }
   }
 
   List<List<T>> _chunkList<T>(List<T> list, int size) {
-    List<List<T>> chunks = [];
+    final chunks = <List<T>>[];
     for (var i = 0; i < list.length; i += size) {
       chunks.add(list.sublist(i, i + size > list.length ? list.length : i + size));
     }
@@ -1342,6 +1348,13 @@ class _SeccionSugerenciasState extends State<_SeccionSugerencias> {
           ],
         ),
         const SizedBox(height: 14),
+
+        // ── Profile summary banner (shown when profile exists) ──────────────
+        if (_perfil != null) ...[
+          _PerfilBanner(perfil: _perfil!, isDark: widget.isDark),
+          const SizedBox(height: 14),
+        ],
+
         if (widget.isWide)
           Column(
             children: _sugerenciasDinamicas
@@ -1511,6 +1524,134 @@ class _TarjetaSugerencia extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Perfil banner ─────────────────────────────────────────────────────────────
+
+class _PerfilBanner extends StatelessWidget {
+  final Map<String, dynamic> perfil;
+  final bool isDark;
+
+  const _PerfilBanner({required this.perfil, required this.isDark});
+
+  String _labelTipo(String tipo) {
+    switch (tipo) {
+      case 'leer_escribir':
+        return 'Lectura y escritura';
+      case 'completar_frase':
+        return 'Completar frases';
+      case 'seleccionar_imagen':
+        return 'Identificar imágenes';
+      default:
+        return 'Práctica variada';
+    }
+  }
+
+  String _labelNivel(String nivel) {
+    switch (nivel) {
+      case 'avanzado':
+        return 'Avanzado';
+      case 'intermedio':
+        return 'Intermedio';
+      default:
+        return 'Básico';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final precisionGlobal =
+        (perfil['precisionGlobal'] as num?)?.toInt() ?? 0;
+    final tipoDebil =
+        perfil['tipoMasDebil'] as String? ?? 'leer_escribir';
+    final nivel =
+        perfil['nivelDificultadSugerido'] as String? ?? 'basico';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.secundario.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppColors.secundario.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          // Precision ring
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CircularProgressIndicator(
+                  value: precisionGlobal / 100,
+                  strokeWidth: 4,
+                  backgroundColor:
+                      AppColors.secundario.withValues(alpha: 0.15),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.secundario),
+                ),
+                Center(
+                  child: Text(
+                    '$precisionGlobal%',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.secundario,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tu perfil de aprendizaje',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Área a mejorar: ${_labelTipo(tipoDebil)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.secundario.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              _labelNivel(nivel),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppColors.secundario,
               ),
             ),
           ),
