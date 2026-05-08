@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/screens/principales/main_screen.dart';
+import 'package:tepetl/core/screens/usuario/racha_diaria_screen.dart';
+import 'package:tepetl/core/services/racha_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/timers/vidas_timer.dart';
 
@@ -93,7 +95,9 @@ class _InicioAppBarState extends State<InicioAppBar> {
       actions: [
         if (!_esAdmin) ...[
           const Center(child: WidgetCorazonesTimer()),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
+          _ChipRacha(),
+          const SizedBox(width: 6),
         ],
         Padding(
           padding: const EdgeInsets.only(right: 16),
@@ -119,27 +123,59 @@ class _InicioAppBarState extends State<InicioAppBar> {
                     ),
                   ),
                 ),
-                Positioned(
-                  right: -3,
-                  bottom: -3,
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                      color: AppColors.naranja1,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.local_fire_department,
-                      size: 12,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Chip de racha ─────────────────────────────────────────────────────────────
+
+class _ChipRacha extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DatosRacha>(
+      stream: RachaService.streamRacha(),
+      builder: (context, snap) {
+        final datos = snap.data ?? DatosRacha.vacio;
+        final racha = datos.rachaActual;
+        final activa = datos.rachaActiva;
+
+        final color = activa ? AppColors.naranja1 : Colors.grey.shade400;
+
+        return GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RachaDiariaScreen()),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.local_fire_department, size: 15, color: color),
+                const SizedBox(width: 3),
+                Text(
+                  '$racha',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -9,6 +9,7 @@ class TextfieldPers extends StatelessWidget {
   final Widget? suffixIcon;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
+  final FocusNode? focusNode;
 
   const TextfieldPers({
     super.key,
@@ -19,6 +20,7 @@ class TextfieldPers extends StatelessWidget {
     this.suffixIcon,
     this.keyboardType,
     this.onChanged,
+    this.focusNode,
   });
 
   @override
@@ -27,8 +29,10 @@ class TextfieldPers extends StatelessWidget {
 
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       obscureText: obscure,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       style: TextStyle(
         fontSize: 14,
         color: Theme.of(context).colorScheme.onSurface,

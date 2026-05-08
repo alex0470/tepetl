@@ -1,30 +1,67 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MetaDiariaService {
-  static const _keyMeta = 'meta_diaria_minutos';
+  static const _keyMeta         = 'meta_diaria_minutos';
   static const _keyUltimoCambio = 'meta_ultima_cambio';
-  static const _keyFechaHoy = 'estudio_fecha_hoy';
-  static const _keySegundosHoy = 'estudio_segundos_hoy';
+  static const _keyFechaHoy     = 'estudio_fecha_hoy';
+  static const _keySegundosHoy  = 'estudio_segundos_hoy';
 
+  static String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+
+  /// Devuelve la meta actual: primero intenta leerla de Firestore,
+  /// luego cae a SharedPreferences (10 min por defecto).
   static Future<int> obtenerMeta() async {
+    final uid = _uid;
+    if (uid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final valor = doc.data()?['meta_diaria'] as int?;
+        if (valor != null) {
+          // Sincroniza local
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt(_keyMeta, valor);
+          return valor;
+        }
+      } catch (_) {}
+    }
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_keyMeta) ?? 10;
   }
 
+  /// Cambia la meta si han pasado ≥ 7 días desde el último cambio.
+  /// Guarda en SharedPreferences y en Firestore.
   static Future<bool> cambiarMeta(int nuevosMins) async {
-    final prefs = await SharedPreferences.getInstance();
     if (!await puedeCambiarMeta()) return false;
-    await prefs.setInt(_keyMeta, nuevosMins);
-    await prefs.setInt(
-        _keyUltimoCambio, DateTime.now().millisecondsSinceEpoch);
+    await _guardarMeta(nuevosMins);
     return true;
   }
 
+  /// Establece la meta sin restricción de tiempo (p.ej., desde onboarding).
   static Future<void> establecerMeta(int nuevosMins) async {
+    await _guardarMeta(nuevosMins);
+  }
+
+  static Future<void> _guardarMeta(int minutos) async {
+    final ahora = DateTime.now().millisecondsSinceEpoch;
+    // Local
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keyMeta, nuevosMins);
-    await prefs.setInt(
-        _keyUltimoCambio, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(_keyMeta, minutos);
+    await prefs.setInt(_keyUltimoCambio, ahora);
+    // Firestore
+    final uid = _uid;
+    if (uid != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .update({'meta_diaria': minutos});
+      } catch (_) {}
+    }
   }
 
   /// `true` si nunca se ha establecido meta o han pasado ≥ 7 días.
