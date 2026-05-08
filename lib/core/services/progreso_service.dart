@@ -1,6 +1,7 @@
 // lib/core/services/progreso_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tepetl/core/services/perfil_aprendizaje_service.dart';
 
 class ProgresoService {
   static FirebaseFirestore get _db => FirebaseFirestore.instance;
@@ -72,19 +73,25 @@ class ProgresoService {
   static Future<void> guardarLeccionCompletada({
     required String cursoId,
     required String leccionId,
+    String? moduloId,
     required int totalLeccionesCurso,
     required int precision,
     required int xpGanada,
     required int aciertos,
     required int total,
+    int tiempoSegundos = 0,
+    int erroresTraducir = 0,
+    int erroresCompletar = 0,
+    int erroresImagenes = 0,
   }) async {
     if (_uid == null) return;
     final ref = _progresoRef(cursoId);
     final doc = await ref.get();
     final data = doc.data() as Map<String, dynamic>? ?? {};
 
-    final completadas = List<String>.from(data['leccionesCompletadas'] ?? []);
-    if (!completadas.contains(leccionId)) completadas.add(leccionId);
+    final completadas  = List<String>.from(data['leccionesCompletadas'] ?? []);
+    final esNueva      = !completadas.contains(leccionId);
+    if (esNueva) completadas.add(leccionId);
 
     final porcentaje = totalLeccionesCurso > 0
         ? completadas.length / totalLeccionesCurso
@@ -98,6 +105,9 @@ class ProgresoService {
     // Guardar en progreso_cursos (xpHoy y porcentaje, NO xpTotal)
     await ref.set({
       'cursoId': cursoId,
+      'moduloId': moduloId,
+      'ultimaLeccion': leccionId,
+      'ultimaActualizacion': FieldValue.serverTimestamp(),
       'leccionesCompletadas': completadas,
       'porcentajeTotal': porcentaje,
       'xpHoy': xpHoyActual + xpGanada,
@@ -121,13 +131,32 @@ class ProgresoService {
       'total': total,
       'precision': precision,
       'completada': precision >= 70,
+      'tiempoSegundos': tiempoSegundos,
+      'erroresTraducir': erroresTraducir,
+      'erroresCompletar': erroresCompletar,
+      'erroresImagenes': erroresImagenes,
       'fecha': FieldValue.serverTimestamp(),
     });
 
-    // XP total → users/{uid}.xp (campo que ya existe)
-    await _db.collection('users').doc(_uid).update({
+    // XP total + contadores de progreso global en users/{uid}
+    final userUpdate = <String, dynamic>{
       'xp': FieldValue.increment(xpGanada),
-    });
+    };
+    if (esNueva) {
+      userUpdate['lecciones_totales'] = FieldValue.increment(1);
+    }
+    // Si el curso acaba de completarse por primera vez, suma cursos_completados
+    final porcentajeAnterior = data['porcentajeTotal'] as double? ?? 0.0;
+    final porcentajeNuevo    = totalLeccionesCurso > 0
+        ? completadas.length / totalLeccionesCurso
+        : 0.0;
+    if (porcentajeAnterior < 1.0 && porcentajeNuevo >= 1.0) {
+      userUpdate['cursos_completados'] = FieldValue.increment(1);
+    }
+    await _db.collection('users').doc(_uid).update(userUpdate);
+
+    // Recompute learning profile async (fire-and-forget)
+    PerfilAprendizajeService.actualizarPerfil(_uid!).ignore();
   }
 
   /// Lee el progreso completo de un curso

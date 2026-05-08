@@ -55,7 +55,9 @@ class _DirectorioUsuariosScreenState extends State<DirectorioUsuariosScreen> {
     try {
       final snap =
           await FirebaseFirestore.instance.collection('users').get();
-      final lista = snap.docs.map((doc) {
+      final lista = snap.docs
+          .where((doc) => doc.data()['rol'] != 'admin')
+          .map((doc) {
         final d = doc.data();
         return {
           'uid': doc.id,
@@ -324,6 +326,11 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
   bool _isLoading = true;
   int _totalLecciones = 0;
   bool _adminTieneAccesoSistema = false;
+  int _totalAciertos = 0;
+  int _totalErrores = 0;
+  int _tiempoPromedioSegundos = 0;
+  int _tiempoTotalSegundos = 0;
+  List<Map<String, dynamic>> _leccionesDificiles = [];
 
   @override
   void initState() {
@@ -409,10 +416,62 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
       lista.sort((a, b) =>
           (b['porcentaje'] as double).compareTo(a['porcentaje'] as double));
 
+      // Cargar historial para métricas de aprendizaje
+      int totalAciertos = 0, totalErrores = 0;
+      int totalTiempoSeg = 0, countConTiempo = 0;
+      final Map<String, List<int>> precisionPorLeccion = {};
+
+      for (final doc in snap.docs) {
+        final hSnap = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('progreso_cursos')
+            .doc(doc.id)
+            .collection('historial')
+            .get();
+        for (final h in hSnap.docs) {
+          final d = h.data();
+          final aciertos = (d['aciertos'] as num?)?.toInt() ?? 0;
+          final totalEj = (d['total'] as num?)?.toInt() ?? 0;
+          totalAciertos += aciertos;
+          totalErrores += (totalEj - aciertos).clamp(0, totalEj);
+          final tiempo = (d['tiempoSegundos'] as num?)?.toInt() ?? 0;
+          if (tiempo > 0) {
+            totalTiempoSeg += tiempo;
+            countConTiempo++;
+          }
+          final leccionId = d['leccionId'] as String?;
+          final precision = (d['precision'] as num?)?.toInt();
+          if (leccionId != null && precision != null) {
+            precisionPorLeccion.putIfAbsent(leccionId, () => []).add(precision);
+          }
+        }
+      }
+
+      final tiempoPromedio =
+          countConTiempo > 0 ? totalTiempoSeg ~/ countConTiempo : 0;
+
+      final leccionesDificiles = precisionPorLeccion.entries
+          .map((e) => {
+                'leccionId': e.key,
+                'avgPrecision':
+                    e.value.reduce((a, b) => a + b) ~/ e.value.length,
+                'intentos': e.value.length,
+              })
+          .where((e) => (e['avgPrecision'] as int) < 70)
+          .toList()
+        ..sort((a, b) =>
+            (a['avgPrecision'] as int).compareTo(b['avgPrecision'] as int));
+
       if (!mounted) return;
       setState(() {
         _cursos = lista;
         _totalLecciones = total;
+        _totalAciertos = totalAciertos;
+        _totalErrores = totalErrores;
+        _tiempoPromedioSegundos = tiempoPromedio;
+        _tiempoTotalSegundos = totalTiempoSeg;
+        _leccionesDificiles = leccionesDificiles.take(5).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -554,6 +613,19 @@ class _PerfilUsuarioScreenState extends State<PerfilUsuarioScreen> {
                         ),
                       ),
                       const SizedBox(height: 32),
+
+                      // ── Métricas de aprendizaje ───────────────────────────────
+                      if (_totalAciertos > 0 || _totalErrores > 0) ...[
+                        _MetricasAprendizajeSection(
+                          totalAciertos: _totalAciertos,
+                          totalErrores: _totalErrores,
+                          tiempoPromedioSegundos: _tiempoPromedioSegundos,
+                          tiempoTotalSegundos: _tiempoTotalSegundos,
+                          leccionesDificiles: _leccionesDificiles,
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 32),
+                      ],
 
                       // ── Progreso en cursos ────────────────────────────────────
                       Align(
@@ -1209,6 +1281,354 @@ class _InfoRow extends StatelessWidget {
             color: isDark ? Colors.white : Colors.black,
           ),
         ),
+      ],
+    );
+  }
+}
+
+// ── Métricas de aprendizaje ───────────────────────────────────────────────────
+
+class _MetricasAprendizajeSection extends StatelessWidget {
+  final int totalAciertos;
+  final int totalErrores;
+  final int tiempoPromedioSegundos;
+  final int tiempoTotalSegundos;
+  final List<Map<String, dynamic>> leccionesDificiles;
+  final bool isDark;
+
+  const _MetricasAprendizajeSection({
+    required this.totalAciertos,
+    required this.totalErrores,
+    required this.tiempoPromedioSegundos,
+    required this.tiempoTotalSegundos,
+    required this.leccionesDificiles,
+    required this.isDark,
+  });
+
+  String _formatTiempo(int segundos) {
+    if (segundos < 60) return '${segundos}s';
+    final m = segundos ~/ 60;
+    final s = segundos % 60;
+    return s == 0 ? '${m}m' : '${m}m ${s}s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = totalAciertos + totalErrores;
+    final pctAciertos = total > 0 ? totalAciertos / total : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Métricas de Aprendizaje',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Aciertos y Errores
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 2,
+                offset: const Offset(3, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.secundario.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.analytics_outlined,
+                        size: 16, color: AppColors.secundario),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Aciertos y Errores',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$totalAciertos',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secundario,
+                          ),
+                        ),
+                        Text('Aciertos',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$totalErrores',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.rojo1,
+                          ),
+                        ),
+                        Text('Errores',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${(pctAciertos * 100).toInt()}%',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Text('Precisión global',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: pctAciertos,
+                  minHeight: 8,
+                  backgroundColor: AppColors.rojo1.withValues(alpha: 0.25),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.secundario),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Tiempos de respuesta
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 2,
+                offset: const Offset(3, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.azul1.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.timer_outlined,
+                        size: 16, color: AppColors.azul1),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Tiempos de Respuesta',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tiempoPromedioSegundos > 0
+                              ? _formatTiempo(tiempoPromedioSegundos)
+                              : '—',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.azul1,
+                          ),
+                        ),
+                        Text('Promedio por lección',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tiempoTotalSegundos > 0
+                              ? _formatTiempo(tiempoTotalSegundos)
+                              : '—',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Text('Tiempo total',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // Unidades con mayor dificultad
+        if (leccionesDificiles.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.fondoOscuroSecundario : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 2,
+                  offset: const Offset(3, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.naranja1.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.warning_amber_outlined,
+                          size: 16, color: AppColors.naranja1),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Unidades con Mayor Dificultad',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                ...leccionesDificiles.map((l) {
+                  final precision = l['avgPrecision'] as int;
+                  final intentos = l['intentos'] as int;
+                  final leccionId = l['leccionId'] as String;
+                  final barColor =
+                      precision < 40 ? AppColors.rojo1 : AppColors.naranja1;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                leccionId,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      isDark ? Colors.white : Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$precision%  ·  $intentos intento${intentos != 1 ? 's' : ''}',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: precision / 100,
+                            minHeight: 6,
+                            backgroundColor:
+                                barColor.withValues(alpha: 0.2),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(barColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
