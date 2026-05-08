@@ -13,6 +13,7 @@ class CursoModel {
   final int ejerciciosCount;
   final int suscritosCount;
   final String creadoPor;
+  final DateTime? creadoEn;
 
   CursoModel({
     required this.id,
@@ -27,6 +28,7 @@ class CursoModel {
     this.ejerciciosCount = 0,
     this.suscritosCount = 0,
     this.creadoPor = '',
+    this.creadoEn,
   });
 
   factory CursoModel.fromDoc(DocumentSnapshot doc) {
@@ -44,6 +46,7 @@ class CursoModel {
       ejerciciosCount: data['ejercicios_count'] ?? 0,
       suscritosCount: data['suscritos_count'] ?? 0,
       creadoPor: data['creado_por'] ?? '',
+      creadoEn: (data['creado_en'] as Timestamp?)?.toDate(),
     );
   }
 

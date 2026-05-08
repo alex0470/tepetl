@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/services/meta_diaria_service.dart';
+import 'package:tepetl/core/screens/usuario/niveles_screen.dart';
 import 'package:tepetl/core/services/niveles_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/cards/curso_card.dart';
@@ -527,7 +528,14 @@ class _InicioScreenState extends State<InicioScreen> {
       _xpHoy += (_progresoData[curso.id]?['xpHoy'] as int? ?? 0);
     }
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NivelesScreen(xpActual: _xpUsuario),
+        ),
+      ),
+      child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: nivelActual.color,
@@ -579,7 +587,8 @@ class _InicioScreenState extends State<InicioScreen> {
           ),
         ],
       ),
-    );
+    ), // Container
+    ); // GestureDetector
   }
 
   Widget _cursosRow({required double vw, required bool isDark}) {
