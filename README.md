@@ -18,6 +18,7 @@ Plataforma de aprendizaje interactivo de la lengua náhuatl, con retroalimentaci
 - [Instalación](#instalación)
 - [Tecnologías](#tecnologías)
 - [Estructura del Proyecto](#estructura-del-proyecto)
+- [Datasets](#datasets)
 - [Configuración](#configuración)
 - [Contribuir](#contribuir)
 - [Licencia](#licencia)
@@ -26,7 +27,7 @@ Plataforma de aprendizaje interactivo de la lengua náhuatl, con retroalimentaci
 
 ## 📖 Descripción
 
-TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación contextualizada y recomendaciones inteligentes para optimizar el proceso de aprendizaje.
+TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación contextualizada y recomendaciones inteligentes basadas en el desempeño del usuario.
 
 ### Objetivos
 
@@ -101,6 +102,7 @@ flutter run -d android
   - Firestore Database
   - Cloud Storage
 - **Hosting**: Firebase Hosting
+- **IA**: FastAPI + Google Gemini + Random Forest Classifier
 - **Lenguajes**: Dart (95.4%), C++ (2.3%), CMake (1.7%), HTML (0.3%)
 
 ---
@@ -128,12 +130,119 @@ tepetl/
 ├── backend/                           # API de IA (FastAPI) que predice nivel y da retroalimentación
 │   ├── api_nivel.py
 │   ├── entrenamiento1.ipynb           # Notebook de entrenamiento del modelo
-│   └── datasets/                      # Datos de palabras, ejercicios y exámenes
+│   ├── datasets/                      # Datos de palabras, ejercicios y exámenes
+│   ├── modelo_random_forest.pkl       # Modelo entrenado (no versionado)
+│   └── encoder.pkl                    # Encoder de labels (no versionado)
 ├── assets/                            # Imágenes, fuentes, audio y datos semilla
 ├── android/ ios/ macos/ windows/ linux/ web/   # Proyectos nativos por plataforma
 ├── firebase.json / firestore.rules    # Configuración y reglas de seguridad de Firebase
 └── pubspec.yaml                       # Dependencias del proyecto
 ```
+
+---
+
+## 📊 Datasets
+
+### Descripción General
+
+El proyecto incluye tres datasets principales utilizados para entrenar y validar el modelo de IA:
+
+#### 1. **Dataset de Palabras Náhuatl** (`palabras.json` / CSV)
+- **Contenido**: Vocabulario fundamental en náhuatl con traducciones y categorías
+- **Estructura**:
+  - `id`: Identificador único
+  - `palabra_nahuatl`: Palabra en náhuatl
+  - `traduccion_espanol`: Traducción al español
+  - `categoria`: Categoría (sustantivos, verbos, adjetivos, etc.)
+  - `nivel`: Nivel de dificultad (Básico, Básico+, Intermedio)
+  - `audio`: Ruta al archivo de audio (opcional)
+  - `imagen`: Ruta a la imagen asociada (opcional)
+
+- **Uso**: 
+  - Población de ejercicios de traducción
+  - Base del diccionario de la plataforma
+  - Validación de respuestas de usuarios
+
+#### 2. **Dataset de Ejercicios** (`ejercicios.json` / CSV)
+- **Contenido**: Colección de ejercicios de diferentes tipos
+- **Estructura**:
+  - `id`: Identificador único
+  - `tipo`: Tipo de ejercicio (traduccion, completar, imagen)
+  - `pregunta`: Texto de la pregunta
+  - `respuesta_correcta`: Respuesta esperada
+  - `opciones`: Opciones de respuesta (para ejercicios de opción múltiple)
+  - `nivel`: Nivel de dificultad
+  - `modulo`: Módulo al que pertenece
+  - `retroalimentacion_base`: Retroalimentación predefinida
+
+- **Tipos de Ejercicios**:
+  - **Traducción**: Usuario traduce palabras/frases del español al náhuatl
+  - **Completar**: Usuario completa espacios en blanco
+  - **Imagen**: Usuario identifica palabras a partir de imágenes
+
+- **Uso**:
+  - Generación dinámica de ejercicios
+  - Evaluación del desempeño del usuario
+  - Adaptación de dificultad
+
+#### 3. **Dataset de Exámenes de Clasificación** (`dataset_examenes.csv`)
+- **Contenido**: 50,000 registros de resultados de exámenes para entrenar el modelo de predicción de nivel
+- **Estructura**:
+  - `aciertos_totales`: Número total de respuestas correctas (0-10)
+  - `vidas_perdidas`: Vidas perdidas en el examen (0-10)
+  - `pistas_usadas`: Número de pistas utilizadas (0-10)
+  - `tiempo_total_segundos`: Tiempo total de examen en segundos (20-623)
+  - `max_racha_correctas`: Racha máxima de respuestas correctas consecutivas (0-10)
+  - `errores_traducir`: Errores en ejercicios de traducción
+  - `errores_completar`: Errores en ejercicios de completar
+  - `errores_imagenes`: Errores en ejercicios de imagen
+  - `nivel_asignado`: **Etiqueta** - Nivel predicho (Básico, Básico+, Intermedio)
+
+- **Estadísticas del Dataset**:
+  - Total de registros: 50,000
+  - Distribución de niveles:
+    - Básico: 35,759 (71.5%)
+    - Básico+: 10,630 (21.3%)
+    - Intermedio: 3,611 (7.2%)
+  - Sin duplicados
+  - Accuracy del modelo: **87.44%**
+
+- **Métricas por Clase**:
+  - Básico: Precision=0.90, Recall=0.97, F1=0.93
+  - Básico+: Precision=0.77, Recall=0.78, F1=0.77
+  - Intermedio: Precision=0.93, Recall=0.21, F1=0.34
+
+- **Uso**:
+  - Entrenamiento del modelo Random Forest
+  - Predicción del nivel de usuario basada en su desempeño
+  - Validación cruzada y métricas de rendimiento
+
+### Ubicación de Datasets
+
+```
+backend/
+├── datasets/
+│   ├── palabras.csv (o .json)           # Vocabulario
+│   ├── ejercicios.csv (o .json)         # Ejercicios
+│   └── dataset_examenes.csv             # Dataset de entrenamiento (50K registros)
+├── entrenamiento1.ipynb                 # Notebook de análisis y entrenamiento
+├── modelo_random_forest.pkl             # Modelo serializado (no versionado)
+└── encoder.pkl                          # Encoder LabelEncoder (no versionado)
+```
+
+### Modelo de Predicción de Nivel
+
+**Algoritmo**: Random Forest Classifier
+- **Estimadores**: 50 árboles
+- **Profundidad máxima**: 5
+- **Random State**: 42
+
+**Características más Importantes**:
+1. `aciertos_totales` - Más peso en la predicción
+2. `errores_traducir` - Errores específicos de traducción
+3. `tiempo_total_segundos` - Velocidad de respuesta
+4. `vidas_perdidas` - Penalizaciones acumuladas
+5. `pistas_usadas` - Dependencia de ayuda
 
 ---
 
@@ -146,6 +255,27 @@ La aplicación está preconfigurada con Firebase. Los detalles de configuración
 - `firebase_options.dart` - Configuración automática
 - `firebase.json` - Configuración del hosting y plataformas
 - Project ID: `tepetl-a9d78`
+
+### Backend API Setup
+
+La API de IA se ejecuta con FastAPI:
+
+```bash
+# Instalar dependencias
+pip install -r backend/requirements.txt
+
+# Configurar variable de entorno
+export GEMINI_API_KEY="tu_clave_de_gemini_aqui"
+
+# Ejecutar servidor
+cd backend
+uvicorn api_nivel:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Endpoints principales**:
+- `POST /predecir` - Predice el nivel del usuario
+- `POST /evaluar-ejercicio` - Evalúa un ejercicio individual
+- `POST /retroalimentacion` - Genera retroalimentación general con IA
 
 ### CORS
 
