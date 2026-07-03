@@ -1,5 +1,9 @@
 # TEPETL 🌟
 
+<div align="center">
+  <img src="https://github.com/alex0470/tepetl/raw/main/assets/logo.png" alt="TEPETL Logo" width="200" height="200">
+</div>
+
 Plataforma de aprendizaje interactivo de la lengua náhuatl, con retroalimentación personalizada y recomendaciones inteligentes de ejercicios.
 
 > **Versión Web:** https://tepetl-a9d78.web.app/
@@ -22,7 +26,7 @@ Plataforma de aprendizaje interactivo de la lengua náhuatl, con retroalimentaci
 
 ## 📖 Descripción
 
-TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación inmediata y recomendaciones basadas en el desempeño del usuario.
+TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación contextualizada y recomendaciones inteligentes para optimizar el proceso de aprendizaje.
 
 ### Objetivos
 
