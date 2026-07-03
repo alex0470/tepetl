@@ -45,7 +45,9 @@ flutter:
    - assets/logo300.png
    - assets/imagen2.png
    - assets/imagen3.png
-   - assets/ejercicios.json
+   - assets/asistente.png
+   - assets/ejercicios_dina.png
+   - assets/insignias.png
 
 flutter_native_splash:
   android: true

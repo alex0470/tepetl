@@ -1,11 +1,16 @@
+import 'dart:ui';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/widgets/botones/botones_sombra.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  /// Callback invocado cuando el usuario elige "Ver artículos primero".
+  /// El padre lo usa para cambiar el tab inicial de MainScreen a Cultura (0).
+  final VoidCallback? onVerArticulos;
+
+  const OnboardingScreen({super.key, this.onVerArticulos});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -27,26 +32,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'titulo': 'Tu Mentor Inteligente',
       'subtitulo':
           'IA personalizada que analiza tus resultados para guiarte paso a paso en tu aprendizaje del Náhuatl.',
-      'imagen': 'assets/imagen3.png',
+      'imagen': 'assets/asistente.png',
     },
     {
-      'titulo': 'Aprende con Ejercicios Dinámicos',
+      'titulo': 'Ejercicios Dinámicos',
       'subtitulo':
-          'Resuelve retos interactivos, traduce palabras diversas, relaciona palabras y completa frases para dominar el idioma a tu propio ritmo.',
-      'imagen': 'assets/logo.png',
+          'Traduce palabras, relaciona conceptos y completa frases para dominar el idioma a tu propio ritmo.',
+      'imagen': 'assets/ejercicios_dina.png',
     },
     {
-      'titulo': 'Gana insignias mientras conectas con las raíces de México',
+      'titulo': 'Gana Insignias',
       'subtitulo':
-          'Desbloquea contenido exclusivo y mide tu progreso desde principiante hasta avanzado.',
-      'imagen': 'assets/logo.png',
+          'Desbloquea contenido exclusivo y mide tu progreso desde principiante hasta intermedio.',
+      'imagen': 'assets/insignias.png',
     },
   ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 320),
         curve: Curves.easeInOut,
       );
     } else {
@@ -57,7 +68,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _finishOnboarding() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
-
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
@@ -72,56 +82,195 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  /// Marca el onboarding completado y señala al padre que cambie al tab de Cultura.
+  Future<void> _verArticulos() async {
+    // 1. Avisar al padre antes de la operación async para que cambie el tab
+    widget.onVerArticulos?.call();
+    // 2. Marcar en Firestore (el stream del AuthWrapper reaccionará y quitará el overlay)
+    await _finishOnboarding();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (int page) =>
-                    setState(() => _currentPage = page),
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  return _OnboardingPage(
-                    data: _pages[index],
-                    isLastPage: index == _pages.length - 1,
-                  );
-                },
+    final sw     = MediaQuery.of(context).size.width;
+    final isWide = sw > 700;
+
+    // Ancho máximo de la tarjeta: más grande en desktop
+    final maxW   = isWide ? 640.0 : 480.0;
+    final hPad   = isWide ? 40.0  : 20.0;
+    final vPad   = isWide ? 40.0  : 24.0;
+
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Capa de blur aislada: solo se repinta cuando cambia el fondo de la app,
+          // NO en cada cambio de página del carrusel.
+          RepaintBoundary(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.52),
               ),
             ),
-            _buildFooter(),
-          ],
-        ),
+          ),
+          // Contenido dinámico: se repinta en cada setState sin tocar el blur.
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxW),
+                  child: _buildCard(context, isWide: isWide),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/logo50.png', height: 24),
-              const SizedBox(width: 8),
-              Text(
-                'TEPETL',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2.0, color: AppColors.primario),
-              ),
-            ],
+  Widget _buildCard(BuildContext context, {bool isWide = false}) {
+    final isDark  = Theme.of(context).brightness == Brightness.dark;
+    final isLast  = _currentPage == _pages.length - 1;
+    final imgH    = isWide ? 300.0 : 230.0;
+    final pad     = isWide ? 36.0  : 28.0;
+    final titleSz = isWide ? 26.0  : 21.0;
+    final bodySz  = isWide ? 16.0  : 14.0;
+    final textH   = isWide ? 140.0 : 118.0;
+    final btnH    = isWide ? 52.0  : 46.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 48,
+            offset: const Offset(0, 20),
           ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children:
-                List.generate(_pages.length, (index) => _buildDot(index)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Imagen superior ─────────────────────────────────────────────
+          _ImagenSuperior(
+            imageAsset: _pages[_currentPage]['imagen']!,
+            currentPage: _currentPage,
+            height: imgH,
+          ),
+
+          // ── Contenido ────────────────────────────────────────────────────
+          Padding(
+            padding: EdgeInsets.fromLTRB(pad, 22, pad, pad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Dots de paginación
+                Row(
+                  children: List.generate(
+                    _pages.length,
+                    (i) => _buildDot(i),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Texto deslizante
+                SizedBox(
+                  height: textH,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (p) => setState(() => _currentPage = p),
+                    itemCount: _pages.length,
+                    itemBuilder: (_, index) {
+                      final d = _pages[index];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            d['titulo']!,
+                            style: TextStyle(
+                              fontSize: titleSz,
+                              fontWeight: FontWeight.w800,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            d['subtitulo']!,
+                            style: TextStyle(
+                              fontSize: bodySz,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.58),
+                              height: 1.6,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                // Botón principal
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : SizedBox(
+                        width: double.infinity,
+                        height: btnH,
+                        child: ElevatedButton(
+                          onPressed: _nextPage,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primario,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            isLast ? 'Aprende ahora' : 'Siguiente',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                // Link omitir
+                if (!_isLoading) ...[
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: isLast ? _verArticulos : _finishOnboarding,
+                      child: Text(
+                        isLast
+                            ? 'Ver artículos primero'
+                            : 'Omitir introducción',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.4),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -131,99 +280,54 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildDot(int index) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.only(right: 8),
-      height: 8,
-      width: _currentPage == index ? 24 : 8,
+      margin: const EdgeInsets.only(right: 6),
+      height: 7,
+      width: _currentPage == index ? 22 : 7,
       decoration: BoxDecoration(
         color: _currentPage == index
             ? AppColors.primario
-            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+            : Theme.of(context)
+                .colorScheme
+                .onSurface
+                .withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    bool isLast = _currentPage == _pages.length - 1;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-      child: Column(
-        children: [
-          _isLoading
-              ? const CircularProgressIndicator()
-              : BotonesSombra(
-                  text: isLast ? 'Aprende ahora' : 'Siguiente',
-                  onPressed: _nextPage,
-                  backgroundColor: AppColors.primario,
-                  width: double.infinity,
-                ),
-          const SizedBox(height: 12),
-          if (!_isLoading)
-            TextButton(
-              onPressed: _finishOnboarding,
-              child: Text(
-                isLast ? 'Ver artículos primero' : 'Omitir introducción',
-                style: TextStyle(
-                  color: AppColors.primario.withValues(alpha: 0.75),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }
 }
 
-class _OnboardingPage extends StatelessWidget {
-  final Map<String, String> data;
-  final bool isLastPage;
+// ── Imagen superior ────────────────────────────────────────────────────────────
 
-  const _OnboardingPage({required this.data, required this.isLastPage});
+class _ImagenSuperior extends StatelessWidget {
+  final String imageAsset;
+  final int currentPage;
+  final double height;
+
+  const _ImagenSuperior({
+    required this.imageAsset,
+    required this.currentPage,
+    this.height = 230,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 90),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  data['imagen']!,
-                  fit: BoxFit.contain,
-                ),
-              ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: Container(
+        height: height,
+        width: double.infinity,
+        color: AppColors.primario.withValues(alpha: 0.07),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Padding(
+            key: ValueKey(currentPage),
+            padding: const EdgeInsets.all(32),
+            child: Image.asset(
+              imageAsset,
+              fit: BoxFit.contain,
             ),
           ),
-          const SizedBox(height: 30),
-          Text(
-            data['titulo']!,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            data['subtitulo']!,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-              height: 1.5,
-            ),
-          ),
-          const Spacer(flex: 1),
-        ],
+        ),
       ),
     );
   }

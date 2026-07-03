@@ -772,6 +772,7 @@ class _DetalleView extends StatelessWidget {
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                cacheHeight: 400,
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
@@ -1197,6 +1198,8 @@ class _TarjetaEntrada extends StatelessWidget {
                       width: 42,
                       height: 42,
                       fit: BoxFit.cover,
+                      cacheWidth: 84,
+                      cacheHeight: 84,
                       errorBuilder: (_, _, _) =>
                           _IconoCat(color: catColor, icono: entrada.icono),
                     )

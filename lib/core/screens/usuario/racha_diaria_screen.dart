@@ -24,6 +24,11 @@ class _RachaDiariaScreenState extends State<RachaDiariaScreen> {
     RachaService.verificarRacha();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   void _irAlInicio() {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const MainScreen()),

@@ -69,8 +69,12 @@ class ProgresoMapWidget extends StatelessWidget {
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: item["active"] == true
-                ? (isDark ? AppColors.textoClaro : AppColors.textoSecundario)
-                : AppColors.textoSecundario40,
+                ? (cursoImagenUrl.isNotEmpty
+                    ? Colors.white
+                    : (isDark ? AppColors.textoClaro : AppColors.textoSecundario))
+                : (cursoImagenUrl.isNotEmpty
+                    ? Colors.white54
+                    : AppColors.textoSecundario40),
           ),
         ));
 
@@ -90,10 +94,37 @@ class ProgresoMapWidget extends StatelessWidget {
       }
     }
 
-    return Center(
-      child: SizedBox(
-        width: 180,
-        child: Column(children: nodes),
+    final tieneImagen = cursoImagenUrl.isNotEmpty;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: double.infinity,
+        decoration: tieneImagen
+            ? BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(cursoImagenUrl),
+                  fit: BoxFit.cover,
+                  // Oscurece la imagen para mantener la legibilidad del mapa
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withValues(alpha: 0.60),
+                    BlendMode.darken,
+                  ),
+                ),
+              )
+            : null,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            vertical: tieneImagen ? 28 : 8,
+            horizontal: tieneImagen ? 16 : 0,
+          ),
+          child: Center(
+            child: SizedBox(
+              width: 180,
+              child: Column(children: nodes),
+            ),
+          ),
+        ),
       ),
     );
   }

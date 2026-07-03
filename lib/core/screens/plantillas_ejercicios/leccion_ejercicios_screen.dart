@@ -88,6 +88,12 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
     _cronometro.start();
   }
 
+  @override
+  void dispose() {
+    _cronometro.stop();
+    super.dispose();
+  }
+
   Future<void> _cargarCorazones() async {
     final corazonesGuardados = await VidasService.obtenerCorazones();
     setState(() => _hearts = corazonesGuardados);

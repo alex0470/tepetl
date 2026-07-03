@@ -21,11 +21,12 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
   String selectedNivel = 'Todos';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _esSistema = false;
+  late Stream<List<CursoModel>> _cursosStream;
 
   @override
   void initState() {
     super.initState();
+    _cursosStream = CursosService.streamCursos(incluirSistema: false);
     _searchController.addListener(() {
       setState(() => _searchQuery = _searchController.text.toLowerCase());
     });
@@ -37,7 +38,11 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
     if (uid == null) return;
     final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final esSistema = (doc.data() ?? {})['sistema'] as bool? ?? false;
-    if (mounted) setState(() => _esSistema = esSistema);
+    if (mounted) {
+      setState(() {
+        _cursosStream = CursosService.streamCursos(incluirSistema: esSistema);
+      });
+    }
   }
 
   @override
@@ -46,10 +51,21 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
     super.dispose();
   }
 
+  // Normaliza para comparar sin importar mayúsculas ni acentos
+  // Ej: 'Básico' → 'basico', 'Básico+' → 'basico+', 'Intermedio' → 'intermedio'
+  static String _norm(String s) => s
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
+
   List<CursoModel> _filtrar(List<CursoModel> cursos) {
     return cursos.where((c) {
       final matchSearch = c.titulo.toLowerCase().contains(_searchQuery);
-      final matchNivel = selectedNivel == 'Todos' || c.nivel == selectedNivel;
+      final matchNivel  = selectedNivel == 'Todos' ||
+          _norm(c.nivel) == _norm(selectedNivel);
       return matchSearch && matchNivel;
     }).toList();
   }
@@ -168,7 +184,7 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
                 ),
                 const SizedBox(height: 25),
                 StreamBuilder<List<CursoModel>>(
-                  stream: CursosService.streamCursos(incluirSistema: _esSistema),
+                  stream: _cursosStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -260,7 +276,7 @@ class _CursosAdminScreenState extends State<CursosAdminScreen> {
   }
 }
 
-class CursoDetalleAdminScreen extends StatelessWidget {
+class CursoDetalleAdminScreen extends StatefulWidget {
   final String cursoId;
   final String cursoTitulo;
 
@@ -270,12 +286,26 @@ class CursoDetalleAdminScreen extends StatelessWidget {
     required this.cursoTitulo,
   });
 
+  @override
+  State<CursoDetalleAdminScreen> createState() =>
+      _CursoDetalleAdminScreenState();
+}
+
+class _CursoDetalleAdminScreenState extends State<CursoDetalleAdminScreen> {
+  late final Stream<List<ModuloModel>> _modulosStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _modulosStream = CursosService.streamModulos(widget.cursoId);
+  }
+
   Future<List<int>> _fetchStats() {
     return Future.wait([
-      CursosService.contarModulos(cursoId),
-      CursosService.contarLecciones(cursoId),
-      CursosService.contarEjercicios(cursoId),
-      CursosService.contarUsuariosSuscritos(cursoId),
+      CursosService.contarModulos(widget.cursoId),
+      CursosService.contarLecciones(widget.cursoId),
+      CursosService.contarEjercicios(widget.cursoId),
+      CursosService.contarUsuariosSuscritos(widget.cursoId),
     ]);
   }
 
@@ -284,7 +314,7 @@ class CursoDetalleAdminScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          cursoTitulo,
+          widget.cursoTitulo,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -341,7 +371,7 @@ class CursoDetalleAdminScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             StreamBuilder<List<ModuloModel>>(
-              stream: CursosService.streamModulos(cursoId),
+              stream: _modulosStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -367,7 +397,7 @@ class CursoDetalleAdminScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) => LeccionesAdminScreen(
-                            cursoId: cursoId,
+                            cursoId: widget.cursoId,
                             moduloId: modulo.id,
                             moduloTitulo: modulo.titulo,
                           ),
@@ -396,8 +426,8 @@ class CursoDetalleAdminScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => ModulosAdminScreen(
-                      cursoId: cursoId,
-                      cursoTitulo: cursoTitulo,
+                      cursoId: widget.cursoId,
+                      cursoTitulo: widget.cursoTitulo,
                     ),
                   ),
                 ),

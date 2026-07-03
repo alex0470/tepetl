@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tepetl/core/screens/usuario/perfil_ajustes.dart';
 import 'package:tepetl/core/widgets/usuario/wrapper_onboarding.dart';
+import 'package:tepetl/core/screens/inicio/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 
 class MyApp extends StatefulWidget {
@@ -44,7 +46,7 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-      home: const AuthWrapper(),
+      home: !kIsWeb ? const SplashScreen() : const AuthWrapper(),
       routes: {
         '/ajustes': (_) => const PerfilAjustesScreen(),
       },

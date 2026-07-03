@@ -488,7 +488,7 @@ class _ArticuloFormScreenState extends State<_ArticuloFormScreen> {
             // ── Contenido ─────────────────────────────────────────────
             _FormLabel(text: 'CONTENIDO'),
             const SizedBox(height: 8),
-            _BarraFormato(isDark: isDark),
+            _BarraFormato(isDark: isDark, controller: _contenidoCtrl),
             const SizedBox(height: 4),
             _CampoTexto(
               controller: _contenidoCtrl,
@@ -680,9 +680,81 @@ class _CampoTexto extends StatelessWidget {
   }
 }
 
+// ── Helper: aplica un marcador de formato al texto seleccionado ───────────────
+
+void _aplicarFormato(
+  TextEditingController ctrl,
+  String marcaA,
+  String marcaC,
+) {
+  final text = ctrl.text;
+  final sel  = ctrl.selection;
+  if (!sel.isValid) return;
+
+  if (sel.isCollapsed) {
+    // Sin selección: inserta plantilla y selecciona el placeholder
+    const placeholder = 'texto';
+    final insertado   = '$marcaA$placeholder$marcaC';
+    final pos         = sel.baseOffset;
+    final nuevo       = text.substring(0, pos) + insertado + text.substring(pos);
+    ctrl.value = TextEditingValue(
+      text: nuevo,
+      selection: TextSelection(
+        baseOffset:  pos + marcaA.length,
+        extentOffset: pos + marcaA.length + placeholder.length,
+      ),
+    );
+  } else {
+    // Con selección: envuelve el texto seleccionado
+    final selText = sel.textInside(text);
+    final nuevo   = text.replaceRange(sel.start, sel.end, '$marcaA$selText$marcaC');
+    ctrl.value = TextEditingValue(
+      text: nuevo,
+      selection: TextSelection.collapsed(
+        offset: sel.start + marcaA.length + selText.length + marcaC.length,
+      ),
+    );
+  }
+}
+
+// ── Helper: renderiza **negrita** y *cursiva* como RichText ───────────────────
+
+Widget articuloRichText(String text, TextStyle base) {
+  final spans = <InlineSpan>[];
+  final regex  = RegExp(r'\*\*(.+?)\*\*|\*(.+?)\*', dotAll: true);
+  int last = 0;
+
+  for (final m in regex.allMatches(text)) {
+    if (m.start > last) {
+      spans.add(TextSpan(text: text.substring(last, m.start), style: base));
+    }
+    if (m.group(1) != null) {
+      spans.add(TextSpan(
+        text: m.group(1),
+        style: base.copyWith(fontWeight: FontWeight.bold),
+      ));
+    } else if (m.group(2) != null) {
+      spans.add(TextSpan(
+        text: m.group(2),
+        style: base.copyWith(fontStyle: FontStyle.italic),
+      ));
+    }
+    last = m.end;
+  }
+  if (last < text.length) {
+    spans.add(TextSpan(text: text.substring(last), style: base));
+  }
+
+  return RichText(text: TextSpan(children: spans));
+}
+
+// ── Barra de formato ──────────────────────────────────────────────────────────
+
 class _BarraFormato extends StatelessWidget {
   final bool isDark;
-  const _BarraFormato({required this.isDark});
+  final TextEditingController controller;
+
+  const _BarraFormato({required this.isDark, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -697,13 +769,30 @@ class _BarraFormato extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _FormatBtn(label: 'B', bold: true),
-          _FormatBtn(label: 'I', italic: true),
-          _FormatBtn(label: '≡'),
-          _FormatBtn(label: '•'),
+          _FormatBtn(
+            label: 'B',
+            bold: true,
+            onTap: () => _aplicarFormato(controller, '**', '**'),
+          ),
+          _FormatBtn(
+            label: 'I',
+            italic: true,
+            onTap: () => _aplicarFormato(controller, '*', '*'),
+          ),
+          _FormatBtn(
+            label: '≡',
+            onTap: () => _aplicarFormato(controller, '\n\n', ''),
+          ),
+          _FormatBtn(
+            label: '•',
+            onTap: () => _aplicarFormato(controller, '\n• ', ''),
+          ),
           const Spacer(),
-          Icon(Icons.open_in_full, size: 16,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
+          Icon(
+            Icons.open_in_full,
+            size: 16,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
         ],
       ),
     );
@@ -714,15 +803,21 @@ class _FormatBtn extends StatelessWidget {
   final String label;
   final bool bold;
   final bool italic;
+  final VoidCallback onTap;
 
-  const _FormatBtn({required this.label, this.bold = false, this.italic = false});
+  const _FormatBtn({
+    required this.label,
+    required this.onTap,
+    this.bold = false,
+    this.italic = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: GestureDetector(
-        onTap: () {},
+        onTap: onTap,
         child: Text(
           label,
           style: TextStyle(
@@ -1143,6 +1238,7 @@ class _HeroSlide extends StatelessWidget {
                 ? Image.network(
                     articulo.imagenUrl,
                     fit: BoxFit.cover,
+                    cacheWidth: 800,
                     errorBuilder: (context, error, stack) =>
                         Container(color: Colors.grey.shade800),
                   )
@@ -1334,6 +1430,8 @@ class _InfoCard extends StatelessWidget {
                           width: 76,
                           height: 76,
                           fit: BoxFit.cover,
+                          cacheWidth: 152,
+                          cacheHeight: 152,
                           errorBuilder: (context, error, stack) =>
                               _FallbackThumb(),
                         )
@@ -1509,6 +1607,7 @@ class _ArticuloWide extends StatelessWidget {
                           height: 340,
                           width: double.infinity,
                           fit: BoxFit.cover,
+                          cacheHeight: 680,
                           errorBuilder: (context, error, stack) =>
                               Container(height: 340, color: Colors.grey.shade300),
                         )
@@ -1603,9 +1702,9 @@ class _ArticuloWide extends StatelessWidget {
                         .onSurface
                         .withValues(alpha: 0.1)),
                 const SizedBox(height: 20),
-                Text(
+                articuloRichText(
                   articulo.contenido,
-                  style: TextStyle(
+                  TextStyle(
                     fontSize: 16,
                     height: 1.9,
                     color: Theme.of(context)
@@ -1654,6 +1753,7 @@ class _ArticuloNarrow extends StatelessWidget {
                     height: 220,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    cacheHeight: 440,
                     errorBuilder: (context, error, stack) =>
                         Container(height: 220, color: Colors.grey.shade300),
                   )
@@ -1722,9 +1822,9 @@ class _ArticuloNarrow extends StatelessWidget {
           Divider(
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
           const SizedBox(height: 16),
-          Text(
+          articuloRichText(
             articulo.contenido,
-            style: TextStyle(
+            TextStyle(
               fontSize: 15,
               height: 1.7,
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),

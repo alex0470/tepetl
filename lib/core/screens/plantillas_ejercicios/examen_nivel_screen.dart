@@ -65,26 +65,82 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
     }
   }
 
-  //Descarga de ejercicios
+  // Cursos base del examen de nivelación: 5 ejercicios de cada uno → 10 en total.
+  static const _cursosExamen = ['Cantidades', 'Colores'];
+  static const _porCurso = 5;
+
+  static String _normNivel(String s) => s
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
+
+  /// Descarga ejercicios de los cursos "Cantidades — Básico" y "Colores — Básico".
+  /// Recorre modulos → lecciones → ejercicios_ids y selecciona 5 al azar de cada curso.
   Future<void> _descargarEjercicios() async {
     try {
-      final int randomNum = Random().nextInt(4000) + 1;
-      final String randomId = 'E${randomNum.toString().padLeft(4, '0')}';
+      final db  = FirebaseFirestore.instance;
+      final rng = Random();
+      final List<String> idsMuestra = [];
 
-      final snapshot = await FirebaseFirestore.instance
+      for (final prefijo in _cursosExamen) {
+        // Búsqueda por prefijo de título (no requiere índice compuesto)
+        final cursosSnap = await db
+            .collection('cursos')
+            .where('titulo', isGreaterThanOrEqualTo: prefijo)
+            .where('titulo', isLessThan: '$prefijo')
+            .get();
+
+        final List<String> idsDelCurso = [];
+
+        for (final cursoDoc in cursosSnap.docs) {
+          // Filtrar client-side por nivel básico (normalizado)
+          final nivel = _normNivel(
+            (cursoDoc.data()['nivel'] as String? ?? ''),
+          );
+          if (nivel != 'basico') continue;
+
+          // Recorrer módulos → lecciones → ejercicios_ids
+          final modulos = await cursoDoc.reference.collection('modulos').get();
+          for (final moduloDoc in modulos.docs) {
+            final lecciones =
+                await moduloDoc.reference.collection('lecciones').get();
+            for (final leccionDoc in lecciones.docs) {
+              final ids = List<String>.from(
+                leccionDoc.data()['ejercicios_ids'] ?? [],
+              );
+              idsDelCurso.addAll(ids);
+            }
+          }
+        }
+
+        // 5 aleatorios de este curso
+        idsDelCurso.shuffle(rng);
+        idsMuestra.addAll(idsDelCurso.take(_porCurso));
+      }
+
+      if (idsMuestra.isEmpty) {
+        debugPrint('Examen: no se encontraron IDs en los cursos base.');
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Fetch de ejercicios (máx 10 IDs, dentro del límite whereIn: 30)
+      idsMuestra.shuffle(rng);
+      final snap = await db
           .collection('ejercicios')
-          .where('dificultad', isEqualTo: 'basico')
-          .where(FieldPath.documentId, isGreaterThanOrEqualTo: randomId)
-          .limit(10)
+          .where(FieldPath.documentId, whereIn: idsMuestra)
           .get();
 
-      final List<EjercicioModel> listaTemporal = snapshot.docs
-          .map((doc) => EjercicioModel.fromMap(doc.id, doc.data()))
+      final ejercicios = snap.docs
+          .map((d) => EjercicioModel.fromMap(d.id, d.data()))
           .toList()
-        ..shuffle();
+        ..shuffle(rng);
 
       setState(() {
-        _ejercicios = listaTemporal;
+        _ejercicios = ejercicios;
         _isLoading = false;
       });
     } catch (e) {

@@ -18,6 +18,10 @@ class CursoFilters {
     'Casa',
     'Números',
     'Colores',
+    'Emociones',
+    'Gramatica',
+    'Lugares',
+    'Tiempo',
   ];
 
   static IconData getCategoryIcon(String categoria) {
@@ -42,6 +46,14 @@ class CursoFilters {
         return Icons.numbers_rounded;
       case 'colores':
         return Icons.palette_rounded;
+      case 'emociones':
+        return Icons.emoji_emotions_rounded;
+      case 'gramatica':
+        return Icons.text_fields_rounded;
+      case 'lugares':
+        return Icons.place_rounded;
+      case 'tiempo':
+        return Icons.access_time_rounded;
       default:
         return Icons.category_rounded;
     }
@@ -69,6 +81,14 @@ class CursoFilters {
         return Colors.purple;
       case 'colores':
         return Colors.teal;
+      case 'emociones':
+        return Colors.deepOrange;
+      case 'gramatica':
+        return Colors.lightBlue;
+      case 'lugares':
+        return Colors.lightGreen;
+      case 'tiempo':
+        return Colors.yellow;
       default:
         return Colors.grey;
     }

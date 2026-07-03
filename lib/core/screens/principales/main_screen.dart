@@ -39,26 +39,37 @@ class _MainScreenState extends State<MainScreen> {
     currentIndex = widget.initialIndex;
 
     screens = [
-      DescubrirScreen(esAdmin: widget.isAdmin),
-      
-      // 1.Pestaña de Estadísticas IA
-      widget.isAdmin 
-          ? const AnalisisGeneralContent() 
+      // 1. Estadísticas
+      widget.isAdmin
+          ? const AnalisisGeneralContent()
           : const ResumenIAScreen(),
-          
-      // 2.Pestaña de Inicio (Gestión de Lecciones / Mapa de Progreso)
-      widget.isAdmin 
-          ? const InicioAdminScreen() 
+
+      DescubrirScreen(esAdmin: widget.isAdmin),
+
+      // 2. Inicio
+      widget.isAdmin
+          ? const InicioAdminScreen()
           : InicioScreen(selectedCursoId: widget.selectedCursoId),
-          
-      // 3.Pestaña de Cursos (NUEVO AJUSTE)
-      widget.isAdmin 
+
+      // 3. Cursos
+      widget.isAdmin
           ? const CursosAdminScreen()
           : const CursosScreen(),
-      widget.isAdmin 
+
+      // 4. Diccionario / Usuarios
+      widget.isAdmin
           ? const DirectorioUsuariosScreen()
           : const DiccionarioScreen(),
     ];
+  }
+
+  @override
+  void didUpdateWidget(MainScreen old) {
+    super.didUpdateWidget(old);
+    // Permite cambiar el tab activo desde el padre sin recrear el widget
+    if (old.initialIndex != widget.initialIndex) {
+      setState(() => currentIndex = widget.initialIndex);
+    }
   }
 
   @override

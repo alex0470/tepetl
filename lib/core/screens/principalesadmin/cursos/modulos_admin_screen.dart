@@ -5,11 +5,24 @@ import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
-class ModulosAdminScreen extends StatelessWidget {
+class ModulosAdminScreen extends StatefulWidget {
   final String cursoId;
   final String cursoTitulo;
 
   const ModulosAdminScreen({super.key, required this.cursoId, required this.cursoTitulo});
+
+  @override
+  State<ModulosAdminScreen> createState() => _ModulosAdminScreenState();
+}
+
+class _ModulosAdminScreenState extends State<ModulosAdminScreen> {
+  late final Stream<List<ModuloModel>> _modulosStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _modulosStream = CursosService.streamModulos(widget.cursoId);
+  }
 
   Future<void> _confirmarEliminar(
       BuildContext context, String moduloId) async {
@@ -33,7 +46,7 @@ class ModulosAdminScreen extends StatelessWidget {
       ),
     );
     if (ok == true) {
-      await CursosService.eliminarModulo(cursoId, moduloId);
+      await CursosService.eliminarModulo(widget.cursoId, moduloId);
     }
   }
 
@@ -64,7 +77,7 @@ class ModulosAdminScreen extends StatelessWidget {
             onPressed: () async {
               if (tituloCtrl.text.isNotEmpty) {
                 await CursosService.crearModulo(
-                  cursoId,
+                  widget.cursoId,
                   ModuloModel(
                       id: '',
                       titulo: tituloCtrl.text.trim(),
@@ -86,7 +99,7 @@ class ModulosAdminScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(cursoTitulo,
+        title: Text(widget.cursoTitulo,
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
@@ -100,7 +113,7 @@ class ModulosAdminScreen extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<List<ModuloModel>>(
-        stream: CursosService.streamModulos(cursoId),
+        stream: _modulosStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -149,7 +162,7 @@ class ModulosAdminScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => LeccionesAdminScreen(
-                              cursoId: cursoId,
+                              cursoId: widget.cursoId,
                               moduloId: modulo.id,
                               moduloTitulo: modulo.titulo,
                             ),

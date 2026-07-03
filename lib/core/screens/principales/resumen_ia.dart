@@ -1212,6 +1212,8 @@ class _SeccionConsejo extends StatelessWidget {
                   'https://69cd7410079511ce6100f7d7.imgix.net/varias-monta%C3%B1as-con-muchos-arboles-y-un-atardecer-al-fondo-396971.png?w=800&h=400',
                   height: 200,
                   fit: BoxFit.cover,
+                  cacheHeight: 400,
+                  cacheWidth: 800,
                   errorBuilder: (_, _, _) =>
                       Container(height: 200, color: const Color(0xFF1A1A2E)),
                 ),
@@ -1293,6 +1295,8 @@ class _SeccionConsejo extends StatelessWidget {
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  cacheHeight: 400,
+                  cacheWidth: 800,
                   errorBuilder: (_, _, _) =>
                       Container(height: 200, color: const Color(0xFF1A1A2E)),
                 ),

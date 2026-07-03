@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:tepetl/core/screens/usuario/racha_diaria_screen.dart';
 import 'package:tepetl/core/services/racha_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/timers/vidas_timer.dart';
+import 'package:tepetl/core/widgets/usuario/profile_avatar.dart';
 
 class InicioAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool isDark;
@@ -21,34 +24,38 @@ class InicioAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _InicioAppBarState extends State<InicioAppBar> {
   String _iniciales = '';
-  bool _esAdmin = false;
+  String _fotoUrl   = '';
+  bool   _esAdmin   = false;
+
+  late final StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
+      _userSub;
 
   @override
   void initState() {
     super.initState();
-    _cargarUsuario();
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    _userSub = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .listen(_onUserData);
   }
 
-  Future<void> _cargarUsuario() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      final data = doc.data() ?? {};
-      final nombre = data['nombre'] as String? ?? '';
-      final rol = (data['rol'] as String? ?? '').toLowerCase();
-      if (mounted) {
-        setState(() {
-          _iniciales = _calcularIniciales(nombre);
-          _esAdmin = rol == 'admin';
-        });
-      }
-    } catch (e) {
-      debugPrint('InicioAppBar: error cargando usuario: $e');
-    }
+  @override
+  void dispose() {
+    _userSub.cancel();
+    super.dispose();
+  }
+
+  void _onUserData(DocumentSnapshot<Map<String, dynamic>> doc) {
+    if (!mounted) return;
+    final data  = doc.data() ?? {};
+    final nombre = data['nombre'] as String? ?? '';
+    setState(() {
+      _iniciales = _calcularIniciales(nombre);
+      _fotoUrl   = data['foto_url'] as String? ?? '';
+      _esAdmin   = (data['rol'] as String? ?? '').toLowerCase() == 'admin';
+    });
   }
 
   String _calcularIniciales(String nombre) {
@@ -103,27 +110,11 @@ class _InicioAppBarState extends State<InicioAppBar> {
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
             onTap: () => Navigator.pushNamed(context, "/ajustes"),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: widget.isDark
-                      ? AppColors.fondoOscuro
-                      : AppColors.fondoSecundario,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      _iniciales.isEmpty ? 'U' : _iniciales,
-                      style: const TextStyle(
-                        color: AppColors.primario,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            child: ProfileAvatar(
+              fotoUrl: _fotoUrl,
+              inicial: _iniciales,
+              radius:  18,
+              isDark:  widget.isDark,
             ),
           ),
         ),
@@ -134,11 +125,24 @@ class _InicioAppBarState extends State<InicioAppBar> {
 
 // ── Chip de racha ─────────────────────────────────────────────────────────────
 
-class _ChipRacha extends StatelessWidget {
+class _ChipRacha extends StatefulWidget {
+  @override
+  State<_ChipRacha> createState() => _ChipRachaState();
+}
+
+class _ChipRachaState extends State<_ChipRacha> {
+  late final Stream<DatosRacha> _rachaStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _rachaStream = RachaService.streamRacha();
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatosRacha>(
-      stream: RachaService.streamRacha(),
+      stream: _rachaStream,
       builder: (context, snap) {
         final datos = snap.data ?? DatosRacha.vacio;
         final racha = datos.rachaActual;

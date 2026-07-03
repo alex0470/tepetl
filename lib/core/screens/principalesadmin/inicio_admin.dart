@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tepetl/core/models/curso_models.dart';
@@ -14,28 +15,92 @@ class InicioAdminScreen extends StatefulWidget {
 
 class _InicioAdminScreenState extends State<InicioAdminScreen> {
   late final Future<AdminStats> _statsFuture;
+  late final Stream<List<CursoModel>> _cursosRecientesStream;
+  late final Stream<List<CursoModel>> _cursosSistemaStream;
+
   String _filtroRecientes = 'Semana';
+  bool _esSistema = false;
 
   @override
   void initState() {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    _statsFuture = AdminStatsService.cargar(uid);
+    _statsFuture           = AdminStatsService.cargar(uid);
+    _cursosRecientesStream = CursosService.streamCursos();
+    _cursosSistemaStream   = CursosService.streamCursosOficiales();
+    _cargarFlagSistema(uid);
+  }
+
+  Future<void> _cargarFlagSistema(String uid) async {
+    if (uid.isEmpty) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    final data     = doc.data() ?? {};
+    final rolAdmin = (data['rol'] as String? ?? '') == 'admin';
+    final sistema  = data['sistema'] as bool? ?? false;
+    if (mounted) setState(() => _esSistema = rolAdmin && sistema);
   }
 
   @override
   Widget build(BuildContext context) {
+    final sw     = MediaQuery.of(context).size.width;
+    final isWide = sw > 800;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildKPIs(),
+      padding: EdgeInsets.all(isWide ? 24 : 16),
+      child: isWide
+          ? _wideLayout()
+          : _narrowLayout(),
+    );
+  }
+
+  // ── Layout ancho ──────────────────────────────────────────────────────────────
+
+  Widget _wideLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Columna izquierda: KPIs + cursos sistema
+        Expanded(
+          flex: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildKPIs(),
+              if (_esSistema) ...[
+                const SizedBox(height: 28),
+                _buildCursosSistema(),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 24),
+        // Columna derecha: cursos recientes
+        Expanded(
+          flex: 4,
+          child: _buildCursosRecientes(),
+        ),
+      ],
+    );
+  }
+
+  // ── Layout estrecho ───────────────────────────────────────────────────────────
+
+  Widget _narrowLayout() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildKPIs(),
+        const SizedBox(height: 24),
+        _buildCursosRecientes(),
+        if (_esSistema) ...[
           const SizedBox(height: 24),
-          _buildCursosRecientes(),
-          const SizedBox(height: 16),
+          _buildCursosSistema(),
         ],
-      ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -47,7 +112,6 @@ class _InicioAdminScreenState extends State<InicioAdminScreen> {
       builder: (context, snap) {
         final loading = !snap.hasData && !snap.hasError;
         final stats   = snap.data;
-
         String fmt(int? v) => loading ? '—' : '${v ?? 0}';
 
         return Column(
@@ -115,7 +179,7 @@ class _InicioAdminScreenState extends State<InicioAdminScreen> {
     );
   }
 
-  // ── Cursos recientes section ────────────────────────────────────────────────
+  // ── Cursos recientes ──────────────────────────────────────────────────────────
 
   Widget _buildCursosRecientes() {
     final dias   = _filtroRecientes == 'Semana' ? 7 : 30;
@@ -142,7 +206,8 @@ class _InicioAdminScreenState extends State<InicioAdminScreen> {
                 onTap: () => setState(() => _filtroRecientes = f),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
                     color: _filtroRecientes == f
                         ? AppColors.secundario
@@ -154,7 +219,8 @@ class _InicioAdminScreenState extends State<InicioAdminScreen> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: _filtroRecientes == f ? Colors.white : Colors.grey,
+                      color:
+                          _filtroRecientes == f ? Colors.white : Colors.grey,
                     ),
                   ),
                 ),
@@ -164,7 +230,7 @@ class _InicioAdminScreenState extends State<InicioAdminScreen> {
         ),
         const SizedBox(height: 16),
         StreamBuilder<List<CursoModel>>(
-          stream: CursosService.streamCursos(),
+          stream: _cursosRecientesStream,
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -184,7 +250,8 @@ class _InicioAdminScreenState extends State<InicioAdminScreen> {
 
             final todos  = snap.data ?? [];
             final cursos = todos
-                .where((c) => c.creadoEn != null && c.creadoEn!.isAfter(cutoff))
+                .where((c) =>
+                    c.creadoEn != null && c.creadoEn!.isAfter(cutoff))
                 .toList()
               ..sort((a, b) => b.creadoEn!.compareTo(a.creadoEn!));
 
@@ -201,7 +268,72 @@ class _InicioAdminScreenState extends State<InicioAdminScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: cursos.length,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, i) => _CursoCard(curso: cursos[i]),
+              itemBuilder: (_, i) => _CursoCard(curso: cursos[i]),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ── Cursos del sistema (solo admin + sistema:true) ────────────────────────────
+
+  Widget _buildCursosSistema() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: const [
+            Icon(Icons.verified_outlined, size: 14, color: AppColors.secundario),
+            SizedBox(width: 6),
+            Text(
+              'CURSOS DEL SISTEMA',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        StreamBuilder<List<CursoModel>>(
+          stream: _cursosSistemaStream,
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            if (snap.hasError) {
+              return _MensajeVacio(
+                icon: Icons.error_outline,
+                texto: 'Error al cargar cursos del sistema',
+                color: Colors.red,
+              );
+            }
+
+            final cursos = snap.data ?? [];
+            if (cursos.isEmpty) {
+              return _MensajeVacio(
+                icon: Icons.school_outlined,
+                texto: 'No hay cursos del sistema aún',
+              );
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: cursos.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (_, i) => _CursoCard(
+                curso: cursos[i],
+                esSistema: true,
+              ),
             );
           },
         ),
@@ -341,7 +473,9 @@ class _TarjetaProgresoKPI extends StatelessWidget {
 
 class _CursoCard extends StatelessWidget {
   final CursoModel curso;
-  const _CursoCard({required this.curso});
+  final bool esSistema;
+
+  const _CursoCard({required this.curso, this.esSistema = false});
 
   Color get _nivelColor {
     switch (curso.nivel.toLowerCase()) {
@@ -385,11 +519,37 @@ class _CursoCard extends StatelessWidget {
                 ),
               ),
             ),
-            title: Text(
-              curso.titulo,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    curso.titulo,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (esSistema) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.secundario.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'sistema',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.secundario,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
             subtitle: Text(
               curso.creadoEn != null
@@ -418,7 +578,8 @@ class _CursoCard extends StatelessWidget {
                   child: Row(children: [
                     Icon(Icons.delete, color: Colors.red, size: 18),
                     SizedBox(width: 8),
-                    Text('Eliminar', style: TextStyle(color: Colors.red)),
+                    Text('Eliminar',
+                        style: TextStyle(color: Colors.red)),
                   ]),
                 ),
               ],
@@ -432,7 +593,8 @@ class _CursoCard extends StatelessWidget {
                 _StatusBadge(publicado: curso.publicado),
                 const SizedBox(width: 8),
                 if (curso.leccionesCount > 0) ...[
-                  Icon(Icons.menu_book_outlined, size: 13, color: Colors.grey[600]),
+                  Icon(Icons.menu_book_outlined,
+                      size: 13, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
                     '${curso.leccionesCount} lec.',
@@ -441,7 +603,8 @@ class _CursoCard extends StatelessWidget {
                 ],
                 const Spacer(),
                 if (curso.suscritosCount > 0) ...[
-                  Icon(Icons.people_outline, size: 13, color: Colors.grey[600]),
+                  Icon(Icons.people_outline,
+                      size: 13, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
                     '${curso.suscritosCount}',
@@ -516,7 +679,8 @@ class _MensajeVacio extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               texto,
-              style: TextStyle(color: color ?? Colors.grey[500], fontSize: 13),
+              style: TextStyle(
+                  color: color ?? Colors.grey[500], fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ],

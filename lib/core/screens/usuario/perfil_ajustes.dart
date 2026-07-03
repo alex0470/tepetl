@@ -14,6 +14,7 @@ import 'package:tepetl/core/services/perfil_service.dart';
 import 'package:tepetl/core/services/racha_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/botones/boton_atras.dart';
+import 'package:tepetl/core/widgets/usuario/profile_avatar.dart';
 
 class PerfilAjustesScreen extends StatefulWidget {
   const PerfilAjustesScreen({super.key});
@@ -27,10 +28,17 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
   String _rol     = '';
   String _nivel   = '';
   String _inicial = '';
+  String _fotoUrl = '';
+
+  // Streams cacheados: se crean UNA sola vez en initState
+  late final Stream<DatosRacha>    _rachaStream;
+  late final Stream<DatosInsignias> _insigniasStream;
 
   @override
   void initState() {
     super.initState();
+    _rachaStream     = RachaService.streamRacha();
+    _insigniasStream = InsigniasService.streamDatos();
     _cargarDatos();
   }
 
@@ -55,6 +63,7 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
       _rol     = datos.rol;
       _nivel   = datos.nivel;
       _inicial = datos.inicial;
+      _fotoUrl = datos.fotoUrl;
     });
   }
 
@@ -156,27 +165,24 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor:
-                      isDark ? AppColors.fondoOscuroSecundario : AppColors.fondoSecundario,
-                  child: Text(
-                    _inicial,
-                    style: const TextStyle(
-                      color: AppColors.primario,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 34,
-                    ),
-                  ),
+                ProfileAvatar(
+                  fotoUrl: _fotoUrl,
+                  inicial: _inicial,
+                  radius:  50,
+                  isDark:  isDark,
                 ),
                 Positioned(
                   right: -3,
                   bottom: -3,
                   child: GestureDetector(
-                    onTap: () => showDialog(
-                      context: context,
-                      builder: (_) => const EditarPerfilDialog(),
-                    ),
+                    onTap: () async {
+                      await showDialog(
+                        context: context,
+                        builder: (_) => const EditarPerfilDialog(),
+                      );
+                      // Recarga datos (nombre + foto) cuando cierra el diálogo
+                      if (mounted) _cargarDatos();
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(5),
                       decoration: const BoxDecoration(
@@ -201,11 +207,11 @@ class _PerfilAjustesScreenState extends State<PerfilAjustesScreen> {
             ),
             const SizedBox(height: 10),
             StreamBuilder<DatosRacha>(
-              stream: RachaService.streamRacha(),
+              stream: _rachaStream,
               builder: (context, snapRacha) {
                 final racha = snapRacha.data?.rachaActual ?? 0;
                 return StreamBuilder<DatosInsignias>(
-                  stream: InsigniasService.streamDatos(),
+                  stream: _insigniasStream,
                   builder: (context, snapInsignias) {
                     final insignias = snapInsignias.data?.totalDesbloqueadas ?? 0;
                     return Row(

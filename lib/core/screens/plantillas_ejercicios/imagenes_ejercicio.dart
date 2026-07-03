@@ -69,21 +69,39 @@ class _PlantillaIdentificarImagenState
   Future<void> _cargarImagenes() async {
     final db = FirebaseFirestore.instance;
 
-    final futures = _options.map((opcionActual) async {
+    final futures = _options.map((opcion) async {
       try {
+        // Buscar en 'palabras' por traduccion_espanol que coincida con el label
         final snap = await db
-            .collection('vocabulario')
-            .where('traduccion', isEqualTo: opcionActual.label)
+            .collection('palabras')
+            .where('traduccion_espanol', isEqualTo: opcion.label)
             .limit(1)
             .get();
 
         if (snap.docs.isNotEmpty) {
           final url = snap.docs.first.data()['imagen_url'] as String?;
-          return ImageOption(label: opcionActual.label, imageUrl: url);
+          if (url != null && url.isNotEmpty) {
+            return ImageOption(label: opcion.label, imageUrl: url);
+          }
+        }
+
+        // Fallback: buscar por prefijo en caso de traducciones con coma ("luna, mes")
+        final snapPrefix = await db
+            .collection('palabras')
+            .where('traduccion_espanol', isGreaterThanOrEqualTo: opcion.label)
+            .where('traduccion_espanol', isLessThan: '${opcion.label},')
+            .limit(1)
+            .get();
+
+        if (snapPrefix.docs.isNotEmpty) {
+          final url = snapPrefix.docs.first.data()['imagen_url'] as String?;
+          if (url != null && url.isNotEmpty) {
+            return ImageOption(label: opcion.label, imageUrl: url);
+          }
         }
       } catch (_) {}
 
-      return ImageOption(label: opcionActual.label);
+      return ImageOption(label: opcion.label);
     });
 
     final results = await Future.wait(futures);
@@ -398,6 +416,8 @@ class _ImageOptionCard extends StatelessWidget {
                   ? Image.network(
                       option.imageUrl!,
                       fit: BoxFit.cover,
+                      cacheWidth: 400,
+                      cacheHeight: 400,
                       loadingBuilder: (_, child, progress) => progress == null
                           ? child
                           : Container(

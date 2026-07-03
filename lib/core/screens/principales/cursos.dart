@@ -116,18 +116,33 @@ class _WideLayout extends StatelessWidget {
 
 // ── Sección: Mis Cursos ───────────────────────────────────────────────────────
 
-class _SeccionMisCursos extends StatelessWidget {
+class _SeccionMisCursos extends StatefulWidget {
   final bool isDark;
   final bool isWide;
 
   const _SeccionMisCursos({required this.isDark, required this.isWide});
 
   @override
+  State<_SeccionMisCursos> createState() => _SeccionMisCursosState();
+}
+
+class _SeccionMisCursosState extends State<_SeccionMisCursos> {
+  late final String _userId;
+  late final Stream<List<CursoModel>> _cursosSuscritosStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    _cursosSuscritosStream = CursosService.streamCursosSuscritos(_userId);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final userId = _userId;
 
     return StreamBuilder<List<CursoModel>>(
-      stream: CursosService.streamCursosSuscritos(userId),
+      stream: _cursosSuscritosStream,
       builder: (context, snapshot) {
         final cursos = snapshot.data ?? [];
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
@@ -170,7 +185,7 @@ class _SeccionMisCursos extends StatelessWidget {
             if (isLoading)
               const Center(child: CircularProgressIndicator())
             else if (cursos.isEmpty)
-              _EmptyMisCursos(isDark: isDark)
+              _EmptyMisCursos(isDark: widget.isDark)
             else
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -185,12 +200,14 @@ class _SeccionMisCursos extends StatelessWidget {
                     runSpacing: spacing,
                     children: cursos
                         .map(
-                          (curso) => SizedBox(
-                            width: itemWidth,
-                            child: _TarjetaCurso(
-                              curso: curso,
-                              isDark: isDark,
-                              userId: userId,
+                          (curso) => RepaintBoundary(
+                            child: SizedBox(
+                              width: itemWidth,
+                              child: _TarjetaCurso(
+                                curso: curso,
+                                isDark: widget.isDark,
+                                userId: userId,
+                              ),
                             ),
                           ),
                         )
@@ -258,7 +275,7 @@ class _EmptyMisCursos extends StatelessWidget {
   }
 }
 
-class _TarjetaCurso extends StatelessWidget {
+class _TarjetaCurso extends StatefulWidget {
   final CursoModel curso;
   final bool isDark;
   final String userId;
@@ -269,6 +286,24 @@ class _TarjetaCurso extends StatelessWidget {
     required this.userId,
   });
 
+  @override
+  State<_TarjetaCurso> createState() => _TarjetaCursoState();
+}
+
+class _TarjetaCursoState extends State<_TarjetaCurso> {
+  late final Stream<DocumentSnapshot> _progresoStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _progresoStream = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .collection('progreso_cursos')
+        .doc(widget.curso.id)
+        .snapshots();
+  }
+
   Future<void> _anularInscripcion(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -278,7 +313,7 @@ class _TarjetaCurso extends StatelessWidget {
         title: const Text('¿Anular inscripción?',
             style: TextStyle(fontWeight: FontWeight.bold)),
         content:
-            Text('Se eliminará "${curso.titulo}" de tu lista de cursos.'),
+            Text('Se eliminará "${widget.curso.titulo}" de tu lista de cursos.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -299,15 +334,15 @@ class _TarjetaCurso extends StatelessWidget {
       // Eliminar el documento de progreso del usuario
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(userId)
+          .doc(widget.userId)
           .collection('progreso_cursos')
-          .doc(curso.id)
+          .doc(widget.curso.id)
           .delete();
 
       // Restar 1 en suscritos_count (sin bajar de 0)
       final cursoRef = FirebaseFirestore.instance
           .collection('cursos')
-          .doc(curso.id);
+          .doc(widget.curso.id);
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final snap = await transaction.get(cursoRef);
         final currentCount = (snap.data()?['suscritos_count'] ?? 1) as int;
@@ -327,12 +362,7 @@ class _TarjetaCurso extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('progreso_cursos')
-          .doc(curso.id)
-          .snapshots(),
+      stream: _progresoStream,
       builder: (context, progressSnapshot) {
         final progresoData =
             progressSnapshot.data?.data() as Map<String, dynamic>?;
@@ -344,7 +374,7 @@ class _TarjetaCurso extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
+            color: widget.isDark
                 ? AppColors.fondoOscuroSecundario
                 : AppColors.fondoSecundario,
             borderRadius: BorderRadius.circular(16),
@@ -367,8 +397,8 @@ class _TarjetaCurso extends StatelessWidget {
                       width: 60,
                       height: 60,
                       child: _CourseImage(
-                        url: curso.imagenUrl,
-                        titulo: curso.titulo,
+                        url: widget.curso.imagenUrl,
+                        titulo: widget.curso.titulo,
                         height: 60,
                         width: 60,
                       ),
@@ -380,7 +410,7 @@ class _TarjetaCurso extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          curso.titulo,
+                          widget.curso.titulo,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -389,7 +419,7 @@ class _TarjetaCurso extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          curso.nivel,
+                          widget.curso.nivel,
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.secundario,
@@ -487,7 +517,7 @@ class _TarjetaCurso extends StatelessWidget {
                             MaterialPageRoute(
                               builder: (context) => MainScreen(
                                 initialIndex: 2,
-                                selectedCursoId: curso.id,
+                                selectedCursoId: widget.curso.id,
                               ),
                             ),
                           );
@@ -536,6 +566,10 @@ class _SeccionExplorarState extends State<_SeccionExplorar> {
   String? _filtroNivel;
   String? _filtroCategoria;
   String? _nivelUsuario;
+  late final Stream<List<CursoModel>> _cursosOficialesStream;
+  late final Stream<List<CursoModel>> _cursosDeUsuariosStream;
+  int _limitOficiales = 6;
+  int _limitComunidad = 6;
 
   // Niveles de curso accesibles por nivel del usuario (acumulativo)
   static const Map<String, List<String>> _nivelesPermitidos = {
@@ -548,6 +582,8 @@ class _SeccionExplorarState extends State<_SeccionExplorar> {
   @override
   void initState() {
     super.initState();
+    _cursosOficialesStream = CursosService.streamCursosOficiales();
+    _cursosDeUsuariosStream = CursosService.streamCursosDeUsuarios();
     _cargarNivelUsuario();
   }
 
@@ -600,7 +636,7 @@ class _SeccionExplorarState extends State<_SeccionExplorar> {
         ),
         const SizedBox(height: 14),
         StreamBuilder<List<CursoModel>>(
-          stream: CursosService.streamCursosOficiales(),
+          stream: _cursosOficialesStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -613,9 +649,24 @@ class _SeccionExplorarState extends State<_SeccionExplorar> {
                 isDark: widget.isDark,
               );
             }
-            return _GridCursos(
-              cursos: cursos,
-              isDark: widget.isDark,
+            final mostrar = cursos.take(_limitOficiales).toList();
+            final hayMas = cursos.length > _limitOficiales;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _GridCursos(cursos: mostrar, isDark: widget.isDark),
+                if (hayMas) ...[
+                  const SizedBox(height: 14),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => setState(() => _limitOficiales += 6),
+                      icon: const Icon(Icons.expand_more),
+                      label: Text(
+                          'Ver más (${cursos.length - _limitOficiales} más)'),
+                    ),
+                  ),
+                ],
+              ],
             );
           },
         ),
@@ -631,7 +682,7 @@ class _SeccionExplorarState extends State<_SeccionExplorar> {
         ),
         const SizedBox(height: 14),
         StreamBuilder<List<CursoModel>>(
-          stream: CursosService.streamCursosDeUsuarios(),
+          stream: _cursosDeUsuariosStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -644,9 +695,24 @@ class _SeccionExplorarState extends State<_SeccionExplorar> {
                 isDark: widget.isDark,
               );
             }
-            return _GridCursos(
-              cursos: cursos,
-              isDark: widget.isDark,
+            final mostrar = cursos.take(_limitComunidad).toList();
+            final hayMas = cursos.length > _limitComunidad;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _GridCursos(cursos: mostrar, isDark: widget.isDark),
+                if (hayMas) ...[
+                  const SizedBox(height: 14),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => setState(() => _limitComunidad += 6),
+                      icon: const Icon(Icons.expand_more),
+                      label: Text(
+                          'Ver más (${cursos.length - _limitComunidad} más)'),
+                    ),
+                  ),
+                ],
+              ],
             );
           },
         ),
@@ -654,15 +720,26 @@ class _SeccionExplorarState extends State<_SeccionExplorar> {
     );
   }
 
+  // Normaliza a minúsculas sin acentos para comparaciones insensibles
+  static String _norm(String s) => s
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
+
   List<CursoModel> _aplicarFiltros(List<CursoModel> cursos) {
-    final nivelesAccesibles = _nivelUsuario != null
-        ? (_nivelesPermitidos[_nivelUsuario] ?? _nivelesPermitidos.values.expand((v) => v).toSet().toList())
+    final nivelUsuarioNorm = _nivelUsuario != null ? _norm(_nivelUsuario!) : null;
+    final nivelesAccesibles = nivelUsuarioNorm != null
+        ? (_nivelesPermitidos[nivelUsuarioNorm] ?? _nivelesPermitidos.values.expand((v) => v).toSet().toList())
         : null;
 
     return cursos.where((curso) {
-      final nivelUsuarioMatch = nivelesAccesibles == null || nivelesAccesibles.contains(curso.nivel);
-      final nivelFiltroMatch = _filtroNivel == null || curso.nivel == _filtroNivel;
-      final categoriaMatch = _filtroCategoria == null || curso.categoria == _filtroCategoria;
+      final cursoNivelNorm = _norm(curso.nivel);
+      final nivelUsuarioMatch = nivelesAccesibles == null || nivelesAccesibles.contains(cursoNivelNorm);
+      final nivelFiltroMatch  = _filtroNivel == null    || cursoNivelNorm == _norm(_filtroNivel!);
+      final categoriaMatch    = _filtroCategoria == null || _norm(curso.categoria) == _norm(_filtroCategoria!);
       return nivelUsuarioMatch && nivelFiltroMatch && categoriaMatch;
     }).toList();
   }
@@ -773,9 +850,11 @@ class _GridCursos extends StatelessWidget {
           runSpacing: spacing,
           children: cursos
               .map(
-                (curso) => SizedBox(
-                  width: itemWidth,
-                  child: _TarjetaCursoExplorar(curso: curso, isDark: isDark),
+                (curso) => RepaintBoundary(
+                  child: SizedBox(
+                    width: itemWidth,
+                    child: _TarjetaCursoExplorar(curso: curso, isDark: isDark),
+                  ),
                 ),
               )
               .toList(),
@@ -794,14 +873,12 @@ class _CourseImage extends StatelessWidget {
   final String titulo;
   final double height;
   final double? width;
-  final BoxFit fit;
 
   const _CourseImage({
     required this.url,
     required this.titulo,
     this.height = 140,
     this.width,
-    this.fit = BoxFit.cover,
   });
 
   Color _colorFromTitle() {
@@ -860,7 +937,7 @@ class _CourseImage extends StatelessWidget {
         url,
         height: height,
         width: width ?? double.infinity,
-        fit: fit,
+        fit: BoxFit.cover,
         gaplessPlayback: true,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
@@ -890,6 +967,19 @@ class _TarjetaCursoExplorar extends StatefulWidget {
 
 class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
   bool _inscribiendo = false;
+  late final Stream<DocumentSnapshot> _suscripcionStream;
+
+  @override
+  void initState() {
+    super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    _suscripcionStream = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('progreso_cursos')
+        .doc(widget.curso.id)
+        .snapshots();
+  }
 
   Future<void> _inscribir(BuildContext context, String userId) async {
     setState(() => _inscribiendo = true);
@@ -936,12 +1026,7 @@ class _TarjetaCursoExplorarState extends State<_TarjetaCursoExplorar> {
 
     return StreamBuilder<DocumentSnapshot>(
       // Escucha en tiempo real si el usuario ya está suscrito
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('progreso_cursos')
-          .doc(widget.curso.id)
-          .snapshots(),
+      stream: _suscripcionStream,
       builder: (context, snapshot) {
         final yaSuscrito = snapshot.data?.exists ?? false;
 
@@ -1797,6 +1882,37 @@ class _BotonFiltrosState extends State<_BotonFiltros> {
   late OverlayEntry _overlayEntry;
   bool _isOpen = false;
 
+  // Estado local para que el overlay se actualice inmediatamente al seleccionar
+  String? _localNivel;
+  String? _localCategoria;
+
+  @override
+  void initState() {
+    super.initState();
+    _localNivel    = widget.filtroNivel;
+    _localCategoria = widget.filtroCategoria;
+  }
+
+  @override
+  void didUpdateWidget(_BotonFiltros old) {
+    super.didUpdateWidget(old);
+    // Sincroniza si el padre cambia los filtros desde fuera
+    _localNivel    = widget.filtroNivel;
+    _localCategoria = widget.filtroCategoria;
+  }
+
+  void _onNivelChanged(String? nivel) {
+    widget.onNivelChanged(nivel);
+    setState(() => _localNivel = nivel);
+    if (_isOpen) _overlayEntry.markNeedsBuild();
+  }
+
+  void _onCategoriaChanged(String? cat) {
+    widget.onCategoriaChanged(cat);
+    setState(() => _localCategoria = cat);
+    if (_isOpen) _overlayEntry.markNeedsBuild();
+  }
+
   void _mostrarFiltros() {
     if (_isOpen) {
       _overlayEntry.remove();
@@ -1825,16 +1941,10 @@ class _BotonFiltrosState extends State<_BotonFiltros> {
             color: Colors.transparent,
             child: _PanelFiltros(
               isDark: widget.isDark,
-              filtroNivel: widget.filtroNivel,
-              filtroCategoria: widget.filtroCategoria,
-              onNivelChanged: (nivel) {
-                widget.onNivelChanged(nivel);
-                setState(() {});
-              },
-              onCategoriaChanged: (categoria) {
-                widget.onCategoriaChanged(categoria);
-                setState(() {});
-              },
+              filtroNivel: _localNivel,
+              filtroCategoria: _localCategoria,
+              onNivelChanged: _onNivelChanged,
+              onCategoriaChanged: _onCategoriaChanged,
               onClose: () {
                 _overlayEntry.remove();
                 setState(() => _isOpen = false);
@@ -2066,7 +2176,7 @@ class _PanelFiltros extends StatelessWidget {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2158,7 +2268,7 @@ class _PanelFiltros extends StatelessWidget {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 12),
                   if (filtroNivel != null || filtroCategoria != null)
                     Padding(

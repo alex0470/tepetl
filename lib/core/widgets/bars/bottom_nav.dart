@@ -28,8 +28,8 @@ class BottomNav extends StatelessWidget {
         : {"icon": Icons.translate_outlined, "label": "Diccionario"};
 
     final navItems = [
+      {"icon": Icons.auto_awesome_outlined, "label": "Resumen"},
       {"icon": Icons.nature_people_outlined, "label": "Cultura"},
-      {"icon": Icons.auto_awesome_outlined, "label": "Resumen IA"},
       {"icon": Icons.home_outlined, "label": "Inicio"},
       {"icon": Icons.menu_book_outlined, "label": "Cursos"},
       lastItem,

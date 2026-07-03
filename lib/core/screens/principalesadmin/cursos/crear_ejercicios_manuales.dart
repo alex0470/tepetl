@@ -728,11 +728,74 @@ class PalabrasSelector extends StatefulWidget {
 class _PalabrasSelectorState extends State<PalabrasSelector> {
   String selectedDificultad = 'Básico';
   final dificultades = ['Básico', 'Básico+', 'Intermedio'];
+  final _searchCtrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
+  String _searchQuery = '';
+  List<PalabraModel> _todasPalabras = [];
+  int _displayLimit = 20;
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _searchQuery = _searchCtrl.text.toLowerCase().trim();
+        _displayLimit = 20;
+      });
+    });
+    _scrollCtrl.addListener(_onScroll);
+    _cargarPalabras();
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 250) {
+      final total = _filtradas().length;
+      if (_displayLimit < total) {
+        setState(() => _displayLimit += 20);
+      }
+    }
+  }
+
+  Future<void> _cargarPalabras() async {
+    final dificultad = selectedDificultad;
+    setState(() => _cargando = true);
+    final palabras =
+        await CursosService.getPalabrasByDificultad(dificultad);
+    if (mounted && dificultad == selectedDificultad) {
+      setState(() {
+        _todasPalabras = palabras;
+        _displayLimit = 20;
+        _cargando = false;
+      });
+    }
+  }
+
+  List<PalabraModel> _filtradas() {
+    if (_searchQuery.isEmpty) return _todasPalabras;
+    return _todasPalabras.where((p) {
+      return p.palabraNahuatl.toLowerCase().contains(_searchQuery) ||
+          p.traduccionEspanol.toLowerCase().contains(_searchQuery) ||
+          p.categoria.toLowerCase().contains(_searchQuery);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final filtradas = _filtradas();
+    final mostrar = filtradas.take(_displayLimit).toList();
+    final hayMas = _displayLimit < filtradas.length;
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
+      height: MediaQuery.of(context).size.height * 0.85,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
@@ -740,11 +803,12 @@ class _PalabrasSelectorState extends State<PalabrasSelector> {
       ),
       child: Column(
         children: [
+          // ── Encabezado ─────────────────────────────────────────────────
           Row(
             children: [
               Text(
                 'Seleccionar Palabra',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const Spacer(),
               IconButton(
@@ -753,57 +817,124 @@ class _PalabrasSelectorState extends State<PalabrasSelector> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+
+          // ── Buscador ───────────────────────────────────────────────────
+          TextField(
+            controller: _searchCtrl,
+            decoration: InputDecoration(
+              hintText: 'Buscar por náhuatl, español o categoría…',
+              hintStyle: const TextStyle(fontSize: 13),
+              prefixIcon: const Icon(Icons.search, size: 20),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: _searchCtrl.clear,
+                    )
+                  : null,
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppColors.secundario,
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 10,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Filtro por dificultad ──────────────────────────────────────
           ToggleButtonGroup(
             options: dificultades,
             selectedIndex: dificultades.indexOf(selectedDificultad),
-            onChanged: (i) =>
-                setState(() => selectedDificultad = dificultades[i]),
+            onChanged: (i) {
+              setState(() {
+                selectedDificultad = dificultades[i];
+                _displayLimit = 20;
+              });
+              _cargarPalabras();
+            },
           ),
           const SizedBox(height: 16),
+
+          // ── Lista ──────────────────────────────────────────────────────
           Expanded(
-            child: FutureBuilder<List<PalabraModel>>(
-              future: CursosService.getPalabrasByDificultad(selectedDificultad),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text('No hay palabras disponibles'),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    final palabra = snapshot.data![index];
-                    return ListTile(
-                      leading: palabra.imagenUrl.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                palabra.imagenUrl,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) =>
-                                    const Icon(Icons.image_not_supported),
-                              ),
-                            )
-                          : const Icon(Icons.image_not_supported),
-                      title: Text(
-                        palabra.palabraNahuatl,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+            child: _cargando
+                ? const Center(child: CircularProgressIndicator())
+                : filtradas.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _searchQuery.isNotEmpty
+                                  ? Icons.search_off_outlined
+                                  : Icons.library_books_outlined,
+                              size: 40,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'Sin resultados para "$_searchQuery"'
+                                  : 'No hay palabras disponibles',
+                              style:
+                                  TextStyle(color: Colors.grey.shade500),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollCtrl,
+                        itemCount: mostrar.length + (hayMas ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == mostrar.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                  child: CircularProgressIndicator()),
+                            );
+                          }
+                          final palabra = mostrar[index];
+                          return ListTile(
+                            leading: palabra.imagenUrl.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      palabra.imagenUrl,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      cacheWidth: 100,
+                                      errorBuilder:
+                                          (context, error, stack) =>
+                                              const Icon(
+                                                  Icons.image_not_supported),
+                                    ),
+                                  )
+                                : const Icon(Icons.image_not_supported),
+                            title: Text(
+                              palabra.palabraNahuatl,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              '${palabra.traduccionEspanol} · ${palabra.categoria}',
+                            ),
+                            onTap: () => widget.onSelect(palabra),
+                          );
+                        },
                       ),
-                      subtitle: Text(
-                        '${palabra.traduccionEspanol} · ${palabra.categoria}',
-                      ),
-                      onTap: () => widget.onSelect(palabra),
-                    );
-                  },
-                );
-              },
-            ),
           ),
         ],
       ),

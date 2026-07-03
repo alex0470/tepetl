@@ -5,7 +5,7 @@ import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
 import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
-class LeccionesAdminScreen extends StatelessWidget {
+class LeccionesAdminScreen extends StatefulWidget {
   final String cursoId;
   final String moduloId;
   final String moduloTitulo;
@@ -16,6 +16,19 @@ class LeccionesAdminScreen extends StatelessWidget {
     required this.moduloId,
     required this.moduloTitulo,
   });
+
+  @override
+  State<LeccionesAdminScreen> createState() => _LeccionesAdminScreenState();
+}
+
+class _LeccionesAdminScreenState extends State<LeccionesAdminScreen> {
+  late final Stream<List<LeccionModel>> _leccionesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _leccionesStream = CursosService.streamLecciones(widget.cursoId, widget.moduloId);
+  }
 
   Future<void> _confirmarEliminar(BuildContext context, String leccionId) async {
     final ok = await showDialog<bool>(
@@ -38,7 +51,7 @@ class LeccionesAdminScreen extends StatelessWidget {
       ),
     );
     if (ok == true) {
-      await CursosService.eliminarLeccion(cursoId, moduloId, leccionId);
+      await CursosService.eliminarLeccion(widget.cursoId, widget.moduloId, leccionId);
     }
   }
 
@@ -69,8 +82,8 @@ class LeccionesAdminScreen extends StatelessWidget {
             onPressed: () async {
               if (tituloCtrl.text.isNotEmpty) {
                 await CursosService.crearLeccion(
-                  cursoId,
-                  moduloId,
+                  widget.cursoId,
+                  widget.moduloId,
                   LeccionModel(
                       id: '',
                       titulo: tituloCtrl.text.trim(),
@@ -92,7 +105,7 @@ class LeccionesAdminScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(moduloTitulo,
+        title: Text(widget.moduloTitulo,
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
@@ -106,7 +119,7 @@ class LeccionesAdminScreen extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<List<LeccionModel>>(
-        stream: CursosService.streamLecciones(cursoId, moduloId),
+        stream: _leccionesStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -156,8 +169,8 @@ class LeccionesAdminScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => CrearEjerciciosScreen(
-                              cursoId: cursoId,
-                              moduloId: moduloId,
+                              cursoId: widget.cursoId,
+                              moduloId: widget.moduloId,
                               moduloTitulo: leccion.titulo,
                               leccionId: leccion.id,
                             ),

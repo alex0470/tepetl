@@ -3,7 +3,11 @@
     "allow": [
       "Bash(flutter analyze *)",
       "Bash(grep -v \"//\\\\|^\\\\s*//\")",
-      "Bash(dart analyze *)"
+      "Bash(dart analyze *)",
+      "Bash(python3 -c ' *)",
+      "PowerShell($content = [System.IO.File]::ReadAllLines\\('c:\\\\Users\\\\mano-\\\\Music\\\\Tepetl\\\\tepetl\\\\lib\\\\core\\\\screens\\\\plantillas_ejercicios\\\\examen_nivel_screen.dart', [System.Text.Encoding]::UTF8\\); $line = $content[92]; $line | ForEach-Object { $bytes = [System.Text.Encoding]::UTF8.GetBytes\\($_\\); \\($bytes | ForEach-Object { $_.ToString\\('X2'\\) }\\) -join ' ' })",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\mano-\\\\Music\\\\Tepetl\\\\tepetl\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }
