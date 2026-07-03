@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class IAService {
-  static const String _baseUrl = 'https://bebe-quixotic-stalkily.ngrok-free.dev';
+  static const String _baseUrl = 'apiurl'; // Reemplaza con la URL de tu API
 
   static const Map<String, String> _headers = {
     'Content-Type': 'application/json',
