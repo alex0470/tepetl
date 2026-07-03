@@ -6,19 +6,24 @@ import 'package:tepetl/core/widgets/usuario/wrapper_onboarding.dart';
 import 'package:tepetl/core/screens/inicio/splash_screen.dart';
 import 'core/theme/app_theme.dart';
 
+abstract class MyAppState {
+  ThemeMode get currentTheme;
+  Future<void> toggleTheme(bool isDark);
+}
+
 class MyApp extends StatefulWidget {
   final ThemeMode initialTheme;
 
   const MyApp({super.key, required this.initialTheme});
 
-  static _MyAppState of(BuildContext context) => 
+  static MyAppState of(BuildContext context) =>
       context.findAncestorStateOfType<_MyAppState>()!;
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> implements MyAppState {
   late ThemeMode _themeMode;
 
   @override
@@ -27,8 +32,10 @@ class _MyAppState extends State<MyApp> {
     _themeMode = widget.initialTheme;
   }
 
+  @override
   ThemeMode get currentTheme => _themeMode;
 
+  @override
   Future<void> toggleTheme(bool isDark) async {
     setState(() {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;

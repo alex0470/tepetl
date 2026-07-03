@@ -997,15 +997,11 @@ class ImageOptionCard extends StatelessWidget {
 class OptionFraseCard extends StatelessWidget {
   final int index;
   final bool isCorrect;
-  final int groupValue;
-  final ValueChanged<int?> onChanged;
   final TextEditingController controller;
 
   const OptionFraseCard({
     required this.index,
     required this.isCorrect,
-    required this.groupValue,
-    required this.onChanged,
     required this.controller,
     super.key,
   });
@@ -1026,8 +1022,6 @@ class OptionFraseCard extends StatelessWidget {
         children: [
           Radio<int>(
             value: index,
-            groupValue: groupValue,
-            onChanged: onChanged,
             activeColor: AppColors.secundario,
           ),
           Expanded(

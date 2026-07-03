@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -28,18 +29,18 @@ class FirestoreService {
         'curso_completado': false,
       });
 
-      print('✅ Usuario creado con gamificación completa');
+      debugPrint('✅ Usuario creado con gamificación completa');
     } catch (e) {
-      print('❌ Error al guardar usuario: $e');
+      debugPrint('❌ Error al guardar usuario: $e');
     }
   }
 
   Future<void> updateUser(String uid, Map<String, dynamic> data) async {
     try {
       await _db.collection('users').doc(uid).update(data);
-      print('✅ updateUser OK');
+      debugPrint('✅ updateUser OK');
     } catch (e) {
-      print('❌ updateUser error: $e');
+      debugPrint('❌ updateUser error: $e');
     }
   }
 
@@ -78,9 +79,9 @@ class FirestoreService {
       }
 
       await batch.commit();
-      print('✅ Todos los usuarios antiguos han sido actualizados');
+      debugPrint('✅ Todos los usuarios antiguos han sido actualizados');
     } catch (e) {
-      print('❌ Error actualizando usuarios: $e');
+      debugPrint('❌ Error actualizando usuarios: $e');
     }
   }
 
@@ -93,7 +94,7 @@ class FirestoreService {
         return data['rol'] ?? 'estudiante'; 
       }
     } catch (e) {
-      print('❌ Error al obtener rol: $e');
+      debugPrint('❌ Error al obtener rol: $e');
     }
     return 'estudiante'; 
   }

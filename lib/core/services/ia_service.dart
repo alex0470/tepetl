@@ -86,7 +86,7 @@ class IAService {
 
   /// Retroalimentación detallada al finalizar la lección (/retroalimentacion).
   /// La API espera: { "ejercicios": [{tipo, respuesta_usuario, respuesta_correcta}] }
-  /// La API devuelve: { "retroalimentacion_ia": "<JSON string de Gemini>", "evaluacion_local": [...] }
+  /// La API devuelve: { "retroalimentacion_ia": "\<JSON string de Gemini\>", "evaluacion_local": [...] }
   static Future<Map<String, dynamic>> obtenerRetroalimentacion({
     required int precision,
     required int aciertos,

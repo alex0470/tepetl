@@ -28,7 +28,7 @@ class _InicioScreenState extends State<InicioScreen> {
   int currentIndex = 2;
   int _xpUsuario = 0;
   List<CursoModel> _misCursos = [];
-  Map<String, dynamic> _progresoData = {};
+  final Map<String, dynamic> _progresoData = {};
   bool _isLoading = true;
   int _minutosHoy = 0;
   int _metaDiaria = 10;
@@ -530,9 +530,9 @@ class _InicioScreenState extends State<InicioScreen> {
 
   Widget _nivelCard() {
     final nivelActual = NivelesService.getNivelByXP(_xpUsuario);
-    int _xpHoy = 0;
+    int xpHoy = 0;
     for (var curso in _misCursos) {
-      _xpHoy += (_progresoData[curso.id]?['xpHoy'] as int? ?? 0);
+      xpHoy += (_progresoData[curso.id]?['xpHoy'] as int? ?? 0);
     }
 
     return GestureDetector(
@@ -584,7 +584,7 @@ class _InicioScreenState extends State<InicioScreen> {
                   color: Colors.white.withValues(alpha: 0.7), size: 13),
               const SizedBox(width: 4),
               Text(
-                '+$_xpHoy hoy  •  $_xpUsuario XP total',
+                '+$xpHoy hoy  •  $_xpUsuario XP total',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 12,

@@ -375,7 +375,7 @@ class CursosService {
         .snapshots()
         .asyncMap((snap) async {
           if (!snap.exists) return <EjercicioModel>[];
-          final data = snap.data() as Map<String, dynamic>? ?? {};
+          final data = snap.data() ?? {};
           final ids = List<String>.from(data['ejercicios_ids'] ?? []);
           // FIX: eliminado filtro por creadoPor — se retornan todos los
           // ejercicios de la lección, no solo los del usuario actual.

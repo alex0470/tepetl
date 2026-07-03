@@ -586,12 +586,9 @@ class NivelSeleccionScreen extends StatelessWidget {
 class _PressableCard extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
-  final BorderRadius borderRadius;
-
   const _PressableCard({
     required this.child,
     this.onTap,
-    this.borderRadius = const BorderRadius.all(Radius.circular(16)),
   });
 
   @override
@@ -632,8 +629,8 @@ class _PressableCardState extends State<_PressableCard>
       onTapCancel: _onTapCancel,
       child: ScaleTransition(
         scale: _scale,
-        child: ClipRRect(
-          borderRadius: widget.borderRadius,
+          child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
           child: widget.child,
         ),
       ),

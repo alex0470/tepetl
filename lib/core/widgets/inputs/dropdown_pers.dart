@@ -24,7 +24,7 @@ class DropdownPers<T> extends StatelessWidget {
     final iconColor  = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       onChanged: onChanged,
       decoration: _inputDecoration(
         prefixIcon: prefixIcon,

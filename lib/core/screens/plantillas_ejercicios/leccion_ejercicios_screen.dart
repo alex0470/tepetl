@@ -56,8 +56,7 @@ class _EjercicioIntento {
     required this.respuestaUsuario,
     required this.respuestaCorrecta,
     required this.esCorrecta,
-    this.retroalimentacion = '',
-  });
+  }) : retroalimentacion = '';
 }
 
 class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
@@ -67,8 +66,6 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   bool _finalizando = false;
   int _hearts = 20;
   int _aciertosTotales = 0;
-  int _vidasPerdidas = 0;
-  int _pistasUsadas = 0;
   int _maxRacha = 0;
   int _rachaActual = 0;
   int _erroresTraducir = 0;
@@ -112,8 +109,6 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
       setState(() {
         _indiceActual = parcial['indiceActual'] ?? 0;
         _aciertosTotales = parcial['aciertosTotales'] ?? 0;
-        _vidasPerdidas = parcial['vidasPerdidas'] ?? 0;
-        _pistasUsadas = parcial['pistasUsadas'] ?? 0;
         _maxRacha = parcial['maxRacha'] ?? 0;
         _rachaActual = parcial['rachaActual'] ?? 0;
         _erroresTraducir = parcial['erroresTraducir'] ?? 0;
@@ -201,8 +196,6 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
   void _avanzarSiguiente(
       bool esCorrecto, bool pistaUsada, String tipo,
       String respuestaUsuario, String respuestaCorrecta) async {
-    if (pistaUsada) _pistasUsadas++;
-
     final ejercicioActual = _ejercicios[_indiceActual];
 
     // Registrar intento
@@ -223,7 +216,6 @@ class _LeccionEjerciciosScreenState extends State<LeccionEjerciciosScreen> {
       _rachaActual++;
       if (_rachaActual > _maxRacha) _maxRacha = _rachaActual;
     } else {
-      _vidasPerdidas++;
       _rachaActual = 0;
 
       switch (tipo) {

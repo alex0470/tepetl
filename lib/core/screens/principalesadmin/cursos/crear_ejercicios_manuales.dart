@@ -552,16 +552,20 @@ class _CrearCompletarFraseScreenState extends State<CrearCompletarFraseScreen> {
           ),
         const SizedBox(height: 20),
         const SectionHeader(text: 'OPCIONES'),
-        ...List.generate(
-          opcionControllers.length,
-          (index) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: OptionFraseCard(
-              index: index,
-              isCorrect: index == correctOption,
-              groupValue: correctOption,
-              onChanged: (value) => setState(() => correctOption = value ?? 0),
-              controller: opcionControllers[index],
+        RadioGroup<int>(
+          groupValue: correctOption,
+          onChanged: (value) => setState(() => correctOption = value ?? 0),
+          child: Column(
+            children: List.generate(
+              opcionControllers.length,
+              (index) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: OptionFraseCard(
+                  index: index,
+                  isCorrect: index == correctOption,
+                  controller: opcionControllers[index],
+                ),
+              ),
             ),
           ),
         ),

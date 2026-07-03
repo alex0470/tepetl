@@ -454,7 +454,7 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
 
-  const _StatCard({required this.label, required this.value, super.key});
+  const _StatCard({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {

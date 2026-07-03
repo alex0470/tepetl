@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:tepetl/core/models/curso_models.dart';
 import 'package:tepetl/core/services/cursos_service.dart';
 import 'package:tepetl/core/theme/app_colors.dart';
-import 'package:tepetl/core/theme/curso_filters.dart';
 import 'package:tepetl/core/widgets/admin/admin_widgets.dart';
 
 class AddCursoScreen extends StatefulWidget {

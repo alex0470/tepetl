@@ -68,20 +68,6 @@ List<String> _nivelesPermitidos(String? nivel) {
   return [normalized];
 }
 
-List<String> _nivelQueryVariants(String? nivel) {
-  final normalized = _normalizeNivel(nivel) ?? 'basico';
-  switch (normalized) {
-    case 'basico+':
-      return ['basico+', 'básico+', 'Basico+', 'Básico+'];
-    case 'intermedio':
-      return ['intermedio', 'Intermedio'];
-    case 'avanzado':
-      return ['avanzado', 'Avanzado'];
-    default:
-      return ['basico', 'básico', 'Basico', 'Básico'];
-  }
-}
-
 // ── Modelos ───────────────────────────────────────────────────────────────────
 
 class _Categoria {

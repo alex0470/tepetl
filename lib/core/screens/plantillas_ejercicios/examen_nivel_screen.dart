@@ -168,14 +168,7 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
       _rachaActual = 0;
       
       final ejercicioActual = _ejercicios[_indiceActual];
-      String resCorrecta = '';
-      try {
-        if (tipo == 'seleccionar_imagen') {
-          resCorrecta = (ejercicioActual as dynamic).respuesta ?? '';
-        } else {
-          resCorrecta = (ejercicioActual as dynamic).respuestaCorrecta ?? '';
-        }
-      } catch (_) {}
+      _errores.add(ejercicioActual);
 
       switch (tipo) {
         case 'leer_escribir':
@@ -194,7 +187,9 @@ class _ExamenNivelScreenState extends State<ExamenNivelScreen> {
       setState(() => _hearts = corazonesRestantes);
 
       if (_hearts <= 0) {
-        DialogosUtils.mostrarSinCorazones(context);
+        if (mounted) {
+          DialogosUtils.mostrarSinCorazones(context);
+        }
         return;
       }
     }
