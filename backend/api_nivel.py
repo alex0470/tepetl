@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
@@ -17,7 +19,7 @@ app.add_middleware(
 modelo = joblib.load("modelo_random_forest.pkl")
 encoder = joblib.load("encoder.pkl")
 
-GEMINI_API_KEY = "apikey"  # Reemplaza con tu clave de API real
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
 @app.get("/")
 def inicio():

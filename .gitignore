@@ -54,3 +54,10 @@ ios/Runner/GoogleService-Info.plist
 macos/Runner/GoogleService-Info.plist
 **/serviceAccountKey.json
 **/*-service-account*.json
+
+# Backend (Python)
+backend/__pycache__/
+backend/.venv/
+backend/venv/
+backend/.ipynb_checkpoints/
+backend/*.pkl

@@ -108,7 +108,6 @@ tepetl/
 ├── lib/
 │   ├── main.dart                      # Punto de entrada
 │   ├── app.dart                       # Widget raíz (MaterialApp, tema)
-│   ├── firebase_options.dart          # Configuración generada por FlutterFire
 │   └── core/
 │       ├── models/                    # Modelos de datos (curso, ejercicio, revisión, artículo)
 │       ├── screens/
@@ -119,23 +118,17 @@ tepetl/
 │       │   ├── plantillas_ejercicios/ # Tipos de ejercicio: traducir, completar, imágenes, examen de nivel
 │       │   ├── usuario/               # Perfil, ajustes, insignias, niveles, racha
 │       │   └── errores/               # Resumen y revisión de errores al terminar una lección
-│       ├── services/                  # Acceso a Firestore/Storage/Auth y lógica de negocio (cursos, progreso, racha, insignias, IA, etc.)
-│       ├── theme/                     # Colores, tema claro/oscuro, filtros visuales de curso
-│       └── widgets/                   # Componentes reutilizables (barras, botones, tarjetas, inputs, popups, temporizadores)
-├── backend/                            # Backend de IA (evalúa ejercicios y genera retroalimentación)
-├── assets/                             # Imágenes, fuentes, audio y datos semilla (cursos.json, ejercicios.json)
-├── docs/                               # Diagramas de arquitectura, modelo de datos y datasets (CSV)
-├── android/                             # Proyecto nativo de Android
-├── ios/                                 # Proyecto nativo de iOS
-├── macos/                               # Proyecto nativo de macOS
-├── windows/                             # Proyecto nativo de Windows
-├── linux/                               # Proyecto nativo de Linux
-├── web/                                 # Shell HTML/PWA para Flutter Web
-├── firebase.json                       # Configuración de Hosting y Firestore
-├── firestore.rules                     # Reglas de seguridad de Firestore
-├── cors.json                           # Configuración CORS para Firebase Storage
-├── analysis_options.yaml               # Reglas de lint de Dart
-└── pubspec.yaml                        # Dependencias y assets del proyecto
+│       ├── services/                  # Acceso a Firestore/Storage/Auth y lógica de negocio
+│       ├── theme/                     # Colores y tema claro/oscuro
+│       └── widgets/                   # Componentes reutilizables
+├── backend/                           # API de IA (FastAPI) que predice nivel y da retroalimentación
+│   ├── api_nivel.py
+│   ├── entrenamiento1.ipynb           # Notebook de entrenamiento del modelo
+│   └── datasets/                      # Datos de palabras, ejercicios y exámenes
+├── assets/                            # Imágenes, fuentes, audio y datos semilla
+├── android/ ios/ macos/ windows/ linux/ web/   # Proyectos nativos por plataforma
+├── firebase.json / firestore.rules    # Configuración y reglas de seguridad de Firebase
+└── pubspec.yaml                       # Dependencias del proyecto
 ```
 
 ---
