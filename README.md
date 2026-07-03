@@ -313,7 +313,7 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 
 Para preguntas, sugerencias o reportar problemas, contacta a través de:
 - 📊 Issues: [GitHub Issues](https://github.com/alex0470/tepetl/issues)
-- 💌 Email: alex0470@gmail.com
+- 💌 Email: silvestrealexanderolverarocha@gmail.com
 
 ---
 
