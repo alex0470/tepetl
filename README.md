@@ -51,13 +51,13 @@ TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la
 ![Pantalla Principal](https://github.com/alex0470/tepetl/blob/main/assets/galeria/pantallainicial.png)
 
 ### Ejercicios
-![Ejercicios](https://via.placeholder.com/600x400?text=Ejercicios)
+![Ejercicios](https://github.com/alex0470/tepetl/blob/main/assets/galeria/ejercicios.png)
 
 ### Perfil y Ajustes
-![Perfil y Ajustes](https://via.placeholder.com/600x400?text=Perfil+y+Ajustes)
+![Perfil y Ajustes](https://github.com/alex0470/tepetl/blob/main/assets/galeria/perfil_ajustes.png)
 
 ### Modo Oscuro
-![Modo Oscuro](https://via.placeholder.com/600x400?text=Modo+Oscuro)
+![Modo Oscuro](https://github.com/alex0470/tepetl/blob/main/assets/galeria/modo_oscuro.png)
 
 ---
 
