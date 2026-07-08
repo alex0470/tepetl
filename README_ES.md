@@ -14,7 +14,7 @@ Plataforma interactiva de aprendizaje para el idioma náhuatl con retroalimentac
 
 | English | Español | Nāhuatl |
 |---------|---------|---------|
-| [📖 Read](#english) | [📖 Leer](#español) | [📖 Xiquitta](#nāhuatl) |
+| [📖 Read](https://github.com/alex0470/tepetl/blob/main/README_EN.md) | [📖 Leer](https://github.com/alex0470/tepetl/blob/main/README_ES.md) | [📖 Xiquitta](https://github.com/alex0470/tepetl/blob/main/README_NA.md) |
 
 </div>
 
