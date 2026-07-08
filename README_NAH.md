@@ -1,16 +1,6 @@
-# TEPETL 🌟
+## Nāhuatl
 
-<div align="center">
-  <img src="https://github.com/alex0470/tepetl/raw/main/assets/logo.png" alt="TEPETL Logo" width="200" height="200">
-</div>
-
-Nextlaoaliztli in nauatl tetlactlaoaliztli, in tleica nextlaoaliztli huan in huel nextlaoaloni.
-
-> **Tlahuilonalli Web:** https://tepetl-a9d78.web.app/
-
----
-
-## 📋 Tlahcuilolmahtecpantli
+### 📋 Tlahcuilolmahtecpantli
 
 - [Tlahcuilolmachtilizti](#tlahcuilolmachtilizti)
 - [Nextlaoaliztli](#nextlaoaliztli)
@@ -21,17 +11,17 @@ Nextlaoaliztli in nauatl tetlactlaoaliztli, in tleica nextlaoaliztli huan in hue
 - [Machtiloni](#machtiloni)
 - [Tlacencaliztli](#tlacencaliztli)
 - [Nextlaoaliztli](#nextlaoaliztli-1)
-- [Licencia](#licencia)
+- [Licencia](#licencia-nahuatl)
 
 ---
 
-## 📖 Tlahcuilolmachtilizti
+### 📖 Tlahcuilolmachtilizti
 
-TEPETL huel mochiuh in nextlaoaliztli, in tlalachiuhtilizti in nauatl tetlactlaoaliztli. In altepetl nican mochiuh in nextlaoaloni in huey in machtilizti, in tleica oniuh in huan in tleica nextlaoaliztli.
+TEPETL huel mochiuh in nextlaoaliztli, in tlalachiuhtilizti in nauatl tetlactlaoaliztli. In altepetl nican mochiuh in nextlaoaloni in huey in machtilizti, in tleica oniuh in huan in tleica nextlaoaliztli in netecinematl.
 
 In altepetl nican ihtac in neixin in techtequitl huan in nahuatl machtilizti.
 
-### Aquimachtilizti
+#### Aquimachtilizti
 
 - ✅ Nextlaoaliztli in nauatl tetlactlaoaliztli
 - ✅ Tleica nextlaoaliztli in oniuh
@@ -40,7 +30,7 @@ In altepetl nican ihtac in neixin in techtequitl huan in nahuatl machtilizti.
 
 ---
 
-## ✨ Nextlaoaliztli
+### ✨ Nextlaoaliztli
 
 - 🎯 **Nextlaoaloni in Oniuh**: In nextlaoaloni mochiuhtiuh in tech huan in oniuh
 - 💬 **Nahuatilli Huiquipanin**: Xiquitta in tleica oniuh huan in cocentlahui
@@ -52,32 +42,32 @@ In altepetl nican ihtac in neixin in techtequitl huan in nahuatl machtilizti.
 
 ---
 
-## 🖼️ Galearia
+### 🖼️ Galearia
 
-### Tlahuilonalli in Imixpan
+#### Tlahuilonalli in Imixpan
 ![Tlahuilonalli in Imixpan](https://github.com/alex0470/tepetl/blob/main/assets/galeria/pantallainicial.png)
 
-### Nextlaoaloni
+#### Nextlaoaloni
 ![Nextlaoaloni](https://github.com/alex0470/tepetl/blob/main/assets/galeria/ejercicios.png)
 
-### Toca huan Tlacencaliztli
+#### Toca huan Tlacencaliztli
 ![Toca huan Tlacencaliztli](https://github.com/alex0470/tepetl/blob/main/assets/galeria/perfil_ajustes.png)
 
-### Tonacayotl Yohualli
+#### Tonacayotl Yohualli
 ![Tonacayotl Yohualli](https://github.com/alex0470/tepetl/blob/main/assets/galeria/modo_oscuro.png)
 
 ---
 
-## 🚀 Tlacenilizti
+### 🚀 Tlacenilizti
 
-### Azo Altepetl in Tlamictiliztli
+#### Azo Altepetl in Tlamictiliztli
 
 - Flutter SDK (3.0 tlahuelmachtiloni o huo occequintin)
 - Dart SDK
 - Android Studio o Xcode (in nextlaoaliztli in noquichtli)
 - Tlamictiliztli in Firebase
 
-### Tlacenilizti in Huazqueh
+#### Tlacenilizti in Huazqueh
 
 ```bash
 # 1. Xicueponi in nextlaoaliztli
@@ -96,7 +86,7 @@ flutter run -d android
 
 ---
 
-## 🛠️ Tequitl in Nextlaoali
+### 🛠️ Tequitl in Nextlaoali
 
 - **Imixpan**: Flutter / Dart
 - **Tonacatl**: Firebase
@@ -109,7 +99,7 @@ flutter run -d android
 
 ---
 
-## 📁 Namictiliztli in Tlamantli
+### 📁 Namictiliztli in Tlamantli
 
 ```
 tepetl/
@@ -143,9 +133,9 @@ tepetl/
 
 ---
 
-## 📊 Machtiloni
+### 📊 Machtiloni
 
-### Huey Tlahtlaloni
+#### Huey Tlahtlaloni
 
 In nextlaoaliztli nican ihtac nahui in huel nextlaoaliztli in tlamahqueh in nextlaoaliztli:
 
@@ -248,9 +238,9 @@ backend/
 
 ---
 
-## ⚙️ Tlacencaliztli
+### ⚙️ Tlacencaliztli
 
-### Tlacencaliztli in Firebase
+#### Tlacencaliztli in Firebase
 
 In nextlaoaliztli nican ozomoztli in Firebase. In tlacencaliztli nican:
 
@@ -258,7 +248,7 @@ In nextlaoaliztli nican ozomoztli in Firebase. In tlacencaliztli nican:
 - `firebase.json` - Tlacencaliztli in tlahuilonalli huan tlamantli
 - Project ID: `tepetl-a9d78`
 
-### Tlacencaliztli in Backend API
+#### Tlacencaliztli in Backend API
 
 In netecinematl API in tequiti in FastAPI:
 
@@ -279,11 +269,11 @@ uvicorn api_nivel:app --reload --host 0.0.0.0 --port 8000
 - `POST /evaluar-ejercicio` - Nextlaoaliztli in nextlaoaloni
 - `POST /retroalimentacion` - Nextlaoaliztli in huey nextlaoaliztli netecinematl
 
-### CORS
+#### CORS
 
 In tlacencaliztli CORS nican nextlaoaliztli in `cors.json` in tlahuilonalli in achi ompa.
 
-### Nextlaoaliztli in Tequitl
+#### Nextlaoaliztli in Tequitl
 
 In `flutter_lints` in nextlaoaliztli in calidad in tequitl. Xiquixtiloni:
 
@@ -293,7 +283,7 @@ flutter analyze
 
 ---
 
-## 🤝 Nextlaoaliztli
+### 🤝 Nextlaoaliztli
 
 Azo quixcomania? ¡In nextlaoaliztli in huelmachtiloni!
 
@@ -305,13 +295,13 @@ Azo quixcomania? ¡In nextlaoaliztli in huelmachtiloni!
 
 ---
 
-## 📝 Licencia
+### 📝 Licencia
 
 In nextlaoaliztli nican ihtac in Licencia MIT. Xiquitta `LICENSE` in huel tlahtlaloni.
 
 ---
 
-## 📧 Nextlaoaliztli
+### 📧 Nextlaoaliztli
 
 In huehuetzaloni, nextlaoaliztli o nahuatililiztli in occequintin tlamantli:
 - 📊 Ahuactlamictiliztli: [GitHub Ahuactlamictiliztli](https://github.com/alex0470/tepetl/issues)
