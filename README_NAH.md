@@ -14,7 +14,7 @@ Interactive learning platform for the Nahuatl language with personalized feedbac
 
 | English | Español | Nāhuatl |
 |---------|---------|---------|
-| [📖 Read](#english) | [📖 Leer](https://github.com/alex0470/tepetl/blob/main/README_ES.md) | [📖 Xiquitta](#nāhuatl) |
+| [📖 Read](https://github.com/alex0470/tepetl/blob/main/README_ES.md) | [📖 Leer](https://github.com/alex0470/tepetl/blob/main/README_ES.md) | [📖 Xiquitta](#nāhuatl) |
 
 </div>
 
