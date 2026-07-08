@@ -18,8 +18,6 @@ Interactive learning platform for the Nahuatl language with personalized feedbac
 
 </div>
 
-> **Live Demo:** https://tepetl-a9d78.web.app/
-
 ---
 
 ## Nāhuatl
