@@ -14,7 +14,7 @@ Interactive learning platform for the Nahuatl language with personalized feedbac
 
 | English | Español | Nāhuatl |
 |---------|---------|---------|
-| [📖 Read](#english) | [📖 Leer](#español) | [📖 Xiquitta](#nāhuatl) |
+| [📖 Read](#english) | [📖 Leer](@README_ES.md) | [📖 Xiquitta](#nāhuatl) |
 
 </div>
 
