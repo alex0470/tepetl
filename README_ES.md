@@ -1,37 +1,27 @@
-# TEPETL 🌟
+## Español
 
-<div align="center">
-  <img src="https://github.com/alex0470/tepetl/raw/main/assets/logo.png" alt="TEPETL Logo" width="200" height="200">
-</div>
+### 📋 Tabla de Contenidos
 
-Plataforma de aprendizaje interactivo de la lengua náhuatl, con retroalimentación personalizada y recomendaciones inteligentes de ejercicios.
-
-> **Versión Web:** https://tepetl-a9d78.web.app/
-
----
-
-## 📋 Tabla de Contenidos
-
-- [Descripción](#descripción)
-- [Características](#características)
-- [Galería](#galería)
-- [Instalación](#instalación)
-- [Tecnologías](#tecnologías)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Datasets](#datasets)
-- [Configuración](#configuración)
-- [Contribuir](#contribuir)
-- [Licencia](#licencia)
+- [Descripción](#descripción-1)
+- [Características](#características-1)
+- [Galería](#galería-1)
+- [Instalación](#instalación-1)
+- [Tecnologías](#tecnologías-1)
+- [Estructura del Proyecto](#estructura-del-proyecto-1)
+- [Datasets](#datasets-1)
+- [Configuración](#configuración-1)
+- [Contribuir](#contribuir-1)
+- [Licencia](#licencia-1)
 
 ---
 
-## 📖 Descripción
+### 📖 Descripción
 
-TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación contextualizada, y un sistema inteligente que recomienda ejercicios según el progreso y desempeño del usuario.
+TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación contextualizada y un sistema de recomendación inteligente impulsado por IA.
 
 La plataforma combina tecnología moderna con preservación cultural, ofreciendo una experiencia atractiva para aprendices de todos los niveles.
 
-### Objetivos
+#### Objetivos
 
 - ✅ Facilitar el aprendizaje del náhuatl a nivel básico
 - ✅ Proporcionar retroalimentación contextualizada
@@ -40,7 +30,7 @@ La plataforma combina tecnología moderna con preservación cultural, ofreciendo
 
 ---
 
-## ✨ Características
+### ✨ Características
 
 - 🎯 **Ejercicios Adaptativos**: Los ejercicios se ajustan según tu nivel y desempeño
 - 💬 **Retroalimentación Inmediata**: Obtén respuestas y sugerencias al instante
@@ -52,32 +42,32 @@ La plataforma combina tecnología moderna con preservación cultural, ofreciendo
 
 ---
 
-## 🖼️ Galería
+### 🖼️ Galería
 
-### Pantalla Principal
+#### Pantalla Principal
 ![Pantalla Principal](https://github.com/alex0470/tepetl/blob/main/assets/galeria/pantallainicial.png)
 
-### Ejercicios
+#### Ejercicios
 ![Ejercicios](https://github.com/alex0470/tepetl/blob/main/assets/galeria/ejercicios.png)
 
-### Perfil y Ajustes
+#### Perfil y Ajustes
 ![Perfil y Ajustes](https://github.com/alex0470/tepetl/blob/main/assets/galeria/perfil_ajustes.png)
 
-### Modo Oscuro
+#### Modo Oscuro
 ![Modo Oscuro](https://github.com/alex0470/tepetl/blob/main/assets/galeria/modo_oscuro.png)
 
 ---
 
-## 🚀 Instalación
+### 🚀 Instalación
 
-### Requisitos Previos
+#### Requisitos Previos
 
 - Flutter SDK (versión 3.0 o superior)
 - Dart SDK
 - Android Studio o Xcode (para desarrollo móvil)
 - Cuenta de Firebase
 
-### Pasos de Instalación
+#### Pasos de Instalación
 
 ```bash
 # 1. Clonar el repositorio
@@ -96,7 +86,7 @@ flutter run -d android
 
 ---
 
-## 🛠️ Tecnologías
+### 🛠️ Tecnologías
 
 - **Frontend**: Flutter / Dart
 - **Backend**: Firebase
@@ -109,7 +99,7 @@ flutter run -d android
 
 ---
 
-## 📁 Estructura del Proyecto
+### 📁 Estructura del Proyecto
 
 ```
 tepetl/
@@ -143,9 +133,9 @@ tepetl/
 
 ---
 
-## 📊 Datasets
+### 📊 Datasets
 
-### Descripción General
+#### Descripción General
 
 El proyecto incluye tres datasets principales utilizados para entrenar y validar el modelo de IA:
 
@@ -248,9 +238,9 @@ backend/
 
 ---
 
-## ⚙️ Configuración
+### ⚙️ Configuración
 
-### Configuración de Firebase
+#### Configuración de Firebase
 
 La aplicación está preconfigurada con Firebase. Los detalles de configuración están en:
 
@@ -258,7 +248,7 @@ La aplicación está preconfigurada con Firebase. Los detalles de configuración
 - `firebase.json` - Configuración del hosting y plataformas
 - Project ID: `tepetl-a9d78`
 
-### Configuración de Backend API
+#### Configuración de Backend API
 
 La API de IA se ejecuta con FastAPI:
 
@@ -279,11 +269,11 @@ uvicorn api_nivel:app --reload --host 0.0.0.0 --port 8000
 - `POST /evaluar-ejercicio` - Evalúa un ejercicio individual
 - `POST /retroalimentacion` - Genera retroalimentación general con IA
 
-### CORS
+#### CORS
 
 La configuración CORS está definida en `cors.json` para permitir solicitudes GET desde cualquier origen.
 
-### Análisis de Código
+#### Análisis de Código
 
 Se utiliza `flutter_lints` para mantener la calidad del código. Ejecuta:
 
@@ -293,7 +283,7 @@ flutter analyze
 
 ---
 
-## 🤝 Contribuir
+### 🤝 Contribuir
 
 ¿Quieres contribuir? ¡Estamos abiertos a colaboraciones!
 
@@ -305,13 +295,13 @@ flutter analyze
 
 ---
 
-## 📝 Licencia
+### 📝 Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 
 ---
 
-## 📧 Contacto
+### 📧 Contacto
 
 Para preguntas, sugerencias o reportar problemas, contacta a través de:
 - 📊 Issues: [GitHub Issues](https://github.com/alex0470/tepetl/issues)
