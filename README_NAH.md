@@ -4,7 +4,7 @@
   <img src="https://github.com/alex0470/tepetl/raw/main/assets/logo.png" alt="TEPETL Logo" width="200" height="200">
 </div>
 
-Interactive learning platform for the Nahuatl language with personalized feedback and intelligent exercise recommendations.
+Kuali nemachtilistli tlen Nauatl tla'toli — tekitl tlen yolo'tli.
 
 ---
 
