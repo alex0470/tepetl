@@ -1,3 +1,26 @@
+# TEPETL 🌟
+
+<div align="center">
+  <img src="https://github.com/alex0470/tepetl/raw/main/assets/logo.png" alt="TEPETL Logo" width="200" height="200">
+</div>
+
+Interactive learning platform for the Nahuatl language with personalized feedback and intelligent exercise recommendations.
+
+---
+
+## 🌐 Available Languages | Idiomas Disponibles | Nēnēualtin Tlahtol
+
+<div align="center">
+
+| English | Español | Nāhuatl |
+|---------|---------|---------|
+| [📖 Read](#english) | [📖 Leer](https://github.com/alex0470/tepetl/blob/main/README_ES.md) | [📖 Xiquitta](#nāhuatl) |
+
+</div>
+
+> **Live Demo:** https://tepetl-a9d78.web.app/
+
+---
 
 ## Nāhuatl
 
