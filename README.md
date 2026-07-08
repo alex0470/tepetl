@@ -6,7 +6,17 @@
 
 Interactive learning platform for the Nahuatl language with personalized feedback and intelligent exercise recommendations.
 
-**📚 Available in:** [English](#english) | [Español](#español) | [Nāhuatl](#nāhuatl)
+---
+
+## 🌐 Available Languages | Idiomas Disponibles | Nēnēualtin Tlahtol
+
+<div align="center">
+
+| English | Español | Nāhuatl |
+|---------|---------|---------|
+| [📖 Read](#english) | [📖 Leer](#español) | [📖 Xiquitta](#nāhuatl) |
+
+</div>
 
 > **Live Demo:** https://tepetl-a9d78.web.app/
 
@@ -31,7 +41,7 @@ Interactive learning platform for the Nahuatl language with personalized feedbac
 
 ### 📖 Description
 
-TEPETL is an educational platform designed to facilitate interactive and personalized learning of the Nahuatl language. The application provides adaptive exercises, contextualized feedback, and an intelligent system that recommends exercises based on user progress and performance.
+TEPETL is an educational platform designed to facilitate interactive and personalized learning of the Nahuatl language. The application provides adaptive exercises, contextualized feedback, and an intelligent recommendation system powered by AI.
 
 The platform combines modern technology with cultural preservation, offering an engaging experience for language learners of all levels.
 
@@ -346,7 +356,7 @@ For questions, suggestions, or to report issues, contact:
 
 ### 📖 Descripción
 
-TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación contextualizada, y un sistema inteligente que recomienda ejercicios según el progreso y desempeño del usuario.
+TEPETL es una plataforma educativa diseñada para facilitar el aprendizaje de la lengua náhuatl de manera interactiva y personalizada. La aplicación proporciona ejercicios adaptativos, retroalimentación contextualizada y un sistema de recomendación inteligente impulsado por IA.
 
 La plataforma combina tecnología moderna con preservación cultural, ofreciendo una experiencia atractiva para aprendices de todos los niveles.
 
@@ -661,7 +671,7 @@ Para preguntas, sugerencias o reportar problemas, contacta a través de:
 
 ### 📖 Tlahcuilolmachtilizti
 
-TEPETL huel mochiuh in nextlaoaliztli, in tlalachiuhtilizti in nauatl tetlactlaoaliztli. In altepetl nican mochiuh in nextlaoaloni in huey in machtilizti, in tleica oniuh in huan in tleica nextlaoaliztli.
+TEPETL huel mochiuh in nextlaoaliztli, in tlalachiuhtilizti in nauatl tetlactlaoaliztli. In altepetl nican mochiuh in nextlaoaloni in huey in machtilizti, in tleica oniuh in huan in tleica nextlaoaliztli in netecinematl.
 
 In altepetl nican ihtac in neixin in techtequitl huan in nahuatl machtilizti.
 
