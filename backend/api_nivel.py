@@ -230,8 +230,8 @@ Responde SOLO en JSON válido:
 
     try:
         texto = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-    except Exception as e:
-        texto = f"Error parseando respuesta: {str(e)}"
+    except Exception:
+        texto = "No se pudo generar retroalimentación en este momento."
 
     valores = np.array([[
         aciertos,
