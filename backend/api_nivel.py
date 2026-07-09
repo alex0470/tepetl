@@ -220,7 +220,7 @@ Responde SOLO en JSON válido:
     response = requests.post(url, json=body)
 
     print("STATUS GEMINI:", response.status_code)
-    print("RESPUESTA GEMINI:", response.text)
+    print("RESPUESTA GEMINI: [redacted]")
 
     if response.status_code != 200:
         return {
